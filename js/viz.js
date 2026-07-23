@@ -19,6 +19,26 @@ const geoLine=d3.line().x(p=>px(p[1])).y(p=>py(p[0])).curve(d3.curveCatmullRom.a
 const GAGE_NODE={};
 G.nodes.forEach(n=>{if(n.gage&&GAGE_NODE[n.gage]==null)GAGE_NODE[n.gage]=n.id;});
 
+/* a representative hue per basin, for the full-state basin outlines */
+const BASIN_HUE={colorado:'#3F7BFF',gunnison:'#B667F2',yampa:'#39C46A',
+  sw:'#22B9C9',rio:'#5C86FF',arkansas:'#F09248',platte:'#8FA6B2'};
+/* convex hull (monotone chain) of [x,y] points */
+function convexHull(pts){
+  pts=pts.filter(Boolean).slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  if(pts.length<3)return pts;
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[];for(const p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);}
+  const up=[];for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);}
+  lo.pop();up.pop();return lo.concat(up);
+}
+/* push a hull outward from its centroid so the outline clears the features */
+function padHull(h,m){
+  if(h.length<3)return h;
+  const cx=h.reduce((s,p)=>s+p[0],0)/h.length, cy=h.reduce((s,p)=>s+p[1],0)/h.length;
+  return h.map(p=>{const dx=p[0]-cx,dy=p[1]-cy,d=Math.hypot(dx,dy)||1;
+    return [p[0]+dx/d*m, p[1]+dy/d*m];});
+}
+
 /* =====================================================================
    STATE
    ===================================================================== */
@@ -312,6 +332,32 @@ function drawMap(){
    .attr('x',px(GEO.w)).attr('y',py(GEO.n)).attr('width',IW).attr('height',IH)
    .attr('preserveAspectRatio','none').attr('opacity',0.5).attr('pointer-events','none');
 
+  /* full-state view: a soft dashed outline grouping each basin's features,
+     with a clickable label to focus that basin. */
+  if(state.basin==='all'){
+    const bl=g.append('g').attr('class','basinlayer');
+    BASINS.filter(b=>b.id!=='all').forEach(b=>{
+      const pts=[];
+      RES.forEach(r=>{if(r.b===b.id)pts.push([px(r.lon),py(r.lat)]);});
+      RIVERS.forEach(rv=>{if(rv.b===b.id)rv.p.forEach(p=>pts.push([px(p[1]),py(p[0])]));});
+      if(typeof GAGE_META!=='undefined')Object.keys(GAGE_META).forEach(s=>{
+        if(GAGE_META[s].basin===b.id)pts.push([px(GAGE_META[s].lon),py(GAGE_META[s].lat)]);});
+      const hull=padHull(convexHull(pts),26);
+      if(hull.length<3)return;
+      const hue=BASIN_HUE[b.id]||'#6d8391';
+      const dd=d3.line().curve(d3.curveCatmullRomClosed.alpha(0.6))(hull);
+      const grp=bl.append('g').attr('class','node-hit').attr('role','button').attr('aria-label',b.n+' basin');
+      grp.append('path').attr('d',dd).attr('fill','none').attr('stroke',hue)
+        .attr('class','zw').attr('data-bw',1.1).attr('stroke-width',1.1)
+        .attr('stroke-dasharray','3 6').attr('opacity',0.55).attr('pointer-events','stroke');
+      const lx=hull.reduce((s,p)=>s+p[0],0)/hull.length, ly=Math.min.apply(null,hull.map(p=>p[1]));
+      const lab=grp.append('text').attr('x',lx).attr('y',ly+15).attr('text-anchor','middle')
+        .attr('class','lbl-basin').attr('fill',hue).text(b.n.toUpperCase());
+      CSTEXT.push({el:lab.node(),x:lx,y:ly+15,p:0.85,o:0.72});
+      grp.on('click',ev=>{ev.preventDefault();ev.stopPropagation();selectBasin(b.id);});
+    });
+  }
+
   const grid=g.append('g').attr('opacity',.5);
   for(let lon=-108;lon>=-103;lon--)grid.append('line').attr('x1',px(lon)).attr('x2',px(lon)).attr('y1',py(GEO.n)).attr('y2',py(GEO.s)).attr('stroke','#14252F').attr('stroke-width',.6);
   for(let lat=38;lat<=40;lat++)grid.append('line').attr('y1',py(lat)).attr('y2',py(lat)).attr('x1',px(GEO.w)).attr('x2',px(GEO.e)).attr('stroke','#14252F').attr('stroke-width',.6);
@@ -418,6 +464,7 @@ function drawMap(){
         .attr('fill',live!=null?'#00D6E6':'#0A1620')
         .attr('stroke',live!=null?'#0A1620':'#4E7488').attr('stroke-width',1.1);
       const short=m.name.split(/,| At | Near | Below | Nr /i)[0].trim();
+      node.append('title').text(`${short} — USGS ${site}${live!=null?' · '+Math.round(live)+' cfs live':''}`);
       const lab=node.append('g').attr('class','lab');
       lab.append('text').attr('x',8).attr('y',3).attr('class','lbl2').text(short);
       LABELS.push({el:lab.node(),x:cx,y:cy,pri:40000,minK:2.2,
@@ -461,10 +508,10 @@ function drawMap(){
     LABELS.push({el:lab.node(),x:cx,y:cy,
       pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),
       bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap||isFcTap?0.1:null});
-    node.on('click',ev=>{if(ev.defaultPrevented)return;
-      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();});
-    node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
-      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();}});
+    node.append('title').text(`${r.n} — ${r.fc?'flood control':pmAt(r,state.mi)+'% of normal'}`);
+    const pickRes=()=>{state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();zoomBasinOf(r.b);};
+    node.on('click',ev=>{if(ev.defaultPrevented)return;pickRes();});
+    node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pickRes();}});
   });
 
   if(state.tap){ /* the reader's tap, marked on the map */
@@ -791,9 +838,39 @@ function renderSheet(){
     if(c2)c2.addEventListener('click',ev=>{ev.preventDefault();clearTap();});
     return;
   }
+  if(!state.selected&&state.basin!=='all'){
+    const b=BASINS.find(x=>x.id===state.basin);
+    const west=['colorado','gunnison','yampa','sw'].includes(b.id);
+    const inb=RES.filter(r=>r.b===b.id&&!r.fc);
+    const cap=inb.reduce((sum,r)=>sum+r.cap,0);
+    const pct=Math.round(PMH[b.id]?PMH[b.id][mi]:0);
+    const below=inb.filter(r=>pmAt(r,mi)<95).length;
+    const largest=inb.slice().sort((a,c)=>c.cap-a.cap)[0];
+    const gg=(typeof GAGE_META!=='undefined')?Object.keys(GAGE_META).filter(x=>GAGE_META[x].basin===b.id):[];
+    const rivers=[...new Set(RIVERS.filter(rv=>rv.b===b.id).map(rv=>rv.n))];
+    const tuns=[...new Set(MAP_TUNNELS.filter(t=>t.fb===b.id||t.tb===b.id).map(t=>t.n))];
+    const cn=n=>n.replace(/ (Reservoir|Res\.|Lake)$/,'');
+    s.innerHTML=`
+      <div class="tag"><span>Basin</span><span>${west?'West slope':'East slope'} · ${MONTHS[mi]}</span></div>
+      <h2>${b.n}</h2>
+      <div class="sub">${inb.length} reservoirs · ${kaf(cap)} KAF when full</div>
+      <table class="rows">
+        <tr><td class="lab">Storage vs normal</td><td style="color:${ramp(pct)}">${pct}% of median</td></tr>
+        <tr><td class="lab">Below normal</td><td>${below} of ${inb.length} reservoirs</td></tr>
+        ${largest?`<tr><td class="lab">Largest</td><td>${cn(largest.n)} · <span style="color:${ramp(pmAt(largest,mi))}">${pmAt(largest,mi)}%</span></td></tr>`:''}
+        <tr><td class="lab">Streamgages</td><td>${gg.length}</td></tr>
+      </table>
+      ${BASININFO[b.id]?`<div class="prov" style="font-size:12px;color:#4a4636">${BASININFO[b.id]}</div>`:''}
+      ${tuns.length?`<div class="prov"><b>Tunnels crossing here:</b> ${tuns.join(' · ')}</div>`:''}
+      ${rivers.length?`<div class="prov"><b>Rivers:</b> ${rivers.slice(0,8).join(' · ')}${rivers.length>8?' …':''}</div>`:''}
+      <div class="prov">Click a glass for a reservoir, a ◆ for a gage, or <a href="#" id="basinall" style="color:#1A2730">← all basins</a>.</div>`;
+    const ba=s.querySelector('#basinall');
+    if(ba)ba.addEventListener('click',ev=>{ev.preventDefault();selectBasin('all');});
+    return;
+  }
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
-      <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond on the flow view to see what that water is made of.
+      <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond for the flow it carries. Pick a <b>basin</b> chip — or its dashed outline on the map — for a basin overview.
       <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap — or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
     return;
   }
@@ -877,13 +954,25 @@ function renderStrip(){
       +`</div>`;
   }).join('');
 }
+/* focus a basin (from a chip, an outline, or the sheet): filter, clear any
+   selection so the basin panel shows, redraw, and frame it. */
+function selectBasin(id){
+  state.basin=id; state.selected=null; state.selectedNode=null;
+  renderChips(); pushHistory(); draw(); renderSheet();
+  if(id==='all')zoomReset(true); else zoomToBasin();
+}
+/* frame a reservoir's whole basin (geographic view) */
+function zoomBasinOf(bid){
+  if(state.view!=='map')return;
+  const bb=basinBBoxMap(bid); if(bb)zoomToBBox.apply(null,bb);
+}
 function renderChips(){
   const box=d3.select('#chips');
   if(box.empty())return;
   box.selectAll('*').remove();
   box.selectAll('button').data(BASINS).join('button')
     .attr('class','chip').attr('aria-pressed',d=>String(d.id===state.basin)).text(d=>d.n)
-    .on('click',(ev,d)=>{state.basin=d.id;renderChips();pushHistory();draw();zoomToBasin();});
+    .on('click',(ev,d)=>selectBasin(d.id));
 }
 function renderLegend(){
   const used={
@@ -1062,6 +1151,7 @@ function restoreFromHash(){
   syncControls();
   setViewBox();draw();renderSheet();
   if(state.tap)frameTap(state.tap);
+  else if(state.selected&&RESBY[state.selected])zoomBasinOf(RESBY[state.selected].b);
   else if(state.basin!=='all')zoomToBasin();
   else zoomReset(false);
 }
@@ -1110,6 +1200,14 @@ if(zipInput){
   zipInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')applyTap(zipInput.value.trim());});
   const zc=document.getElementById('zipclear');if(zc)zc.addEventListener('click',clearTap);
 }
+
+/* Escape steps back out: selection → tap → basin → all */
+document.addEventListener('keydown',ev=>{
+  if(ev.key!=='Escape')return;
+  if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;commit();}
+  else if(state.tap){clearTap();}
+  else if(state.basin!=='all'){selectBasin('all');}
+});
 
 /* boot — live fetches are wired up in js/live.js */
 renderStrip();renderChips();renderLegend();
