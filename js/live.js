@@ -41,22 +41,30 @@ function ingestUSGS(j){
   return n;
 }
 function ingestCDSS(j){
-  let n=0;
   const byAb=Object.fromEntries(DWR.map(r=>[r.dwr,r]));
   const cutoff=Date.now()-14*864e5; /* ignore stations gone quiet */
+  /* A station can return several rows for one timestamp — some are dropout
+     sensors reading 0 that would clobber the real value (Cheesman does this).
+     Keep the largest plausible reading per station, and reject exact zeros:
+     a working storage gage doesn't read 0, and genuinely-empty reservoirs
+     have no telemetry here anyway. */
+  const best={};
   ((j&&j.ResultList)||[]).forEach(row=>{
-    const r=byAb[row.abbrev],v=row.measValue,t=Date.parse(row.measDateTime);
-    if(!r||!isFinite(v)||v<0||!(t>cutoff))return;
+    const r=byAb[row.abbrev];if(!r)return;
+    const v=row.measValue,t=Date.parse(row.measDateTime);
+    if(!isFinite(v)||v<=0||!(t>cutoff))return;
     if(v>r.cap*1.15)return; /* unit mixup or bad reading */
-    LIVE_STO[r.id]={sto:v,asOf:String(row.measDateTime).slice(0,10)};
+    const cur=best[row.abbrev];
+    if(!cur||v>cur.v)best[row.abbrev]={v,asOf:String(row.measDateTime).slice(0,10)};
   });
+  Object.entries(best).forEach(([ab,b])=>{LIVE_STO[byAb[ab].id]={sto:b.v,asOf:b.asOf};});
   return Object.keys(LIVE_STO).length;
 }
 function ingestWeek(j){
   /* week of daily storage → trend in cfs (1 AF/day = 0.50417 cfs) */
   const byAb={};
   ((j&&j.ResultList)||[]).forEach(row=>{
-    if(!isFinite(row.measValue))return;
+    if(!isFinite(row.measValue)||row.measValue<=0)return;
     (byAb[row.abbrev]=byAb[row.abbrev]||[]).push({t:Date.parse(row.measDate),v:row.measValue});
   });
   const idByAb=Object.fromEntries(DWR.map(r=>[r.dwr,r.id]));

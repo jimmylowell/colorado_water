@@ -313,7 +313,7 @@ function drawMap(){
   g.append('rect').attr('x',px(GEO.w)).attr('y',py(GEO.n)).attr('width',IW).attr('height',IH)
    .attr('fill','#08131B').attr('stroke','#2A4351').attr('stroke-width',1.2)
    .on('click',ev=>{if(ev.defaultPrevented)return;
-     if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;draw();renderSheet();}});
+     if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;commit();}});
 
   const grid=g.append('g').attr('opacity',.5);
   for(let lon=-108;lon>=-103;lon--)grid.append('line').attr('x1',px(lon)).attr('x2',px(lon)).attr('y1',py(GEO.n)).attr('y2',py(GEO.s)).attr('stroke','#14252F').attr('stroke-width',.6);
@@ -436,9 +436,9 @@ function drawMap(){
       pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),sub:sub.node(),
       bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap||isFcTap?0.1:null});
     node.on('click',ev=>{if(ev.defaultPrevented)return;
-      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();});
+      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();});
     node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
-      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();}});
+      state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();}});
   });
 
   if(state.tap){ /* the reader's tap, marked on the map */
@@ -484,7 +484,7 @@ function drawFlow(){
   g.append('rect').attr('x',0).attr('y',0).attr('width',FW).attr('height',FH)
     .attr('fill','transparent')
     .on('click',ev=>{if(ev.defaultPrevented)return;
-      if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;draw();renderSheet();}});
+      if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;commit();}});
 
   const defs=g.append('defs');
   G.edges.forEach((e,i)=>{
@@ -617,9 +617,9 @@ function drawFlow(){
         bx0:-nm.length*3.4,by0:ly-9,bx1:nm.length*3.4,by1:ly+4});
       if(faded)lab.attr('opacity',.35);
       grp.on('click',ev=>{if(ev.defaultPrevented)return;ev.stopPropagation();
-        state.selected=r.id;state.selectedNode=n.id;draw();renderSheet();});
+        state.selected=r.id;state.selectedNode=n.id;commit();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
-        state.selected=r.id;state.selectedNode=n.id;draw();renderSheet();}});
+        state.selected=r.id;state.selectedNode=n.id;commit();}});
       return;
     }
     if(n.k==='gage'){
@@ -647,9 +647,9 @@ function drawFlow(){
       CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',17).attr('class','gid').attr('text-anchor','middle')
         .text('USGS '+n.gage).node(),x:0,y:17,p:0.5,minK:3.2});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
-        state.selectedNode=n.id;state.selected=null;draw();renderSheet();});
+        state.selectedNode=n.id;state.selected=null;commit();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
-        state.selectedNode=n.id;state.selected=null;draw();renderSheet();}});
+        state.selectedNode=n.id;state.selected=null;commit();}});
       return;
     }
     if(n.k==='exit'){
@@ -665,9 +665,9 @@ function drawFlow(){
       CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y+23).attr('class','xq').attr('text-anchor','middle')
         .text(fmt(FLOWQ[n.id]*qFactor(state.mi))+' cfs leaving').node(),x:n.x,y:n.y+23,p:0.5,o:dimX?.35:1});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
-        state.selectedNode=n.id;state.selected=null;draw();renderSheet();});
+        state.selectedNode=n.id;state.selected=null;commit();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
-        state.selectedNode=n.id;state.selected=null;draw();renderSheet();}});
+        state.selectedNode=n.id;state.selected=null;commit();}});
     }
   });
 
@@ -747,7 +747,7 @@ function renderSheet(){
       ${t.tun.length?`<div class="prov"><b>Crossing the Divide for you:</b> ${t.tun.join(' · ')}</div>`:''}
       <div class="prov">A simplified picture — providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
     s.querySelectorAll('.taprow').forEach(el=>el.addEventListener('click',()=>{
-      state.selected=el.dataset.res;state.selectedNode=RESNODE[el.dataset.res]||null;draw();renderSheet();}));
+      state.selected=el.dataset.res;state.selectedNode=RESNODE[el.dataset.res]||null;commit();}));
     const c2=s.querySelector('#tapclear2');
     if(c2)c2.addEventListener('click',ev=>{ev.preventDefault();clearTap();});
     return;
@@ -755,7 +755,7 @@ function renderSheet(){
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
       <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond on the flow view to see what that water is made of.
-      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap — or drag the timeline to Oct 2025 and press play to watch the drought arrive.</div>`;
+      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap — or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
     return;
   }
   const r=RESBY[state.selected];
@@ -808,23 +808,54 @@ function renderSheet(){
     ${state.tap?`<div class="prov"><a href="#" id="backtap" style="color:#1A2730">← back to your water (ZIP ${state.tap.zip})</a></div>`:''}`;
   const bt=s.querySelector('#backtap');
   if(bt)bt.addEventListener('click',ev=>{ev.preventDefault();
-    state.selected=null;state.selectedNode=null;draw();renderSheet();});
+    state.selected=null;state.selectedNode=null;commit();});
   if(window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'res',r});
 }
 
 /* =====================================================================
    CHROME
    ===================================================================== */
+/* monthly series behind a headline stat, so the tile shows its own trend */
+function statSeries(kind){
+  if(kind==='flow')return FLOWPCT.slice();
+  if(kind==='denver')return MONTHS.map((_,i)=>(PMH.colorado[i]+PMH.platte[i])/2);
+  if(kind==='storage'){
+    const capB={};RES.forEach(r=>{if(!r.fc)capB[r.b]=(capB[r.b]||0)+r.cap;});
+    return MONTHS.map((_,i)=>{
+      let num=0,den=0;
+      for(const b in PMH){const c=capB[b]||0;num+=PMH[b][i]*c;den+=c;}
+      return den?num/den:0;
+    });
+  }
+  return null;
+}
+const SPARKCOL={low:'#FF7A45',mid:'#EFD01B',ok:'#2FD94F'};
+function sparkSVG(series,color){
+  const w=100,h=20,mn=Math.min(...series),mx=Math.max(...series),rng=(mx-mn)||1;
+  const X=i=>i/(series.length-1)*w, Y=v=>h-2-((v-mn)/rng)*(h-4);
+  const d=series.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join('');
+  const lx=X(series.length-1).toFixed(1),ly=Y(series[series.length-1]).toFixed(1);
+  return `<svg class="sparksvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">`
+    +`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`
+    +`<circle cx="${lx}" cy="${ly}" r="1.7" fill="${color}"/></svg>`;
+}
 function renderStrip(){
-  document.getElementById('strip').innerHTML=STATEWIDE.map(s=>
-    `<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls}">${s.v}</div><div class="n">${s.n}</div></div>`).join('');
+  const el=document.getElementById('strip');if(!el)return;
+  el.innerHTML=STATEWIDE.map(s=>{
+    const series=s.spark?statSeries(s.spark):null;
+    return `<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls}">${s.v}</div>`
+      +`<div class="n">${s.n}</div>`
+      +(series?`<div class="spark" title="Oct 2025 → Jul 2026">${sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
+      +`</div>`;
+  }).join('');
 }
 function renderChips(){
   const box=d3.select('#chips');
+  if(box.empty())return;
   box.selectAll('*').remove();
   box.selectAll('button').data(BASINS).join('button')
     .attr('class','chip').attr('aria-pressed',d=>String(d.id===state.basin)).text(d=>d.n)
-    .on('click',(ev,d)=>{state.basin=d.id;renderChips();draw();zoomToBasin();});
+    .on('click',(ev,d)=>{state.basin=d.id;renderChips();pushHistory();draw();zoomToBasin();});
 }
 function renderLegend(){
   const used={
@@ -836,7 +867,8 @@ function renderLegend(){
     [H.red]:'Roaring Fork (Fry-Ark) · Big Thompson · San Miguel',
     [H.magenta]:'Gunnison · Los Pinos · Purgatoire · St. Vrain'
   };
-  document.getElementById('huekey').innerHTML=Object.entries(used).map(([c,v])=>
+  const el=document.getElementById('huekey');if(!el)return;
+  el.innerHTML=Object.entries(used).map(([c,v])=>
     `<div class="keyrow"><span class="swatch" style="background:${c}"></span>${v}</div>`).join('');
 }
 function draw(){
@@ -844,16 +876,17 @@ function draw(){
   if(state.view==='map')drawMap(); else drawFlow();
   applyZoom();lastPass=0;labelPass();
 }
-function setView(v){
+function setView(v,push){
   state.view=v;
   d3.select('#btn-map').attr('aria-pressed',String(v==='map'));
   d3.select('#btn-flow').attr('aria-pressed',String(v==='flow'));
-  document.getElementById('modewrap').style.display=v==='flow'?'flex':'none';
+  const mw=document.getElementById('modewrap');if(mw)mw.style.display=v==='flow'?'flex':'none';
   setViewBox();zoomReset(false);draw();
   if(state.basin!=='all')zoomToBasin();
+  if(push)pushHistory();
 }
-d3.select('#btn-map').on('click',()=>setView('map'));
-d3.select('#btn-flow').on('click',()=>setView('flow'));
+d3.select('#btn-map').on('click',()=>setView('map',true));
+d3.select('#btn-flow').on('click',()=>setView('flow',true));
 d3.select('#btn-blend').on('click',()=>{state.mode='blend';
   d3.select('#btn-blend').attr('aria-pressed','true');d3.select('#btn-braid').attr('aria-pressed','false');draw();});
 d3.select('#btn-braid').on('click',()=>{state.mode='braid';
@@ -869,16 +902,17 @@ d3.select('#btn-meas').on('click',function(){
   draw();
 });
 
-/* timeline */
+/* timeline — present only on timeline.html; guarded elsewhere */
 const slider=document.getElementById('tslider'), monthlbl=document.getElementById('monthlbl');
 function setMonth(mi){
-  state.mi=mi; slider.value=mi;
-  monthlbl.innerHTML='<small>storage timeline</small>'+MONTHS[mi];
-  draw(); renderSheet();
+  state.mi=mi;
+  if(slider)slider.value=mi;
+  if(monthlbl)monthlbl.innerHTML='<small>storage timeline</small>'+MONTHS[mi];
+  replaceHistory();draw();renderSheet();
 }
-slider.addEventListener('input',()=>setMonth(+slider.value));
+if(slider)slider.addEventListener('input',()=>setMonth(+slider.value));
 const playBtn=document.getElementById('play');
-playBtn.addEventListener('click',()=>{
+if(playBtn)playBtn.addEventListener('click',()=>{
   if(state.playing){clearInterval(state.playing);state.playing=null;playBtn.textContent='▶';return;}
   let mi=state.mi>=NOW?0:state.mi;
   setMonth(mi);
@@ -891,6 +925,62 @@ playBtn.addEventListener('click',()=>{
 });
 
 /* =====================================================================
+   URL STATE — the map's navigable state lives in the location hash, so
+   the browser Back button walks selections/ZIP/view and links are
+   shareable. Selection & tap actions pushState; restore never pushes.
+   ===================================================================== */
+let restoring=false;
+function stateHash(){
+  const p=[];
+  if(state.tap)p.push('zip='+state.tap.zip);
+  if(state.view==='flow')p.push('view=flow');
+  if(state.basin!=='all')p.push('basin='+state.basin);
+  if(state.selected)p.push('r='+state.selected);
+  else if(state.selectedNode)p.push('n='+state.selectedNode);
+  if(slider&&state.mi!==NOW)p.push('m='+state.mi);
+  return p.join('&');
+}
+function writeHistory(replace){
+  if(restoring)return;
+  const h=stateHash(),url=location.pathname+(h?'#'+h:'');
+  try{replace?history.replaceState(null,'',url):history.pushState(null,'',url);}catch(e){}
+}
+function pushHistory(){writeHistory(false);}
+function replaceHistory(){writeHistory(true);}
+function commit(){pushHistory();draw();renderSheet();}
+function syncControls(){
+  d3.select('#btn-map').attr('aria-pressed',String(state.view==='map'));
+  d3.select('#btn-flow').attr('aria-pressed',String(state.view==='flow'));
+  const mw=document.getElementById('modewrap');if(mw)mw.style.display=state.view==='flow'?'flex':'none';
+  renderChips();
+  const zc=document.getElementById('zipclear');if(zc)zc.style.display=state.tap?'':'none';
+  if(zipInput&&state.tap)zipInput.value=state.tap.zip;
+  if(slider)slider.value=state.mi;
+  if(monthlbl)monthlbl.innerHTML='<small>storage timeline</small>'+MONTHS[state.mi];
+}
+function restoreFromHash(){
+  const raw=location.hash.replace(/^#/,'');
+  const q={};
+  if(/^\d{5}$/.test(raw))q.zip=raw; /* legacy /#80302 links */
+  else raw.split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)q[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));});
+  restoring=true;
+  const t=q.zip&&/^\d{5}$/.test(q.zip)?zipLookup(q.zip):null;
+  state.tap=t?Object.assign({zip:q.zip},t):null;
+  state.basin=(q.basin&&BASINS.some(b=>b.id===q.basin))?q.basin:'all';
+  state.selected=(q.r&&RESBY[q.r])?q.r:null;
+  state.selectedNode=state.selected?(RESNODE[state.selected]||null):((q.n&&NODE[q.n])?q.n:null);
+  state.mi=(q.m!=null&&+q.m>=0&&+q.m<=NOW)?+q.m:NOW;
+  state.view=(q.view==='flow')?'flow':'map';
+  restoring=false;
+  syncControls();
+  setViewBox();draw();renderSheet();
+  if(state.tap)frameTap(state.tap);
+  else if(state.basin!=='all')zoomToBasin();
+  else zoomReset(false);
+}
+window.addEventListener('popstate',restoreFromHash);
+
+/* =====================================================================
    YOUR TAP — ZIP lookup: longest matching prefix in TAPS wins
    ===================================================================== */
 function zipLookup(zip){
@@ -900,7 +990,14 @@ function zipLookup(zip){
   }));
   return best;
 }
-function zipMsg(txt){document.getElementById('zipmsg').textContent=txt;}
+function zipMsg(txt){const el=document.getElementById('zipmsg');if(el)el.textContent=txt;}
+function frameTap(t){
+  const pts=(t.res||[]).concat(t.fcres||[]).map(id=>RESBY[id]).filter(Boolean)
+    .map(r=>[px(r.lon),py(r.lat)]).concat([[px(t.loc[1]),py(t.loc[0])]]);
+  if(!pts.length)return;
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),m=70;
+  zoomToBBox(Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m);
+}
 function applyTap(zip){
   if(!/^\d{5}$/.test(zip)){zipMsg('five digits, e.g. 80302');return;}
   const t=zipLookup(zip);
@@ -912,31 +1009,29 @@ function applyTap(zip){
   }
   state.tap=Object.assign({zip},t);
   zipMsg('');
-  document.getElementById('zipclear').style.display='';
-  try{history.replaceState(null,'','#'+zip);}catch(e){}
+  const zc=document.getElementById('zipclear');if(zc)zc.style.display='';
   state.selected=null;state.selectedNode=null;
   if(state.view!=='map')setView('map');else draw();
   renderSheet();
-  const pts=t.res.map(id=>RESBY[id]).filter(Boolean).map(r=>[px(r.lon),py(r.lat)])
-    .concat([[px(t.loc[1]),py(t.loc[0])]]);
-  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),m=70;
-  zoomToBBox(Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m);
+  frameTap(state.tap);
+  pushHistory();
 }
 function clearTap(){
   state.tap=null;state.selected=null;state.selectedNode=null;
-  document.getElementById('zipclear').style.display='none';
+  const zc=document.getElementById('zipclear');if(zc)zc.style.display='none';
   zipMsg('');
-  try{history.replaceState(null,'',location.pathname);}catch(e){}
   draw();renderSheet();zoomReset(true);
+  pushHistory();
 }
 const zipInput=document.getElementById('zip');
-document.getElementById('zipgo').addEventListener('click',()=>applyTap(zipInput.value.trim()));
-zipInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')applyTap(zipInput.value.trim());});
-document.getElementById('zipclear').addEventListener('click',clearTap);
+if(zipInput){
+  const zg=document.getElementById('zipgo');if(zg)zg.addEventListener('click',()=>applyTap(zipInput.value.trim()));
+  zipInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')applyTap(zipInput.value.trim());});
+  const zc=document.getElementById('zipclear');if(zc)zc.addEventListener('click',clearTap);
+}
 
 /* boot — live fetches are wired up in js/live.js */
-renderStrip();renderChips();renderLegend();renderSheet();
-/* shareable: site.com/#80302 lights up that ZIP's water on load */
-const hashZip=(location.hash.match(/^#(\d{5})$/)||[])[1];
-if(hashZip){zipInput.value=hashZip;setTimeout(()=>applyTap(hashZip),60);}
-setViewBox();draw();
+renderStrip();renderChips();renderLegend();
+setViewBox();
+if(location.hash)restoreFromHash();
+else{renderSheet();draw();}

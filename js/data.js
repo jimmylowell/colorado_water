@@ -8,12 +8,12 @@ const H={blue:'#2F6BFF',cyan:'#00D6E6',green:'#2FD94F',lime:'#C6E01A',orange:'#F
    RESERVOIRS  (c:'obs' = published reading; c:'est' = basin-scaled)
    ===================================================================== */
 const STATEWIDE=[
- {k:'Statewide storage',v:'75%',n:'of 1991–2020 median · NRCS, 1 Jun',cls:'mid'},
- {k:'Statewide streamflow',v:'44%',n:'of normal · USGS gages, 20 Jul',cls:'low'},
+ {k:'Statewide storage',v:'75%',n:'of 1991–2020 median · NRCS, 1 Jun',cls:'mid',spark:'storage'},
+ {k:'Statewide streamflow',v:'44%',n:'of normal · USGS gages, 20 Jul',cls:'low',spark:'flow'},
  {k:'Peak snowpack',v:'melted',n:'91% of SNOTEL sites bare by 1 Jun',cls:'low'},
- {k:'Denver Water system',v:'77%',n:'full vs. 97% normal · 20 Jul',cls:'mid'},
- {k:'Colorado R. at Cameo',v:'1,520',n:'cfs · USGS 09095500',cls:'low'},
- {k:'Reservoir capacity used',v:'54%',n:'statewide · NRCS, 1 Jun',cls:'mid'}
+ {k:'Denver Water system',v:'77%',n:'full vs. 97% normal · 20 Jul',cls:'mid',spark:'denver'},
+ {k:'Colorado R. at Cameo',v:'1,520',n:'cfs · USGS 09095500',cls:'low',spark:'flow'},
+ {k:'Reservoir capacity used',v:'54%',n:'statewide · NRCS, 1 Jun',cls:'mid',spark:'storage'}
 ];
 
 const RES=[
@@ -25,9 +25,9 @@ const RES=[
  {id:'greenmtn',dwr:'GRERESCO',n:'Green Mountain',lat:39.880,lon:-106.330,cap:154645,sto:34947,pm:50,b:'colorado',r:'Blue River',c:'obs',d:'22 Jul 2026',s:'USBR via Snoflo'},
  {id:'dillon',dwr:'DILRESCO',n:'Dillon Reservoir',lat:39.610,lon:-106.060,cap:257304,sto:199482,pm:82,b:'colorado',r:'Blue River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'ruedi',dwr:'RUERESCO',n:'Ruedi Reservoir',lat:39.362,lon:-106.820,cap:102373,sto:70170,pm:102,b:'colorado',r:'Fryingpan River',c:'obs',d:'15 Jul 2026',s:'USBR via Snoflo'},
- {id:'homestake',dwr:'HOMRESCO',n:'Homestake Res.',lat:39.420,lon:-106.420,cap:43600,sto:31400,pm:80,b:'colorado',r:'Homestake Creek',c:'est'},
+ {id:'homestake',dwr:'HOMRESCO',n:'Homestake Res.',lat:39.420,lon:-106.420,cap:43600,sto:19355,pm:49,b:'colorado',r:'Homestake Creek',c:'est'},
  {id:'vega',n:'Vega Reservoir',lat:39.230,lon:-107.790,cap:33171,sto:23900,pm:80,b:'colorado',r:'Plateau Creek',c:'est'},
- {id:'riflegap',dwr:'RIFRESCO',n:'Rifle Gap',lat:39.630,lon:-107.750,cap:13600,sto:9800,pm:80,b:'colorado',r:'Rifle Creek',c:'est'},
+ {id:'riflegap',dwr:'RIFRESCO',n:'Rifle Gap',lat:39.630,lon:-107.750,cap:13600,sto:3200,pm:26,b:'colorado',r:'Rifle Creek',c:'est'},
  {id:'taylor',n:'Taylor Park Res.',lat:38.820,lon:-106.600,cap:106225,sto:66900,pm:70,b:'gunnison',r:'Taylor River',c:'est'},
  {id:'bluemesa',dwr:'BLMRESCO',n:'Blue Mesa Res.',lat:38.460,lon:-107.200,cap:940700,sto:259379,pm:54,b:'gunnison',r:'Gunnison River',c:'obs',d:'17 Jul 2026',s:'USBR via Snoflo'},
  {id:'morrow',n:'Morrow Point',lat:38.480,lon:-107.420,cap:117190,sto:114834,pm:99,b:'gunnison',r:'Gunnison River',c:'obs',d:'29 Jun 2026',s:'USBR'},
@@ -45,13 +45,14 @@ const RES=[
  {id:'navajo',n:'Navajo Reservoir',lat:37.000,lon:-107.400,cap:1708600,sto:969000,pm:70,b:'sw',r:'San Juan River',c:'obs',d:'1 Jul 2026',s:'USBR UC Region'},
  {id:'riogrande',dwr:'RIORESCO',n:'Rio Grande Res.',lat:37.730,lon:-107.270,cap:52192,sto:34500,pm:86,b:'rio',r:'Rio Grande',c:'est'},
  {id:'platoro',dwr:'PLARESCO',n:'Platoro Reservoir',lat:37.350,lon:-106.530,cap:59570,sto:39400,pm:86,b:'rio',r:'Conejos River',c:'est'},
- {id:'sanchez',dwr:'SANRESCO',n:'Sanchez Reservoir',lat:37.100,lon:-105.420,cap:103000,sto:68100,pm:86,b:'rio',r:'Ventero Creek',c:'est'},
+ {id:'sanchez',dwr:'SANRESCO',n:'Sanchez Reservoir',lat:37.100,lon:-105.420,cap:103000,sto:2451,pm:4,b:'rio',r:'Ventero Creek',c:'est'},
  {id:'turquoise',dwr:'TURQLACO',n:'Turquoise Lake',lat:39.250,lon:-106.400,cap:129432,sto:94500,pm:91,b:'arkansas',r:'Lake Fork Arkansas',c:'est'},
  {id:'twinlakes',dwr:'TWIRESCO',n:'Twin Lakes',lat:39.080,lon:-106.350,cap:141000,sto:103000,pm:91,b:'arkansas',r:'Lake Creek',c:'est'},
  {id:'pueblo',n:'Pueblo Reservoir',lat:38.260,lon:-104.720,cap:357000,sto:196000,pm:93,b:'arkansas',r:'Arkansas River',c:'est'},
  {id:'trinidad',n:'Trinidad Lake',lat:37.140,lon:-104.600,cap:114000,sto:22800,pm:52,b:'arkansas',r:'Purgatoire River',c:'est'},
  {id:'johnmartin',dwr:'JMRCADCO',n:'John Martin Res.',lat:38.070,lon:-102.930,cap:616000,sto:31000,pm:41,b:'arkansas',r:'Arkansas River',c:'est'},
- {id:'antero',n:'Antero Reservoir',lat:39.000,lon:-105.900,cap:20122,sto:0,pm:0,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'antero',n:'Antero Reservoir',lat:39.000,lon:-105.900,cap:20122,sto:16100,pm:90,b:'platte',r:'South Platte River',c:'est'},
+ {id:'spinney',dwr:'SPIRESCO',n:'Spinney Mtn Res.',lat:38.972,lon:-105.622,cap:53651,sto:25239,pm:66,b:'platte',r:'South Platte River',c:'est'},
  {id:'elevenmile',n:'Eleven Mile Canyon',lat:38.930,lon:-105.480,cap:97779,sto:98664,pm:104,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'cheesman',dwr:'CHERESCO',n:'Cheesman Reservoir',lat:39.200,lon:-105.270,cap:79064,sto:59114,pm:88,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'strontia',dwr:'STRRESCO',n:'Strontia Springs',lat:39.420,lon:-105.130,cap:7864,sto:6849,pm:95,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
@@ -413,8 +414,8 @@ const TAPS=[
   tun:['Roberts Tunnel','Moffat Tunnel'],fcres:['cherrycreek','bearcreek'],zips:['802','8011','8012'],
   desc:'About half of Denver Water’s supply starts west of the Divide: Blue River water banked in Dillon rides the 23-mile Roberts Tunnel, and Fraser & Williams Fork water crosses beneath the Moffat. The rest is South Platte water stored in Cheesman, Eleven Mile and Antero, staged through Strontia Springs and Marston on the way to the taps.'},
  {id:'aurora',city:'Aurora',prov:'Aurora Water',loc:[39.71,-104.81],
-  res:['homestake','twinlakes'],tun:['Homestake Tunnel'],fcres:['cherrycreek'],zips:['8001','8004'],
-  desc:'Aurora reaches farther than almost anyone: Eagle River water from Homestake (shared with Colorado Springs) crosses the Divide to Turquoise and Twin Lakes, then comes north — joined by Arkansas and South Platte rights and one of the state’s biggest reuse systems.'},
+  res:['spinney','homestake','twinlakes'],tun:['Homestake Tunnel'],fcres:['cherrycreek'],zips:['8001','8004'],
+  desc:'Aurora reaches farther than almost anyone: Eagle River water from Homestake (shared with Colorado Springs) crosses the Divide to Turquoise and Twin Lakes, then comes north — while Spinney Mountain Reservoir on the South Platte is its big high-country savings account, joined by Arkansas rights and one of the state’s largest reuse systems.'},
  {id:'arvada',city:'Arvada',prov:'City of Arvada',loc:[39.80,-105.10],
   res:['ralston'],tun:['Moffat Tunnel'],zips:['8000'],
   desc:'Arvada drinks Clear Creek water plus Fraser River water that crosses under the Divide in the Moffat Tunnel, both settled into Ralston Reservoir above town.'},

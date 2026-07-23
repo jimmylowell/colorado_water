@@ -7,9 +7,9 @@ wolford,Wolford Mountain,40.1,-106.34,Colorado headwaters,Muddy Creek,water supp
 greenmtn,Green Mountain,39.88,-106.33,Colorado headwaters,Blue River,water supply,154645,34947,50,observed,22 Jul 2026,USBR via Snoflo,GRERESCO
 dillon,Dillon Reservoir,39.61,-106.06,Colorado headwaters,Blue River,water supply,257304,199482,82,observed,16 Jul 2026,Denver Water CSV,DILRESCO
 ruedi,Ruedi Reservoir,39.362,-106.82,Colorado headwaters,Fryingpan River,water supply,102373,70170,102,observed,15 Jul 2026,USBR via Snoflo,RUERESCO
-homestake,Homestake Res.,39.42,-106.42,Colorado headwaters,Homestake Creek,water supply,43600,31400,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HOMRESCO
+homestake,Homestake Res.,39.42,-106.42,Colorado headwaters,Homestake Creek,water supply,43600,19355,49,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HOMRESCO
 vega,Vega Reservoir,39.23,-107.79,Colorado headwaters,Plateau Creek,water supply,33171,23900,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-riflegap,Rifle Gap,39.63,-107.75,Colorado headwaters,Rifle Creek,water supply,13600,9800,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIFRESCO
+riflegap,Rifle Gap,39.63,-107.75,Colorado headwaters,Rifle Creek,water supply,13600,3200,26,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIFRESCO
 taylor,Taylor Park Res.,38.82,-106.6,Gunnison,Taylor River,water supply,106225,66900,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
 bluemesa,Blue Mesa Res.,38.46,-107.2,Gunnison,Gunnison River,water supply,940700,259379,54,observed,17 Jul 2026,USBR via Snoflo,BLMRESCO
 morrow,Morrow Point,38.48,-107.42,Gunnison,Gunnison River,water supply,117190,114834,99,observed,29 Jun 2026,USBR,
@@ -27,13 +27,14 @@ nighthorse,Lake Nighthorse,37.23,-107.9,San Juan & Dolores,Animas (pumped),water
 navajo,Navajo Reservoir,37,-107.4,San Juan & Dolores,San Juan River,water supply,1708600,969000,70,observed,1 Jul 2026,USBR UC Region,
 riogrande,Rio Grande Res.,37.73,-107.27,Rio Grande,Rio Grande,water supply,52192,34500,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIORESCO
 platoro,Platoro Reservoir,37.35,-106.53,Rio Grande,Conejos River,water supply,59570,39400,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",PLARESCO
-sanchez,Sanchez Reservoir,37.1,-105.42,Rio Grande,Ventero Creek,water supply,103000,68100,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SANRESCO
+sanchez,Sanchez Reservoir,37.1,-105.42,Rio Grande,Ventero Creek,water supply,103000,2451,4,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SANRESCO
 turquoise,Turquoise Lake,39.25,-106.4,Arkansas,Lake Fork Arkansas,water supply,129432,94500,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TURQLACO
 twinlakes,Twin Lakes,39.08,-106.35,Arkansas,Lake Creek,water supply,141000,103000,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TWIRESCO
 pueblo,Pueblo Reservoir,38.26,-104.72,Arkansas,Arkansas River,water supply,357000,196000,93,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
 trinidad,Trinidad Lake,37.14,-104.6,Arkansas,Purgatoire River,water supply,114000,22800,52,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
 johnmartin,John Martin Res.,38.07,-102.93,Arkansas,Arkansas River,water supply,616000,31000,41,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",JMRCADCO
-antero,Antero Reservoir,39,-105.9,South Platte,South Platte River,water supply,20122,0,0,observed,16 Jul 2026,Denver Water CSV,
+antero,Antero Reservoir,39,-105.9,South Platte,South Platte River,water supply,20122,16100,90,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+spinney,Spinney Mtn Res.,38.972,-105.622,South Platte,South Platte River,water supply,53651,25239,66,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SPIRESCO
 elevenmile,Eleven Mile Canyon,38.93,-105.48,South Platte,South Platte River,water supply,97779,98664,104,observed,16 Jul 2026,Denver Water CSV,
 cheesman,Cheesman Reservoir,39.2,-105.27,South Platte,South Platte River,water supply,79064,59114,88,observed,16 Jul 2026,Denver Water CSV,CHERESCO
 strontia,Strontia Springs,39.42,-105.13,South Platte,South Platte River,water supply,7864,6849,95,observed,16 Jul 2026,Denver Water CSV,STRRESCO

@@ -11,10 +11,15 @@ Enter a ZIP code (or link to one, e.g. `/#80302`) to light up the reservoirs
 and tunnels behind that ZIP's tap — a simplified provider map (`TAPS` in
 `js/data.js`) covering Colorado's populated areas by ZIP prefix.
 
+Navigable map state lives in the URL hash (`#r=<reservoir>`, `#n=<gage/node>`,
+`#zip=<zip>`, `#view=flow`, `#basin=<id>`), so the browser Back button walks
+selections and every view is a shareable link.
+
 **Pages**
 
-- `index.html` — the map and the flow-and-mixing diagram, with a monthly
-  timeline of water year 2026
+- `index.html` — the map and the flow-and-mixing diagram, with sparkline
+  headline stats
+- `timeline.html` — scrub/play water year 2026 and watch the drawdown
 - `data.html` — the full dataset as downloadable CSVs, with sources
 - `about.html` — the story and the methods
 

@@ -205,3 +205,12 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 .zipbar button:hover{background:rgba(0,214,230,.1)}
 .zipbar #zipclear{border-color:var(--silt-2);color:var(--dust)}
 .zipbar #zipmsg{font-family:var(--mono);font-size:10.5px;color:var(--dust)}
+
+/* ------- sparkline stat tiles ------- */
+.stat{display:flex;flex-direction:column}
+.spark{margin-top:8px}
+.sparksvg{width:100%;height:20px;display:block;opacity:.9}
+
+/* ------- timeline page ------- */
+.tl-intro{max-width:60ch;color:var(--dust);font-size:14px;line-height:1.7;margin:0 0 16px}
+.tl-intro b{color:var(--bone);font-weight:500}

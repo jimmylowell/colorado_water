@@ -16,6 +16,7 @@
   <nav class="nav" aria-label="Site">
     <a class="brand" href="index.html">Colorado Water</a>
     <a href="index.html" aria-current="page">Map</a>
+    <a href="timeline.html">Timeline</a>
     <a href="data.html">Data</a>
     <a href="about.html">About</a>
   </nav>
@@ -24,7 +25,7 @@
     <div>
       <p class="eyebrow">Colorado surface water · water year 2026</p>
       <h1>Where the water sits,<br>and where it <em>combines</em></h1>
-      <p class="standfirst">Reservoirs drawn as glasses of water, rivers as ribbons of colour, and the Continental Divide down the middle. A reservoir wears the colour of the water that fills it; the level in the glass is the reading. Drag the timeline to watch the 2026 drought arrive.</p>
+      <p class="standfirst">Reservoirs drawn as glasses of water, rivers as ribbons of colour, and the Continental Divide down the middle. A reservoir wears the colour of the water that fills it; the level in the glass is the reading. Enter your ZIP to trace your own tap, or <a href="timeline.html">watch the 2026 drought arrive over the water year</a>.</p>
     </div>
     <div class="asof">
       <div>reading as of <b>22 Jul 2026</b></div>
@@ -65,12 +66,6 @@
       <button class="chip" id="btn-meas" aria-pressed="false">Measured only</button>
     </div>
     <div class="chips" id="chips"></div>
-  </div>
-
-  <div class="timeline">
-    <button class="playbtn" id="play" aria-label="Play timeline">▶</button>
-    <input type="range" id="tslider" min="0" max="9" step="1" value="9" aria-label="Month">
-    <div class="month" id="monthlbl"><small>storage timeline</small>Jul 2026</div>
   </div>
 
   <div class="stage">
