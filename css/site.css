@@ -80,7 +80,9 @@ h1 em{font-style:italic;color:var(--aqua)}
 .sheet .sub{font-size:12px;color:#5f5949;margin-bottom:12px}
 .gauge{margin:6px 0 14px}
 .gaugebar{position:relative;height:30px;background:#d5cbb2;border:1px solid #bfb59c;overflow:hidden}
-.gaugefill{position:absolute;left:0;top:0;bottom:0;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.gaugefill{position:absolute;left:0;top:0;bottom:0;display:flex;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.gaugefill span{display:block;height:100%}
+.gaugefill span+span{box-shadow:inset 1px 0 0 rgba(7,17,25,.35)}
 .gaugemed{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px solid #1A2730}
 .gaugelbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:#5f5949;margin-top:5px}
 .rows{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11.5px}
@@ -214,10 +216,3 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 /* ------- timeline page ------- */
 .tl-intro{max-width:60ch;color:var(--dust);font-size:14px;line-height:1.7;margin:0 0 16px}
 .tl-intro b{color:var(--bone);font-weight:500}
-
-/* ------- combined "what fills it" block ------- */
-.fillblock{margin:16px 0 2px}
-.fillhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.glassicon{flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
-.fillttl{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450}
-.fillsub{font-size:12.5px;color:#3c3a33;margin-top:3px;line-height:1.35}

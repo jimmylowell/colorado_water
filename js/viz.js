@@ -703,28 +703,13 @@ function compBlockHTML(nodeId,title){
     <div class="complist">${parts.slice().sort((a,b)=>b[1]-a[1]).map(([sid,w])=>
       `<div><span class="sw" style="background:${NODE[sid].hue}"></span>${NODE[sid].l}<b>${(w/T*100).toFixed(0)}%</b></div>`).join('')}</div>`;
 }
-/* a glass icon filled with the reservoir's blended source colour */
-function glassIcon(col){
-  return `<svg class="glassicon" width="26" height="30" viewBox="0 0 26 30" aria-hidden="true">`
-    +`<path d="M3.5,3.5 L8.3,24.2 Q8.4,26.4 10.6,26.4 L15.4,26.4 Q17.6,26.4 17.7,24.2 L22.5,3.5 Z" `
-    +`fill="${col}" stroke="#2b2a22" stroke-width="1" stroke-linejoin="round"/>`
-    +`<path d="M6,6 L8.9,18" stroke="rgba(255,255,255,.35)" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>`;
-}
-/* combined "what fills it": the glass in its mixed colour, plus the source
-   breakdown when more than one headwater contributes */
-function fillBlockHTML(r,col){
+/* storage-gauge fill split into its separate source-water colours */
+function fillSegments(r,col){
   const nid=RESNODE[r.id];
   const parts=nid?sortedParts(COMP[nid]):[];
-  const multi=parts.length>=2, T=parts.reduce((a,p)=>a+p[1],0)||1;
-  const head=`<div class="fillhead">${glassIcon(col)}<div>`
-    +`<div class="fillttl">What fills it</div>`
-    +`<div class="fillsub">${multi?'a blend of '+parts.length+' source waters':'the colour of its source water'}</div>`
-    +`</div></div>`;
-  if(!multi)return `<div class="fillblock">${head}</div>`;
-  return `<div class="fillblock">${head}`
-    +`<div class="compbar">${parts.map(([sid,w])=>`<div style="width:${(w/T*100).toFixed(2)}%;background:${NODE[sid].hue}"></div>`).join('')}</div>`
-    +`<div class="complist">${parts.slice().sort((a,b)=>b[1]-a[1]).map(([sid,w])=>
-      `<div><span class="sw" style="background:${NODE[sid].hue}"></span>${NODE[sid].l}<b>${(w/T*100).toFixed(0)}%</b></div>`).join('')}</div></div>`;
+  if(parts.length<2)return `<span style="width:100%;background:${col}"></span>`;
+  const T=parts.reduce((a,p)=>a+p[1],0)||1;
+  return parts.map(([sid,w])=>`<span style="width:${(w/T*100).toFixed(2)}%;background:${NODE[sid].hue}" title="${NODE[sid].l} · ${(w/T*100).toFixed(0)}%"></span>`).join('');
 }
 function renderSheet(){
   const s=document.getElementById('sheet');
@@ -797,7 +782,7 @@ function renderSheet(){
     <div class="sub">on the ${r.r} · ${MONTHS[mi]}</div>
     <div class="gauge">
       <div class="gaugebar">
-        <div class="gaugefill" style="width:${Math.min(100,fill).toFixed(1)}%;background:${col}"></div>
+        <div class="gaugefill" style="width:${Math.min(100,fill).toFixed(1)}%">${fillSegments(r,col)}</div>
         ${r.fc?'':`<div class="gaugemed" style="left:${Math.min(100,med).toFixed(1)}%"></div>`}
       </div>
       <div class="gaugelbl"><span>${fill.toFixed(0)}% full</span><span>${r.fc?'of the permanent pool':'normal: '+med.toFixed(0)+'%'}</span></div>
@@ -817,7 +802,6 @@ function renderSheet(){
       })()}
     </table>
     <div class="hydro" id="hydrobox"></div>
-    ${fillBlockHTML(r,col)}
     <div class="prov">${r.fc
       ? `<b>Flood control</b> A U.S. Army Corps of Engineers dam — nobody drinks from this lake. The pool shown${lv?' (live via DWR '+r.dwr+', read '+lv.asOf+')':''} is the small permanent one kept for recreation and sediment; the dam's far larger flood space sits empty on purpose, waiting for a storm. It's on this map because you see it from the highway — and because the water you <b>do</b> drink is somewhere else entirely.`
       : past
