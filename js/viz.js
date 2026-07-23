@@ -160,6 +160,7 @@ function drawdownCfs(r,mi){
   return 0;
 }
 function medianFullPct(r,mi){
+  if(r.fc)return 0; /* flood pools have no "normal storage" to compare against */
   const pm=pmAt(r,mi),sto=stoAt(r,mi);
   if(!pm)return 0;
   return Math.min(140,(sto/(pm/100))/r.cap*100);
@@ -402,15 +403,17 @@ function drawMap(){
   });
 
   const tapRes=state.tap?new Set(state.tap.res):null;
+  const tapFc=state.tap&&state.tap.fcres?new Set(state.tap.fcres):null;
   const list=RES.filter(r=>(state.basin==='all'||r.b===state.basin)&&passesFilter(r))
     .slice().sort((a,b)=>b.cap-a.cap);
   const rg=g.append('g');
   list.forEach(r=>{
     const cx=px(r.lon),cy=py(r.lat);
     const isTap=tapRes&&tapRes.has(r.id);
+    const isFcTap=tapFc&&tapFc.has(r.id);
     const node=rg.append('g').attr('transform',`translate(${cx},${cy})`)
       .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n)
-      .attr('opacity',tapRes&&!isTap?.3:1);
+      .attr('opacity',tapRes&&!isTap&&!isFcTap?.3:1);
     const gfx=node.append('g').attr('class','gfx');
     drawGlass(gfx,r,resColour(r.id),1);
     if(state.selected===r.id)glassRing(gfx,r,1);
@@ -427,9 +430,11 @@ function drawMap(){
     lab.append('text').attr('x',0).attr('y',13).attr('class','lbl').attr('text-anchor','middle')
       .text(name);
     const sub=lab.append('text').attr('x',0).attr('y',24.5).attr('class','pmlbl').attr('text-anchor','middle')
-      .attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'% of normal');
-    LABELS.push({el:lab.node(),x:cx,y:cy,pri:isTap?1e9+r.cap:(tapRes?r.cap*0.02:r.cap),sub:sub.node(),
-      bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap?0.1:null});
+      .attr('fill',r.fc?'#8DA4B0':ramp(pmAt(r,state.mi)))
+      .text(r.fc?'flood control':pmAt(r,state.mi)+'% of normal');
+    LABELS.push({el:lab.node(),x:cx,y:cy,
+      pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),sub:sub.node(),
+      bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap||isFcTap?0.1:null});
     node.on('click',ev=>{if(ev.defaultPrevented)return;
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();});
     node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -735,6 +740,10 @@ function renderSheet(){
       <div class="prov" style="margin-top:0;margin-bottom:12px;font-size:11px;color:#3c3a33">${t.desc}</div>
       ${t.res.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">Your reservoirs today</div>
       <table class="rows">${rows}</table>`:''}
+      ${t.fcres&&t.fcres.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">The lakes you see — not your supply</div>
+      <table class="rows">${t.fcres.map(id=>{const r=RESBY[id];return r?`<tr class="taprow" data-res="${id}" style="cursor:pointer">
+        <td class="lab" style="text-transform:none;font-size:11px">${r.n}</td>
+        <td style="color:#6d6450;font-weight:400">flood control</td></tr>`:'';}).join('')}</table>`:''}
       ${t.tun.length?`<div class="prov"><b>Crossing the Divide for you:</b> ${t.tun.join(' · ')}</div>`:''}
       <div class="prov">A simplified picture — providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
     s.querySelectorAll('.taprow').forEach(el=>el.addEventListener('click',()=>{
@@ -754,7 +763,8 @@ function renderSheet(){
   const fill=sto/r.cap*100, med=medianFullPct(r,mi);
   const deficit=pm?Math.round(sto/(pm/100)-sto):null;
   const lv=!past&&LIVE_STO[r.id];
-  const badge=lv?`<span class="badge obs">live</span>`
+  const badge=r.fc?`<span class="badge est">flood control</span>`
+    :lv?`<span class="badge obs">live</span>`
     :r.c==='obs'&&!past?`<span class="badge obs">measured</span>`
     :`<span class="badge est">${past?'reconstructed':'basin estimate'}</span>`;
   const col=resColour(r.id), nid=RESNODE[r.id];
@@ -766,15 +776,16 @@ function renderSheet(){
     <div class="gauge">
       <div class="gaugebar">
         <div class="gaugefill" style="width:${Math.min(100,fill).toFixed(1)}%;background:${col}"></div>
-        <div class="gaugemed" style="left:${Math.min(100,med).toFixed(1)}%"></div>
+        ${r.fc?'':`<div class="gaugemed" style="left:${Math.min(100,med).toFixed(1)}%"></div>`}
       </div>
-      <div class="gaugelbl"><span>${fill.toFixed(0)}% full</span><span>normal: ${med.toFixed(0)}%</span></div>
+      <div class="gaugelbl"><span>${fill.toFixed(0)}% full</span><span>${r.fc?'of the permanent pool':'normal: '+med.toFixed(0)+'%'}</span></div>
     </div>
     <table class="rows">
       <tr><td class="lab">Storage</td><td>${fmt(sto)} AF</td></tr>
-      <tr><td class="lab">Capacity</td><td>${fmt(r.cap)} AF</td></tr>
-      <tr><td class="lab">Percent of normal</td><td style="color:${ramp(pm)}">${pm}%</td></tr>
-      ${deficit>0?`<tr><td class="lab">Below normal by</td><td>${fmt(deficit)} AF</td></tr>`:''}
+      <tr><td class="lab">${r.fc?'Permanent pool':'Capacity'}</td><td>${fmt(r.cap)} AF</td></tr>
+      ${r.fc?`<tr><td class="lab">Role</td><td>flood control · USACE</td></tr>`
+        :`<tr><td class="lab">Percent of normal</td><td style="color:${ramp(pm)}">${pm}%</td></tr>`}
+      ${!r.fc&&deficit>0?`<tr><td class="lab">Below normal by</td><td>${fmt(deficit)} AF</td></tr>`:''}
       <tr><td class="lab">Reading</td><td>${past?'basin-scaled':(lv?lv.asOf+' · live':(r.d||'1 Jun 2026 basin'))}</td></tr>
       ${(()=>{
         const dd=drawdownCfs(r,mi);
@@ -785,7 +796,9 @@ function renderSheet(){
     </table>
     <div class="hydro" id="hydrobox"></div>
     ${nid?compBlockHTML(nid,'Water arriving here'):''}
-    <div class="prov">${past
+    <div class="prov">${r.fc
+      ? `<b>Flood control</b> A U.S. Army Corps of Engineers dam — nobody drinks from this lake. The pool shown${lv?' (live via DWR '+r.dwr+', read '+lv.asOf+')':''} is the small permanent one kept for recreation and sediment; the dam's far larger flood space sits empty on purpose, waiting for a storm. It's on this map because you see it from the highway — and because the water you <b>do</b> drink is somewhere else entirely.`
+      : past
       ? `<b>Timeline mode</b> — storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
       : lv
         ? `<b>Live</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. Percent of normal compares to the NRCS 1991–2020 median.`

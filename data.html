@@ -69,6 +69,7 @@
       <li><b>capacity_af / storage_af</b> — total and current storage in acre-feet. An acre-foot floods one acre a foot deep: roughly what two Front Range households use in a year.</li>
       <li><b>pct_of_median_1991_2020</b> — storage against the NRCS median for this calendar day, 100 = a normal year.</li>
       <li><b>confidence</b> — <i>observed</i>: published, dated reading; <i>live</i>: DWR telemetry fetched by your browser; <i>basin estimate</i>: scaled from the basin's percent of median.</li>
+      <li><b>role</b> — <i>water supply</i>, or <i>flood control</i> for the Corps of Engineers pools (Cherry Creek, Bear Creek): famous lakes nobody drinks from, whose capacity_af is just the small permanent pool and whose percent-of-median is blank because "normal storage" doesn't apply.</li>
       <li><b>dwr_telemetry_abbrev</b> — Colorado DWR station code, usable directly against the <a href="https://dwr.state.co.us/Tools/Stations" rel="noopener">CDSS station tools</a> and REST API.</li>
     </ul>
 
@@ -101,8 +102,9 @@ function rowsNow(){
     const lv=LIVE_STO[r.id];
     return {
       id:r.id,n:r.n,basin:BN[r.b],river:r.r,cap:r.cap,
+      role:r.fc?'flood control':'water supply',
       sto:Math.round(lv?lv.sto:r.sto),
-      pm:pmAt(r,NOW),
+      pm:r.fc?'':pmAt(r,NOW),
       conf:lv?'live':(r.c==='obs'?'observed':'basin estimate'),
       asof:lv?lv.asOf:(r.d||''),
       src:lv?'Colorado DWR telemetry '+r.dwr:(r.s||'basin % of median (NRCS, 1 Jun 2026)'),
@@ -113,18 +115,18 @@ function rowsNow(){
 function renderTable(){
   const fmt=n=>n.toLocaleString('en-US');
   document.getElementById('restable').innerHTML=
-    '<tr><th>Reservoir</th><th>Basin</th><th>River</th><th class="num">Capacity (AF)</th>'
+    '<tr><th>Reservoir</th><th>Basin</th><th>River</th><th>Role</th><th class="num">Capacity (AF)</th>'
     +'<th class="num">Storage (AF)</th><th class="num">% of normal</th><th>Confidence</th><th>As of</th><th>Source</th></tr>'
-    +rowsNow().map(r=>`<tr><td><b>${r.n}</b></td><td>${r.basin}</td><td>${r.river}</td>`
-      +`<td class="num">${fmt(r.cap)}</td><td class="num">${fmt(r.sto)}</td><td class="num">${r.pm}%</td>`
+    +rowsNow().map(r=>`<tr><td><b>${r.n}</b></td><td>${r.basin}</td><td>${r.river}</td><td>${r.role}</td>`
+      +`<td class="num">${fmt(r.cap)}</td><td class="num">${fmt(r.sto)}</td><td class="num">${r.pm===''?'—':r.pm+'%'}</td>`
       +`<td>${r.conf}</td><td>${r.asof}</td><td>${r.src}</td></tr>`).join('');
 }
 function csvEscape(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
 document.getElementById('dl-live').addEventListener('click',()=>{
-  const head=['id','name','lat','lon','basin','river','capacity_af','storage_af',
+  const head=['id','name','lat','lon','basin','river','role','capacity_af','storage_af',
     'pct_of_median_1991_2020','confidence','as_of','source'];
   const lines=[head.join(',')].concat(rowsNow().map(r=>
-    [r.id,r.n,r.lat,r.lon,r.basin,r.river,r.cap,r.sto,r.pm,r.conf,r.asof,r.src].map(csvEscape).join(',')));
+    [r.id,r.n,r.lat,r.lon,r.basin,r.river,r.role,r.cap,r.sto,r.pm,r.conf,r.asof,r.src].map(csvEscape).join(',')));
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([lines.join('\n')+'\n'],{type:'text/csv'}));
   a.download='colorado_reservoirs_'+new Date().toISOString().slice(0,10)+'.csv';

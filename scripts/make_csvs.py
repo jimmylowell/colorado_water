@@ -45,10 +45,12 @@ def main():
     basin_names = {b['id']: b['n'] for b in d['BASINS']}
 
     write(OUT / 'reservoirs.csv',
-          ['id', 'name', 'lat', 'lon', 'basin', 'river', 'capacity_af', 'storage_af',
+          ['id', 'name', 'lat', 'lon', 'basin', 'river', 'role', 'capacity_af', 'storage_af',
            'pct_of_median_1991_2020', 'confidence', 'as_of', 'source', 'dwr_telemetry_abbrev'],
           [[r['id'], r['n'], r['lat'], r['lon'], basin_names.get(r['b'], r['b']), r['r'],
-            r['cap'], r['sto'], r['pm'], 'observed' if r['c'] == 'obs' else 'basin estimate',
+            'flood control' if r.get('fc') else 'water supply',
+            r['cap'], r['sto'], '' if r.get('fc') else r['pm'],
+            'observed' if r['c'] == 'obs' else 'basin estimate',
             r.get('d', ''), r.get('s', 'basin % of median (NRCS, 1 Jun 2026)'), r.get('dwr', '')]
            for r in d['RES']])
 

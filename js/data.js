@@ -56,6 +56,11 @@ const RES=[
  {id:'cheesman',dwr:'CHERESCO',n:'Cheesman Reservoir',lat:39.200,lon:-105.270,cap:79064,sto:59114,pm:88,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'strontia',dwr:'STRRESCO',n:'Strontia Springs',lat:39.420,lon:-105.130,cap:7864,sto:6849,pm:95,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'chatfield',dwr:'CHARESCO',n:'Chatfield Res.',lat:39.540,lon:-105.070,cap:28709,sto:24148,pm:92,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ /* fc:1 = USACE flood-control pools — drawn because everyone sees them,
+    flagged because nobody drinks them. cap = permanent multipurpose pool,
+    not the far larger flood space held empty behind each dam. */
+ {id:'cherrycreek',dwr:'CHRRESCO',fc:1,n:'Cherry Creek Res.',lat:39.6506,lon:-104.8543,cap:13077,sto:11381,pm:100,b:'platte',r:'Cherry Creek',c:'obs',d:'22 Jul 2026',s:'USACE dam · DWR telemetry'},
+ {id:'bearcreek',dwr:'BCRRESCO',fc:1,n:'Bear Creek Lake',lat:39.6537,lon:-105.1408,cap:1996,sto:899,pm:100,b:'platte',r:'Bear Creek',c:'obs',d:'22 Jul 2026',s:'USACE dam · DWR telemetry'},
  {id:'marston',n:'Marston Reservoir',lat:39.650,lon:-105.080,cap:19108,sto:18265,pm:99,b:'platte',r:'Denver system',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'gross',dwr:'GROSRECO',n:'Gross Reservoir',lat:39.950,lon:-105.360,cap:41811,sto:23389,pm:70,b:'platte',r:'S. Boulder Creek',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'ralston',n:'Ralston Reservoir',lat:39.830,lon:-105.250,cap:10776,sto:10113,pm:98,b:'platte',r:'Ralston Creek',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
@@ -149,6 +154,8 @@ const RIVERS=[
  {n:'St. Vrain Creek',src:'h_bo',w:1.1,b:'platte',p:[[40.22,-105.55],[40.18,-105.28],[40.16,-105.10],[40.13,-104.85],[40.15,-104.72]]},
  {n:'S. Boulder Ck',src:'h_bo',w:0.9,b:'platte',p:[[39.95,-105.60],[39.95,-105.36],[39.98,-105.15],[40.02,-104.98]]},
  {n:'Clear Creek',src:'h_cc',w:1.1,b:'platte',p:[[39.71,-105.70],[39.74,-105.45],[39.75,-105.22],[39.78,-105.02]]},
+ {n:'Cherry Creek',hue:H.orange,w:0.9,b:'platte',p:[[39.39,-104.75],[39.55,-104.80],[39.65,-104.86],[39.70,-104.94],[39.75,-105.00]]},
+ {n:'Bear Creek',hue:H.lime,w:0.9,b:'platte',p:[[39.63,-105.60],[39.65,-105.35],[39.654,-105.14],[39.65,-105.02]]},
  {n:'North Platte R.',hue:'#4C7C8E',w:1.2,b:'platte',p:[[40.55,-106.20],[40.73,-106.28],[40.90,-106.32],[41.00,-106.35]]}
 ];
 const DIVIDE=[[41.00,-106.30],[40.72,-106.42],[40.42,-105.83],[40.25,-105.78],[39.98,-105.72],[39.80,-105.78],[39.66,-105.88],[39.50,-106.10],[39.35,-106.20],[39.12,-106.36],[38.80,-106.42],[38.50,-106.32],[38.20,-106.55],[37.85,-106.70],[37.48,-106.80],[37.20,-106.72],[37.00,-106.62]];
@@ -403,10 +410,10 @@ edges:[
 const TAPS=[
  {id:'denver',city:'Denver & inner suburbs',prov:'Denver Water',loc:[39.74,-104.99],
   res:['dillon','wmsfork','gross','ralston','cheesman','elevenmile','antero','strontia','marston'],
-  tun:['Roberts Tunnel','Moffat Tunnel'],zips:['802','8011','8012'],
+  tun:['Roberts Tunnel','Moffat Tunnel'],fcres:['cherrycreek','bearcreek'],zips:['802','8011','8012'],
   desc:'About half of Denver Water’s supply starts west of the Divide: Blue River water banked in Dillon rides the 23-mile Roberts Tunnel, and Fraser & Williams Fork water crosses beneath the Moffat. The rest is South Platte water stored in Cheesman, Eleven Mile and Antero, staged through Strontia Springs and Marston on the way to the taps.'},
  {id:'aurora',city:'Aurora',prov:'Aurora Water',loc:[39.71,-104.81],
-  res:['homestake','twinlakes'],tun:['Homestake Tunnel'],zips:['8001','8004'],
+  res:['homestake','twinlakes'],tun:['Homestake Tunnel'],fcres:['cherrycreek'],zips:['8001','8004'],
   desc:'Aurora reaches farther than almost anyone: Eagle River water from Homestake (shared with Colorado Springs) crosses the Divide to Turquoise and Twin Lakes, then comes north — joined by Arkansas and South Platte rights and one of the state’s biggest reuse systems.'},
  {id:'arvada',city:'Arvada',prov:'City of Arvada',loc:[39.80,-105.10],
   res:['ralston'],tun:['Moffat Tunnel'],zips:['8000'],

@@ -1,50 +1,52 @@
-id,name,lat,lon,basin,river,capacity_af,storage_af,pct_of_median_1991_2020,confidence,as_of,source,dwr_telemetry_abbrev
-granby,Lake Granby,40.15,-105.91,Colorado headwaters,Colorado River,539758,366074,84,observed,7 Jun 2026,USBR ARCWEB,GRARESCO
-shadow,Shadow Mountain,40.222,-105.848,Colorado headwaters,Colorado River,18369,17450,99,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SHARESCO
-willow,Willow Creek Res.,40.143,-106.018,Colorado headwaters,Willow Creek,10553,7280,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",WILRESCO
-wmsfork,Williams Fork Res.,39.958,-106.203,Colorado headwaters,Williams Fork,96822,42094,56,observed,16 Jul 2026,Denver Water CSV,WLFRESCO
-wolford,Wolford Mountain,40.1,-106.34,Colorado headwaters,Muddy Creek,65985,41400,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-greenmtn,Green Mountain,39.88,-106.33,Colorado headwaters,Blue River,154645,34947,50,observed,22 Jul 2026,USBR via Snoflo,GRERESCO
-dillon,Dillon Reservoir,39.61,-106.06,Colorado headwaters,Blue River,257304,199482,82,observed,16 Jul 2026,Denver Water CSV,DILRESCO
-ruedi,Ruedi Reservoir,39.362,-106.82,Colorado headwaters,Fryingpan River,102373,70170,102,observed,15 Jul 2026,USBR via Snoflo,RUERESCO
-homestake,Homestake Res.,39.42,-106.42,Colorado headwaters,Homestake Creek,43600,31400,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HOMRESCO
-vega,Vega Reservoir,39.23,-107.79,Colorado headwaters,Plateau Creek,33171,23900,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-riflegap,Rifle Gap,39.63,-107.75,Colorado headwaters,Rifle Creek,13600,9800,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIFRESCO
-taylor,Taylor Park Res.,38.82,-106.6,Gunnison,Taylor River,106225,66900,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-bluemesa,Blue Mesa Res.,38.46,-107.2,Gunnison,Gunnison River,940700,259379,54,observed,17 Jul 2026,USBR via Snoflo,BLMRESCO
-morrow,Morrow Point,38.48,-107.42,Gunnison,Gunnison River,117190,114834,99,observed,29 Jun 2026,USBR,
-crystalg,Crystal Reservoir,38.51,-107.58,Gunnison,Gunnison River,25236,22700,97,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-paonia,Paonia Reservoir,38.99,-107.34,Gunnison,N. Fork Gunnison,20950,13200,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-ridgway,Ridgway Reservoir,38.2,-107.75,Gunnison,Uncompahgre River,84590,53300,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-crawford,Crawford Res.,38.71,-107.6,Gunnison,Smith Fork,14395,9070,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-stagecoach,Stagecoach Res.,40.28,-106.86,Yampa & White,Yampa River,33275,23300,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-steamboatl,Steamboat Lake,40.79,-106.95,Yampa & White,Willow Creek,26000,18200,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",STELAKCO
-elkhead,Elkhead Reservoir,40.55,-107.4,Yampa & White,Elkhead Creek,25610,17900,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-mcphee,McPhee Reservoir,37.55,-108.6,San Juan & Dolores,Dolores River,381195,210000,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",MCPRESCO
-vallecito,Vallecito Res.,37.38,-107.57,San Juan & Dolores,Los Pinos River,129700,71500,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",VALRESCO
-lemon,Lemon Reservoir,37.38,-107.66,San Juan & Dolores,Florida River,40146,22100,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-nighthorse,Lake Nighthorse,37.23,-107.9,San Juan & Dolores,Animas (pumped),123541,117000,97,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",BASRESCO
-navajo,Navajo Reservoir,37,-107.4,San Juan & Dolores,San Juan River,1708600,969000,70,observed,1 Jul 2026,USBR UC Region,
-riogrande,Rio Grande Res.,37.73,-107.27,Rio Grande,Rio Grande,52192,34500,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIORESCO
-platoro,Platoro Reservoir,37.35,-106.53,Rio Grande,Conejos River,59570,39400,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",PLARESCO
-sanchez,Sanchez Reservoir,37.1,-105.42,Rio Grande,Ventero Creek,103000,68100,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SANRESCO
-turquoise,Turquoise Lake,39.25,-106.4,Arkansas,Lake Fork Arkansas,129432,94500,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TURQLACO
-twinlakes,Twin Lakes,39.08,-106.35,Arkansas,Lake Creek,141000,103000,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TWIRESCO
-pueblo,Pueblo Reservoir,38.26,-104.72,Arkansas,Arkansas River,357000,196000,93,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-trinidad,Trinidad Lake,37.14,-104.6,Arkansas,Purgatoire River,114000,22800,52,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-johnmartin,John Martin Res.,38.07,-102.93,Arkansas,Arkansas River,616000,31000,41,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",JMRCADCO
-antero,Antero Reservoir,39,-105.9,South Platte,South Platte River,20122,0,0,observed,16 Jul 2026,Denver Water CSV,
-elevenmile,Eleven Mile Canyon,38.93,-105.48,South Platte,South Platte River,97779,98664,104,observed,16 Jul 2026,Denver Water CSV,
-cheesman,Cheesman Reservoir,39.2,-105.27,South Platte,South Platte River,79064,59114,88,observed,16 Jul 2026,Denver Water CSV,CHERESCO
-strontia,Strontia Springs,39.42,-105.13,South Platte,South Platte River,7864,6849,95,observed,16 Jul 2026,Denver Water CSV,STRRESCO
-chatfield,Chatfield Res.,39.54,-105.07,South Platte,South Platte River,28709,24148,92,observed,16 Jul 2026,Denver Water CSV,CHARESCO
-marston,Marston Reservoir,39.65,-105.08,South Platte,Denver system,19108,18265,99,observed,16 Jul 2026,Denver Water CSV,
-gross,Gross Reservoir,39.95,-105.36,South Platte,S. Boulder Creek,41811,23389,70,observed,16 Jul 2026,Denver Water CSV,GROSRECO
-ralston,Ralston Reservoir,39.83,-105.25,South Platte,Ralston Creek,10776,10113,98,observed,16 Jul 2026,Denver Water CSV,
-standley,Standley Lake,39.87,-105.13,South Platte,Clear Creek (div.),42000,33600,90,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",STALAKCO
-horsetooth,Horsetooth Res.,40.57,-105.17,South Platte,C-BT terminal,156735,141000,96,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HORTOOCO
-carter,Carter Lake,40.33,-105.22,South Platte,C-BT terminal,108900,88200,84,observed,Jul 2026,Northern Water via Snoflo,CARTERCO
-boyd,Boyd Lake,40.44,-105.05,South Platte,Big Thompson (div.),48871,12200,32,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-jackson,Jackson Lake,40.38,-104.09,South Platte,S. Platte (div.),35000,27650,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-prewitt,Prewitt Reservoir,40.63,-103.4,South Platte,S. Platte (div.),28840,22780,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
-nsterling,North Sterling,40.79,-103.13,South Platte,S. Platte (div.),74590,58900,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+id,name,lat,lon,basin,river,role,capacity_af,storage_af,pct_of_median_1991_2020,confidence,as_of,source,dwr_telemetry_abbrev
+granby,Lake Granby,40.15,-105.91,Colorado headwaters,Colorado River,water supply,539758,366074,84,observed,7 Jun 2026,USBR ARCWEB,GRARESCO
+shadow,Shadow Mountain,40.222,-105.848,Colorado headwaters,Colorado River,water supply,18369,17450,99,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SHARESCO
+willow,Willow Creek Res.,40.143,-106.018,Colorado headwaters,Willow Creek,water supply,10553,7280,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",WILRESCO
+wmsfork,Williams Fork Res.,39.958,-106.203,Colorado headwaters,Williams Fork,water supply,96822,42094,56,observed,16 Jul 2026,Denver Water CSV,WLFRESCO
+wolford,Wolford Mountain,40.1,-106.34,Colorado headwaters,Muddy Creek,water supply,65985,41400,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+greenmtn,Green Mountain,39.88,-106.33,Colorado headwaters,Blue River,water supply,154645,34947,50,observed,22 Jul 2026,USBR via Snoflo,GRERESCO
+dillon,Dillon Reservoir,39.61,-106.06,Colorado headwaters,Blue River,water supply,257304,199482,82,observed,16 Jul 2026,Denver Water CSV,DILRESCO
+ruedi,Ruedi Reservoir,39.362,-106.82,Colorado headwaters,Fryingpan River,water supply,102373,70170,102,observed,15 Jul 2026,USBR via Snoflo,RUERESCO
+homestake,Homestake Res.,39.42,-106.42,Colorado headwaters,Homestake Creek,water supply,43600,31400,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HOMRESCO
+vega,Vega Reservoir,39.23,-107.79,Colorado headwaters,Plateau Creek,water supply,33171,23900,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+riflegap,Rifle Gap,39.63,-107.75,Colorado headwaters,Rifle Creek,water supply,13600,9800,80,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIFRESCO
+taylor,Taylor Park Res.,38.82,-106.6,Gunnison,Taylor River,water supply,106225,66900,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+bluemesa,Blue Mesa Res.,38.46,-107.2,Gunnison,Gunnison River,water supply,940700,259379,54,observed,17 Jul 2026,USBR via Snoflo,BLMRESCO
+morrow,Morrow Point,38.48,-107.42,Gunnison,Gunnison River,water supply,117190,114834,99,observed,29 Jun 2026,USBR,
+crystalg,Crystal Reservoir,38.51,-107.58,Gunnison,Gunnison River,water supply,25236,22700,97,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+paonia,Paonia Reservoir,38.99,-107.34,Gunnison,N. Fork Gunnison,water supply,20950,13200,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+ridgway,Ridgway Reservoir,38.2,-107.75,Gunnison,Uncompahgre River,water supply,84590,53300,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+crawford,Crawford Res.,38.71,-107.6,Gunnison,Smith Fork,water supply,14395,9070,70,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+stagecoach,Stagecoach Res.,40.28,-106.86,Yampa & White,Yampa River,water supply,33275,23300,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+steamboatl,Steamboat Lake,40.79,-106.95,Yampa & White,Willow Creek,water supply,26000,18200,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",STELAKCO
+elkhead,Elkhead Reservoir,40.55,-107.4,Yampa & White,Elkhead Creek,water supply,25610,17900,78,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+mcphee,McPhee Reservoir,37.55,-108.6,San Juan & Dolores,Dolores River,water supply,381195,210000,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",MCPRESCO
+vallecito,Vallecito Res.,37.38,-107.57,San Juan & Dolores,Los Pinos River,water supply,129700,71500,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",VALRESCO
+lemon,Lemon Reservoir,37.38,-107.66,San Juan & Dolores,Florida River,water supply,40146,22100,69,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+nighthorse,Lake Nighthorse,37.23,-107.9,San Juan & Dolores,Animas (pumped),water supply,123541,117000,97,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",BASRESCO
+navajo,Navajo Reservoir,37,-107.4,San Juan & Dolores,San Juan River,water supply,1708600,969000,70,observed,1 Jul 2026,USBR UC Region,
+riogrande,Rio Grande Res.,37.73,-107.27,Rio Grande,Rio Grande,water supply,52192,34500,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",RIORESCO
+platoro,Platoro Reservoir,37.35,-106.53,Rio Grande,Conejos River,water supply,59570,39400,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",PLARESCO
+sanchez,Sanchez Reservoir,37.1,-105.42,Rio Grande,Ventero Creek,water supply,103000,68100,86,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",SANRESCO
+turquoise,Turquoise Lake,39.25,-106.4,Arkansas,Lake Fork Arkansas,water supply,129432,94500,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TURQLACO
+twinlakes,Twin Lakes,39.08,-106.35,Arkansas,Lake Creek,water supply,141000,103000,91,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",TWIRESCO
+pueblo,Pueblo Reservoir,38.26,-104.72,Arkansas,Arkansas River,water supply,357000,196000,93,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+trinidad,Trinidad Lake,37.14,-104.6,Arkansas,Purgatoire River,water supply,114000,22800,52,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+johnmartin,John Martin Res.,38.07,-102.93,Arkansas,Arkansas River,water supply,616000,31000,41,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",JMRCADCO
+antero,Antero Reservoir,39,-105.9,South Platte,South Platte River,water supply,20122,0,0,observed,16 Jul 2026,Denver Water CSV,
+elevenmile,Eleven Mile Canyon,38.93,-105.48,South Platte,South Platte River,water supply,97779,98664,104,observed,16 Jul 2026,Denver Water CSV,
+cheesman,Cheesman Reservoir,39.2,-105.27,South Platte,South Platte River,water supply,79064,59114,88,observed,16 Jul 2026,Denver Water CSV,CHERESCO
+strontia,Strontia Springs,39.42,-105.13,South Platte,South Platte River,water supply,7864,6849,95,observed,16 Jul 2026,Denver Water CSV,STRRESCO
+chatfield,Chatfield Res.,39.54,-105.07,South Platte,South Platte River,water supply,28709,24148,92,observed,16 Jul 2026,Denver Water CSV,CHARESCO
+cherrycreek,Cherry Creek Res.,39.6506,-104.8543,South Platte,Cherry Creek,flood control,13077,11381,,observed,22 Jul 2026,USACE dam · DWR telemetry,CHRRESCO
+bearcreek,Bear Creek Lake,39.6537,-105.1408,South Platte,Bear Creek,flood control,1996,899,,observed,22 Jul 2026,USACE dam · DWR telemetry,BCRRESCO
+marston,Marston Reservoir,39.65,-105.08,South Platte,Denver system,water supply,19108,18265,99,observed,16 Jul 2026,Denver Water CSV,
+gross,Gross Reservoir,39.95,-105.36,South Platte,S. Boulder Creek,water supply,41811,23389,70,observed,16 Jul 2026,Denver Water CSV,GROSRECO
+ralston,Ralston Reservoir,39.83,-105.25,South Platte,Ralston Creek,water supply,10776,10113,98,observed,16 Jul 2026,Denver Water CSV,
+standley,Standley Lake,39.87,-105.13,South Platte,Clear Creek (div.),water supply,42000,33600,90,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",STALAKCO
+horsetooth,Horsetooth Res.,40.57,-105.17,South Platte,C-BT terminal,water supply,156735,141000,96,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",HORTOOCO
+carter,Carter Lake,40.33,-105.22,South Platte,C-BT terminal,water supply,108900,88200,84,observed,Jul 2026,Northern Water via Snoflo,CARTERCO
+boyd,Boyd Lake,40.44,-105.05,South Platte,Big Thompson (div.),water supply,48871,12200,32,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+jackson,Jackson Lake,40.38,-104.09,South Platte,S. Platte (div.),water supply,35000,27650,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+prewitt,Prewitt Reservoir,40.63,-103.4,South Platte,S. Platte (div.),water supply,28840,22780,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
+nsterling,North Sterling,40.79,-103.13,South Platte,S. Platte (div.),water supply,74590,58900,79,basin estimate,,"basin % of median (NRCS, 1 Jun 2026)",
