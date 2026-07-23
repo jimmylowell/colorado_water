@@ -143,3 +143,39 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 #viz g.lab,#viz text{transition:opacity .22s linear}
 @media (max-width:940px){.stage{grid-template-columns:1fr}.sheet{position:static}.asof{text-align:left}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ------- site nav + subpages ------- */
+.nav{display:flex;flex-wrap:wrap;gap:16px 22px;align-items:baseline;font-family:var(--mono);font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;margin-bottom:22px;color:var(--dim)}
+.nav .brand{color:var(--bone);margin-right:auto;letter-spacing:.2em;text-decoration:none}
+.nav a{color:var(--dust);text-decoration:none;padding-bottom:2px;border-bottom:1px solid transparent}
+.nav a:hover{color:var(--bone)}
+.nav a[aria-current="page"]{color:var(--bone);border-bottom-color:var(--aqua)}
+
+.prose{max-width:72ch;color:var(--dust);font-size:14.5px;line-height:1.75}
+.prose h2{font-family:var(--display);font-weight:400;font-size:27px;letter-spacing:-.01em;color:var(--bone);margin:38px 0 12px}
+.prose h2 em{font-style:italic;color:var(--aqua)}
+.prose p{margin:0 0 14px}
+.prose b{color:var(--bone);font-weight:500}
+.prose a{color:var(--aqua)}
+.prose ul{padding-left:20px;margin:0 0 14px}
+.prose li{margin-bottom:7px}
+.prose .aside{border-left:2px solid var(--silt-2);padding:2px 0 2px 16px;color:var(--dim);font-size:13px;margin:18px 0}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--silt);background:var(--basin);margin:18px 0}
+.dtable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;min-width:820px}
+.dtable th{text-align:left;color:var(--dim);text-transform:uppercase;font-size:9px;letter-spacing:.12em;
+  padding:9px 10px;border-bottom:1px solid var(--silt-2);white-space:nowrap;font-weight:400}
+.dtable td{padding:6px 10px;border-bottom:1px solid var(--silt);color:var(--dust);white-space:nowrap}
+.dtable tr:last-child td{border-bottom:0}
+.dtable td.num{text-align:right;font-variant-numeric:tabular-nums}
+.dtable th.num{text-align:right}
+.dtable td b{color:var(--bone);font-weight:500}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:20px 0}
+.dl .card p{min-height:54px}
+.dlbtn{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--aqua);border:1px solid var(--aqua);padding:8px 13px;text-decoration:none;cursor:pointer;background:transparent}
+.dlbtn:hover{background:rgba(0,214,230,.1)}
+.foot{margin-top:52px;border-top:1px solid var(--silt);padding-top:16px;font-family:var(--mono);
+  font-size:10.5px;color:var(--dim);line-height:1.8}
+.foot a{color:var(--dust)}

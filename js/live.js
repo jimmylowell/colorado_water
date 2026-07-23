@@ -7,6 +7,9 @@
    On file:// or offline both fetches fail quietly and the snapshot stands.
    ===================================================================== */
 (function(){
+/* also loads on data.html, where viz.js (state, draw, renderSheet) is absent */
+const S=typeof state!=='undefined'?state:{live:{}};
+const redraw=()=>{if(typeof draw!=='undefined'){draw();renderSheet();}};
 const GAGES=[...new Set(G.nodes.filter(n=>n.gage).map(n=>n.gage))];
 const USGS_URL='https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+GAGES.join(',')
   +'&parameterCd=00060&siteStatus=all';
@@ -28,7 +31,7 @@ function ingestUSGS(j){
     const site=ts.sourceInfo&&ts.sourceInfo.siteCode&&ts.sourceInfo.siteCode[0]&&ts.sourceInfo.siteCode[0].value;
     const vv=ts.values&&ts.values[0]&&ts.values[0].value&&ts.values[0].value[0];
     const v=vv?parseFloat(vv.value):NaN;
-    if(site&&isFinite(v)&&v>=0){state.live[site]=v;n++;}
+    if(site&&isFinite(v)&&v>=0){S.live[site]=v;n++;}
   });
   return n;
 }
@@ -63,15 +66,17 @@ async function refresh(){
     status(`Live: <b style="color:var(--bone)">${nR}</b> reservoirs (DWR telemetry) · `
       +`<b style="color:var(--bone)">${nG}</b> gages (USGS) · as of ${at}. `
       +`Everything else shows the dated snapshot.`);
-    draw();renderSheet();
+    redraw();
   }else{
     status('Couldn’t reach the live services — showing the snapshot of 22 Jul 2026. '
       +'(Normal when viewing this page offline or as a saved file.)');
   }
   if(btn)btn.disabled=false;
   busy=false;
+  window.dispatchEvent(new CustomEvent('cw-live',{detail:{gages:nG,reservoirs:nR}}));
 }
-d3.select('#live').on('click',refresh);
+const btn=document.getElementById('live');
+if(btn)btn.addEventListener('click',refresh);
 window.CW_LIVE={refresh,USGS_URL,CDSS_URL,GAGES};
 refresh();
 })();

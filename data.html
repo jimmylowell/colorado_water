@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorado Water — the data</title>
+<meta name="description" content="Raw CSV downloads and sources for the Colorado Water reservoir visualization.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="nav" aria-label="Site">
+    <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Map</a>
+    <a href="data.html" aria-current="page">Data</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Raw data · water year 2026</p>
+      <h1>Take the <em>numbers</em> with you</h1>
+      <p class="standfirst">Everything behind the map, as plain CSV. The committed files are the dated snapshot the site ships with; the export button below folds in whatever live readings your browser just fetched.</p>
+    </div>
+    <div class="asof">
+      <div>snapshot <b>22 Jul 2026</b></div>
+      <div>storage <b>acre-feet</b> · flow <b>cfs</b></div>
+      <div>normals <b>NRCS 1991–2020</b></div>
+    </div>
+  </header>
+
+  <div class="dl">
+    <div class="card">
+      <h3>reservoirs.csv</h3>
+      <p>All 49 reservoirs: location, basin, source river, capacity and storage (acre-feet), percent of the 1991–2020 median, confidence, source and as-of date for every reading.</p>
+      <a class="dlbtn" href="data/reservoirs.csv" download>Download</a>
+    </div>
+    <div class="card">
+      <h3>basin_history.csv</h3>
+      <p>Monthly percent-of-median storage for the seven basins, Oct 2025 – Jul 2026 — the series that drives the map's timeline — plus statewide streamflow percent of normal.</p>
+      <a class="dlbtn" href="data/basin_history.csv" download>Download</a>
+    </div>
+    <div class="card">
+      <h3>gages.csv</h3>
+      <p>The 18 USGS streamgages used on the flow view, with site numbers you can look up directly at waterdata.usgs.gov.</p>
+      <a class="dlbtn" href="data/gages.csv" download>Download</a>
+    </div>
+    <div class="card">
+      <h3>Current values</h3>
+      <p>reservoirs.csv, but with live Colorado DWR telemetry readings replacing the snapshot wherever your browser could fetch them just now.</p>
+      <button class="dlbtn" id="dl-live">Download current CSV</button>
+      <div class="livestat" id="livestat">Contacting live services…</div>
+    </div>
+  </div>
+
+  <section class="prose">
+    <h2>Every reservoir in the set</h2>
+    <p>Rows marked <b>live</b> were refreshed from Colorado DWR telemetry when this page loaded. <b>Observed</b> rows carry a published, dated reading; <b>basin estimate</b> rows are scaled to their basin's NRCS percent of median because no same-day public reading was available.</p>
+  </section>
+  <div class="tablewrap"><table class="dtable" id="restable"></table></div>
+
+  <section class="prose">
+    <h2>Column dictionary</h2>
+    <ul>
+      <li><b>capacity_af / storage_af</b> — total and current storage in acre-feet. An acre-foot floods one acre a foot deep: roughly what two Front Range households use in a year.</li>
+      <li><b>pct_of_median_1991_2020</b> — storage against the NRCS median for this calendar day, 100 = a normal year.</li>
+      <li><b>confidence</b> — <i>observed</i>: published, dated reading; <i>live</i>: DWR telemetry fetched by your browser; <i>basin estimate</i>: scaled from the basin's percent of median.</li>
+      <li><b>dwr_telemetry_abbrev</b> — Colorado DWR station code, usable directly against the <a href="https://dwr.state.co.us/Tools/Stations" rel="noopener">CDSS station tools</a> and REST API.</li>
+    </ul>
+
+    <h2>Where it all comes from</h2>
+    <ul>
+      <li><b>Colorado DWR / CDSS REST API</b> — live reservoir storage telemetry. <a href="https://dwr.state.co.us/Rest/GET/Help" rel="noopener">dwr.state.co.us/Rest</a></li>
+      <li><b>USGS NWIS instantaneous values</b> — live streamflow. <a href="https://waterservices.usgs.gov/" rel="noopener">waterservices.usgs.gov</a></li>
+      <li><b>Denver Water</b> — daily storage for its 12-reservoir system. <a href="https://www.denverwater.org/your-water/water-supply-and-planning/water-supply-conditions" rel="noopener">denverwater.org</a></li>
+      <li><b>US Bureau of Reclamation</b> — Granby, Blue Mesa, Navajo, Pueblo and other federal projects. <a href="https://www.usbr.gov/uc/water/" rel="noopener">usbr.gov/uc/water</a></li>
+      <li><b>NRCS Colorado Water Supply Outlook</b> — the monthly basin percent-of-median series. <a href="https://www.nrcs.usda.gov/wps/portal/wcc/home/" rel="noopener">nrcs.usda.gov</a></li>
+    </ul>
+    <p class="aside">All of it is public, US-government or utility-published data. This project only collates it — check the primary sources before using any number for anything that matters.</p>
+  </section>
+
+  <footer class="foot">
+    An educational project on drought — knowing where your water actually comes from ·
+    <a href="about.html">the story &amp; methods</a> · <a href="index.html">the map</a><br>
+    Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
+  </footer>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/live.js"></script>
+<script>
+"use strict";
+(function(){
+const BN=Object.fromEntries(BASINS.map(b=>[b.id,b.n]));
+function rowsNow(){
+  return RES.slice().sort((a,b)=>b.cap-a.cap).map(r=>{
+    const lv=LIVE_STO[r.id];
+    return {
+      id:r.id,n:r.n,basin:BN[r.b],river:r.r,cap:r.cap,
+      sto:Math.round(lv?lv.sto:r.sto),
+      pm:pmAt(r,NOW),
+      conf:lv?'live':(r.c==='obs'?'observed':'basin estimate'),
+      asof:lv?lv.asOf:(r.d||''),
+      src:lv?'Colorado DWR telemetry '+r.dwr:(r.s||'basin % of median (NRCS, 1 Jun 2026)'),
+      lat:r.lat,lon:r.lon
+    };
+  });
+}
+function renderTable(){
+  const fmt=n=>n.toLocaleString('en-US');
+  document.getElementById('restable').innerHTML=
+    '<tr><th>Reservoir</th><th>Basin</th><th>River</th><th class="num">Capacity (AF)</th>'
+    +'<th class="num">Storage (AF)</th><th class="num">% of normal</th><th>Confidence</th><th>As of</th><th>Source</th></tr>'
+    +rowsNow().map(r=>`<tr><td><b>${r.n}</b></td><td>${r.basin}</td><td>${r.river}</td>`
+      +`<td class="num">${fmt(r.cap)}</td><td class="num">${fmt(r.sto)}</td><td class="num">${r.pm}%</td>`
+      +`<td>${r.conf}</td><td>${r.asof}</td><td>${r.src}</td></tr>`).join('');
+}
+function csvEscape(v){v=String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+document.getElementById('dl-live').addEventListener('click',()=>{
+  const head=['id','name','lat','lon','basin','river','capacity_af','storage_af',
+    'pct_of_median_1991_2020','confidence','as_of','source'];
+  const lines=[head.join(',')].concat(rowsNow().map(r=>
+    [r.id,r.n,r.lat,r.lon,r.basin,r.river,r.cap,r.sto,r.pm,r.conf,r.asof,r.src].map(csvEscape).join(',')));
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')+'\n'],{type:'text/csv'}));
+  a.download='colorado_reservoirs_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+window.addEventListener('cw-live',renderTable);
+renderTable();
+})();
+</script>
+</body>
+</html>

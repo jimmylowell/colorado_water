@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorado Water — about</title>
+<meta name="description" content="Why this map exists: drought awareness, and knowing where your water actually comes from.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="nav" aria-label="Site">
+    <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Map</a>
+    <a href="data.html">Data</a>
+    <a href="about.html" aria-current="page">About</a>
+  </nav>
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">About this project</p>
+      <h1>Do you know where<br>your water <em>comes from?</em></h1>
+    </div>
+    <div class="asof">
+      <div>a drought-awareness project</div>
+      <div>water year <b>2026</b></div>
+    </div>
+  </header>
+
+  <section class="prose">
+    <p>State parks sometimes keep a diorama near the visitor center: a painted relief of the landscape with a ribbon of blue resin showing how water moves through it — over this divide, into that reservoir, out through a canal to somewhere far away. People stand in front of them longer than any signboard. And if you drive across Colorado in a dry year, the reservoirs make the same point without a single label: a bathtub ring of pale rock where the water level normally sits.</p>
+    <p>This site is an attempt at that diorama for the whole state — with real numbers, updating while you look at it.</p>
+
+    <h2>Water from over the mountains</h2>
+    <p>Most of Colorado's people live east of the Continental Divide. Most of its water falls to the west. Roughly <b>80% of the state's precipitation lands on the West Slope</b>, while nearly 90% of the population lives on the Front Range. The gap is closed by plumbing on a heroic scale: tunnels bored under the Divide that pull water from the Colorado River's headwaters and push it east.</p>
+    <p>When Denver turns on a tap, some of that water started as snow above Winter Park and rode the <b>Moffat Tunnel</b> under James Peak; some was Blue River water lifted from Dillon Reservoir through the 23-mile <b>Roberts Tunnel</b>. Fort Collins and the northern Front Range drink Lake Granby water delivered by the <b>Colorado–Big Thompson Project's Adams Tunnel</b>. Colorado Springs and Pueblo lean on the <b>Fry-Ark Project</b>, which moves Fryingpan headwaters under the Divide into Turquoise Lake and Twin Lakes. On the <a href="index.html">map</a>, those tunnels are the dashed ribbons crossing the dotted line — and on the flow view you can watch each city's water blend from its true sources.</p>
+    <p class="aside">This is why a dry winter in the Never Summer Range shows up in a Denver lawn-watering schedule. The Divide decides where water falls; the tunnels decide who gets it.</p>
+
+    <h2>Reading the glasses</h2>
+    <p>Every reservoir is drawn as a <b>glass of water</b> — wide at the rim, narrow at the base, the cross-section of a canyon filling up. The glass's size is its total capacity. The colour inside is the water's <i>source</i> (each headwater has its own hue, and blends stay traceable). The level is what's actually in it, filled by <b>area</b>, so a glass that looks half-full really holds half its capacity — a detail borrowed from the way a tapering reservoir genuinely stores less water per foot of depth. The bone-coloured tick is where the level would sit in a normal year: the drought is the gap between the tick and the waterline.</p>
+
+    <h2>Water year 2026, so far</h2>
+    <p>The winter looked survivable on paper and then March turned warm early — by the first of June, <b>91% of the state's SNOTEL snow-measurement sites were bare</b>, and the melt that should have carried rivers through summer came and went in a spike. By late July statewide streamflow was running around <b>44% of normal</b>, statewide reservoir storage near <b>75% of its 30-year median</b>, and the Gunnison basin's glasses — Blue Mesa above all — were visibly draining. Drag the map's timeline back to October and press play: you can watch it happen.</p>
+
+    <h2>Methods, honestly</h2>
+    <ul>
+      <li><b>Snapshot first.</b> The site renders entirely from a dated snapshot (22 Jul 2026) committed to the repository — it works offline, saved to disk, anywhere.</li>
+      <li><b>Live where possible.</b> On load, the page asks two public, browser-accessible APIs for fresher numbers: Colorado DWR's CDSS telemetry (storage at 27 mapped reservoirs) and USGS NWIS (streamflow at 18 gages). Fresh readings replace the snapshot and are labelled <i>live</i>; anything stale or unreachable keeps its snapshot value and label.</li>
+      <li><b>Observed vs. estimated.</b> Solid-outlined glasses carry a published, dated reading (Denver Water, USBR, Northern Water, DWR). Dash-outlined glasses had no same-day public reading, so their storage is scaled to their basin's NRCS percent of median — a fair guess, marked as one.</li>
+      <li><b>The timeline is a reconstruction.</b> Monthly basin percentages come from NRCS Water Supply Outlook reports, interpolated between report dates; individual reservoirs are rescaled by their basin's factor. It shows the shape of the year, not a gage record.</li>
+      <li><b>Flow composition is arithmetic.</b> The flow view traces each river's makeup edge by edge from the headwaters, with diversions taking proportional slices of typical late-July flows.</li>
+    </ul>
+    <p>All of it is downloadable as <a href="data.html">plain CSV</a>, with per-row source and as-of columns. None of it is operational data — for real decisions, go to the primary sources.</p>
+
+    <h2>Why bother</h2>
+    <p>Because drought is easy to ignore from a kitchen tap. The water still comes out; the price doesn't change much; the crisis is always somewhere upstream. But every tap in Colorado is at the end of a specific, findable thread — a river, a tunnel, a glass slowly draining in the hills. If you can point at your reservoir on a map and say <i>that one, and it's at 54%</i>, the abstraction gets personal. That's the whole project.</p>
+  </section>
+
+  <footer class="foot">
+    An educational project on drought — knowing where your water actually comes from ·
+    <a href="index.html">the map</a> · <a href="data.html">raw data (CSV)</a><br>
+    Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
+  </footer>
+</div>
+</body>
+</html>
