@@ -84,14 +84,15 @@
       <div class="keyrow"><svg width="26" height="18"><path d="M5,1 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L21,1 Z" fill="#0A1620" stroke="#54798C" stroke-width="1.2"/><path d="M7.7,8 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L18.3,8 Z" fill="#2F6BFF"/></svg><span><b style="color:var(--bone)">Solid glass</b> — a measured, dated reading</span></div>
       <div class="keyrow"><svg width="26" height="18"><path d="M5,1 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L21,1 Z" fill="#0A1620" stroke="#3A5A6B" stroke-width="1" stroke-dasharray="2.5 2.5"/></svg><span><b style="color:var(--bone)">Dashed glass</b> — estimated from its basin's % of median</span></div>
       <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#EDE6D6" stroke-width="2"/></svg><span><b style="color:var(--bone)">Bone tick</b> — where the level normally sits today</span></div>
-      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed ribbon</b> — a tunnel carrying water under the Divide</span></div>
+      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed line</b> — a tunnel carrying water under the Divide</span></div>
+      <div class="keyrow"><svg width="26" height="18"><path d="M8,6 l10,0 l-5,8 z" fill="#00D6E6"/></svg><span><b style="color:var(--bone)">▼ marker</b> — the glass is being drawn down to feed the river</span></div>
       <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity — wide at the rim, narrow at the base, the way a canyon reservoir actually holds water. Fill colour is the water's source; the level is filled by <em>area</em>, so a half-full glass really is half-full. The % figure under each glass is condition against the 1991–2020 median.</p>
     </div>
 
     <div class="card">
       <h3>The seven colours</h3>
       <div id="huekey"></div>
-      <p style="margin-top:12px">Colours repeat only between rivers that can never mix, so within any one river every colour is unique and a blend is always traceable. <b style="color:var(--bone)">Braid</b> mode splits every ribbon into its true source shares — nothing overlaps; the widths are the arithmetic.</p>
+      <p style="margin-top:12px">Colours repeat only between rivers that can never mix, so within any one river every colour is unique and a blend is always traceable. Map rivers wear the same hues — mainstems fade toward the blend of everything they've collected. <b style="color:var(--bone)">Braid</b> mode on the flow view splits every ribbon into its true source shares.</p>
     </div>
 
     <div class="card">
@@ -119,5 +120,6 @@
 <script src="js/data.js"></script>
 <script src="js/viz.js"></script>
 <script src="js/live.js"></script>
+<script src="js/hydro.js"></script>
 </body>
 </html>

@@ -24,8 +24,13 @@ On load, the browser asks two public CORS-open APIs for fresher numbers and
 overlays whatever it gets:
 
 - **Colorado DWR CDSS telemetry** — latest storage for the 27 reservoirs with a
-  `dwr` station code (14-day staleness cutoff, plausibility-checked)
+  `dwr` station code (14-day staleness cutoff, plausibility-checked), plus the
+  past week of daily storage to compute each reservoir's drawdown rate in cfs
 - **USGS NWIS instantaneous values** — streamflow at 18 gages
+
+Selecting a reservoir or gage additionally fetches a trailing year of daily
+data (CDSS `telemetrytimeseriesday` / USGS `nwis/dv`) for the in-sheet
+hydrograph, cached per station for the session.
 
 The CSVs in `data/` are generated from the snapshot:
 

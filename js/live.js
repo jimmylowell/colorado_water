@@ -16,6 +16,11 @@ const USGS_URL='https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+GAGE
 const DWR=RES.filter(r=>r.dwr);
 const CDSS_URL='https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/'
   +'?format=json&parameter=STORAGE&abbrev='+DWR.map(r=>r.dwr).join('%2C');
+const pad2=n=>String(n).padStart(2,'0');
+const dstr=d=>pad2(d.getMonth()+1)+'%2F'+pad2(d.getDate())+'%2F'+d.getFullYear();
+const CDSS_WEEK_URL='https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/'
+  +'?format=json&parameter=STORAGE&abbrev='+DWR.map(r=>r.dwr).join('%2C')
+  +'&startDate='+dstr(new Date(Date.now()-8*864e5))+'&endDate='+dstr(new Date());
 
 function fetchJSON(url,ms){
   const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),ms||9000);
@@ -47,6 +52,23 @@ function ingestCDSS(j){
   });
   return Object.keys(LIVE_STO).length;
 }
+function ingestWeek(j){
+  /* week of daily storage → trend in cfs (1 AF/day = 0.50417 cfs) */
+  const byAb={};
+  ((j&&j.ResultList)||[]).forEach(row=>{
+    if(!isFinite(row.measValue))return;
+    (byAb[row.abbrev]=byAb[row.abbrev]||[]).push({t:Date.parse(row.measDate),v:row.measValue});
+  });
+  const idByAb=Object.fromEntries(DWR.map(r=>[r.dwr,r.id]));
+  Object.entries(byAb).forEach(([ab,pts])=>{
+    if(pts.length<3||!idByAb[ab])return;
+    pts.sort((a,b)=>a.t-b.t);
+    const days=(pts[pts.length-1].t-pts[0].t)/864e5;
+    if(days<2)return;
+    const afday=(pts[pts.length-1].v-pts[0].v)/days;
+    LIVE_DELTA[idByAb[ab]]=-afday*0.50417; /* falling storage = releasing */
+  });
+}
 function status(html){
   const el=document.getElementById('livestat');
   if(el)el.innerHTML=html;
@@ -58,9 +80,11 @@ async function refresh(){
   const btn=document.getElementById('live');
   if(btn)btn.disabled=true;
   status('Contacting USGS and Colorado DWR…');
-  const [usgs,cdss]=await Promise.allSettled([fetchJSON(USGS_URL),fetchJSON(CDSS_URL)]);
+  const [usgs,cdss,week]=await Promise.allSettled([
+    fetchJSON(USGS_URL),fetchJSON(CDSS_URL),fetchJSON(CDSS_WEEK_URL,12000)]);
   const nG=usgs.status==='fulfilled'?ingestUSGS(usgs.value):0;
   const nR=cdss.status==='fulfilled'?ingestCDSS(cdss.value):0;
+  if(week.status==='fulfilled')ingestWeek(week.value);
   if(nG||nR){
     const at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     status(`Live: <b style="color:var(--bone)">${nR}</b> reservoirs (DWR telemetry) · `

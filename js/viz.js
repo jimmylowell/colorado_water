@@ -115,20 +115,21 @@ function fillLevel(f,h,a,b){
   return y;
 }
 let GID=0;
-function drawGlass(grp,r,color,S){
+function drawGlass(grp,r,color,S,bright){
   const {h,a,b}=glassDims(r.cap,S), est=r.c==='est'&&!LIVE_STO[r.id];
   grp.append('rect').attr('x',-a-5).attr('y',-h-6).attr('width',2*a+10).attr('height',h+18)
      .attr('fill','transparent');
   const d=glassPathD(h,a,b);
   grp.append('path').attr('d',d).attr('fill','#0A1620')
-     .attr('stroke',est?'#3A5A6B':'#54798C').attr('stroke-width',est?1:1.3)
+     .attr('stroke',est?(bright?'#4E7488':'#3A5A6B'):(bright?'#7FA6BC':'#54798C'))
+     .attr('stroke-width',est?(bright?1.3:1):(bright?1.6:1.3))
      .attr('stroke-dasharray',est?'2.5 2.5':null);
   const cid='c'+r.id+(GID++);
   grp.append('clipPath').attr('id',cid).append('path').attr('d',d);
   const y=Math.min(h,fillLevel(stoAt(r,state.mi)/r.cap,h,a,b));
   if(y>0.3){
     grp.append('rect').attr('x',-a).attr('y',-y).attr('width',2*a).attr('height',y)
-       .attr('fill',color).attr('opacity',.92).attr('clip-path',`url(#${cid})`);
+       .attr('fill',color).attr('opacity',bright?1:.92).attr('clip-path',`url(#${cid})`);
     grp.append('line').attr('x1',-a).attr('x2',a).attr('y1',-y).attr('y2',-y)
        .attr('stroke','#071119').attr('stroke-width',.8).attr('opacity',.6).attr('clip-path',`url(#${cid})`);
   }
@@ -145,6 +146,18 @@ function glassRing(grp,r,S){
   const {h,a,b}=glassDims(r.cap,S);
   grp.append('path').attr('d',glassPathD(h+7,a+5,b+5)).attr('transform','translate(0,3.5)')
      .attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.4);
+}
+/* storage trend as cfs, + = drawing down. Live weekly slope when we have
+   it and the timeline sits on now; else the monthly reconstruction —
+   snapshot-only on both sides of the difference, so live values never
+   get compared against reconstructed ones. */
+function drawdownCfs(r,mi){
+  if(mi===NOW&&LIVE_DELTA[r.id]!=null)return LIVE_DELTA[r.id];
+  if(mi>0){
+    const snap=m=>Math.min(r.cap*1.02,r.sto*pmFactor(r.b,m));
+    return -(snap(mi)-snap(mi-1))/30.4*0.50417;
+  }
+  return 0;
 }
 function medianFullPct(r,mi){
   const pm=pmAt(r,mi),sto=stoAt(r,mi);
@@ -297,7 +310,9 @@ function drawMap(){
   glow.html('<feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>');
 
   g.append('rect').attr('x',px(GEO.w)).attr('y',py(GEO.n)).attr('width',IW).attr('height',IH)
-   .attr('fill','#08131B').attr('stroke','#2A4351').attr('stroke-width',1.2);
+   .attr('fill','#08131B').attr('stroke','#2A4351').attr('stroke-width',1.2)
+   .on('click',ev=>{if(ev.defaultPrevented)return;
+     if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;draw();renderSheet();}});
 
   const grid=g.append('g').attr('opacity',.5);
   for(let lon=-108;lon>=-103;lon--)grid.append('line').attr('x1',px(lon)).attr('x2',px(lon)).attr('y1',py(GEO.n)).attr('y2',py(GEO.s)).attr('stroke','#14252F').attr('stroke-width',.6);
@@ -320,13 +335,27 @@ function drawMap(){
   g.append('text').attr('x',px(-106.9)).attr('y',py(38.05)).attr('class','lbl-big')
    .attr('transform',`rotate(-72 ${px(-106.9)} ${py(38.05)})`).text('CONTINENTAL DIVIDE');
 
+  /* rivers wear their flow-view source hue; mainstems that accumulate
+     sources fade along their length to the downstream blend */
   const rl=g.append('g').attr('class','riverlayer').style('mix-blend-mode','screen');
-  RIVERS.forEach(rv=>{
+  RIVERS.forEach((rv,ri)=>{
     const on=state.basin==='all'||rv.b===state.basin;
     const w=rv.w*(on?1.6:1);
+    let stroke='#1A2E39';
+    if(on){
+      const base=rv.src&&NODE[rv.src]?NODE[rv.src].hue:(rv.hue||'#2E7E96');
+      if(rv.blendTo&&COMP[rv.blendTo]){
+        const p0=rv.p[0],p1=rv.p[rv.p.length-1];
+        const lg=defs.append('linearGradient').attr('id','rg'+ri).attr('gradientUnits','userSpaceOnUse')
+          .attr('x1',px(p0[1])).attr('y1',py(p0[0])).attr('x2',px(p1[1])).attr('y2',py(p1[0]));
+        lg.append('stop').attr('offset','0%').attr('stop-color',base);
+        lg.append('stop').attr('offset','100%').attr('stop-color',rgb2css(blendColour(COMP[rv.blendTo])));
+        stroke=`url(#rg${ri})`;
+      }else stroke=base;
+    }
     rl.append('path').attr('d',geoLine(rv.p)).attr('fill','none')
-      .attr('stroke',on?'#2E7E96':'#1A2E39').attr('class','zw').attr('data-bw',w).attr('stroke-width',w)
-      .attr('stroke-linecap','round').attr('opacity',on?.95:.3)
+      .attr('stroke',stroke).attr('class','zw').attr('data-bw',w).attr('stroke-width',w)
+      .attr('stroke-linecap','round').attr('opacity',on?.8:.3)
       .attr('filter',on?'url(#glow)':null);
   });
 
@@ -343,6 +372,21 @@ function drawMap(){
       minK:rv.w>=2?0.1:(rv.w>=1.3?1.6:3)});
   });
 
+  /* transmountain tunnels: dashed, marching toward the thirsty side */
+  const tg=g.append('g');
+  MAP_TUNNELS.forEach(tn=>{
+    const P=pt=>Array.isArray(pt)?[px(pt[1]),py(pt[0])]:[px(RESBY[pt].lon),py(RESBY[pt].lat)];
+    const [x0,y0]=P(tn.f),[x1,y1]=P(tn.t);
+    const on=state.basin==='all'||tn.fb===state.basin||tn.tb===state.basin;
+    const mx=(x0+x1)/2,my=(y0+y1)/2-14;
+    tg.append('path').attr('d',`M${x0},${y0} Q${mx},${my} ${x1},${y1}`)
+      .attr('fill','none').attr('stroke',on?tn.hue:'#1A2E39')
+      .attr('class','zw'+(on?' mapdash':'')).attr('data-bw',1.8).attr('stroke-width',1.8)
+      .attr('stroke-dasharray','5 4').attr('stroke-linecap','round').attr('opacity',on?.85:.25);
+    if(on)CSTEXT.push({el:tg.append('text').attr('x',mx).attr('y',my-4).attr('class','lbl2')
+      .attr('text-anchor','middle').text(tn.n).node(),x:mx,y:my-4,p:0.8,minK:1.7});
+  });
+
   const cg=g.append('g');
   CITIES.forEach(c=>{
     const node=cg.append('g').attr('transform',`translate(${px(c.lon)},${py(c.lat)})`);
@@ -351,7 +395,7 @@ function drawMap(){
     const lab=node.append('g').attr('class','lab');
     lab.append('text').attr('x',6).attr('y',3).attr('class','lbl2').text(c.n);
     LABELS.push({el:lab.node(),x:px(c.lon),y:py(c.lat),pri:90000,minK:1.6,
-      bx0:4,by0:-7,bx1:8+c.n.length*6.2,by1:7});
+      bx0:4,by0:-7,bx1:8+c.n.length*6.8,by1:7});
   });
 
   const list=RES.filter(r=>(state.basin==='all'||r.b===state.basin)&&passesFilter(r))
@@ -364,14 +408,21 @@ function drawMap(){
     const gfx=node.append('g').attr('class','gfx');
     drawGlass(gfx,r,resColour(r.id),1);
     if(state.selected===r.id)glassRing(gfx,r,1);
+    const dd=drawdownCfs(r,state.mi);
+    if(Math.abs(dd)>15){
+      const gd=glassDims(r.cap,1),tx=gd.a+5,ty=-gd.h*0.55;
+      gfx.append('path')
+        .attr('d',dd>0?`M${tx},${ty} l8,0 l-4,6.5 z`:`M${tx},${ty+6.5} l8,0 l-4,-6.5 z`)
+        .attr('fill',dd>0?'#00D6E6':'#5C7484').attr('opacity',.95);
+    }
     const lab=node.append('g').attr('class','lab');
     const name=r.n.replace(/ (Reservoir|Res\.|Lake)$/,'');
-    lab.append('text').attr('x',0).attr('y',12).attr('class','lbl').attr('text-anchor','middle')
+    lab.append('text').attr('x',0).attr('y',13).attr('class','lbl').attr('text-anchor','middle')
       .text(name);
-    const sub=lab.append('text').attr('x',0).attr('y',23).attr('class','pmlbl').attr('text-anchor','middle')
+    const sub=lab.append('text').attr('x',0).attr('y',24.5).attr('class','pmlbl').attr('text-anchor','middle')
       .attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'% of normal');
     LABELS.push({el:lab.node(),x:cx,y:cy,pri:r.cap,sub:sub.node(),
-      bx0:-name.length*3.1,by0:3,bx1:name.length*3.1,by1:15});
+      bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16});
     node.on('click',ev=>{if(ev.defaultPrevented)return;
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();});
     node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -382,7 +433,7 @@ function drawMap(){
    .text((state.basin==='all'?'ALL BASINS':BASINS.find(b=>b.id===state.basin).n.toUpperCase())
      +' · '+list.length+' RESERVOIRS · '+kaf(list.reduce((s,r)=>s+r.cap,0))+' KAF CAPACITY · '+MONTHS[state.mi].toUpperCase());
 
-  d3.select('#viewnote').text('Fill colour = source water · fill level = storage · bone tick = normal level · zoom in for more labels · drag to pan');
+  d3.select('#viewnote').text('River colour = its source water · dashed lines = tunnels under the Divide · fill level = storage · bone tick = normal · zoom in for more labels');
 }
 
 /* =====================================================================
@@ -393,6 +444,21 @@ function drawFlow(){
   layoutFlow();
   const g=camera;
   const dimmed=id=>state.basin!=='all'&&NODE[id]&&NODE[id].sys!==state.basin;
+
+  /* downstream reach of the selected node: everything else steps back */
+  let DOWN=null;
+  if(state.selectedNode&&NODE[state.selectedNode]){
+    DOWN=new Set([state.selectedNode]);
+    let grew=true;
+    while(grew){grew=false;G.edges.forEach(e=>{if(DOWN.has(e.f)&&!DOWN.has(e.t)){DOWN.add(e.t);grew=true;}});}
+  }
+  const offN=id=>DOWN&&!DOWN.has(id);
+  const qf=qFactor(state.mi);
+
+  g.append('rect').attr('x',0).attr('y',0).attr('width',FW).attr('height',FH)
+    .attr('fill','transparent')
+    .on('click',ev=>{if(ev.defaultPrevented)return;
+      if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;draw();renderSheet();}});
 
   const defs=g.append('defs');
   G.edges.forEach((e,i)=>{
@@ -419,6 +485,8 @@ function drawFlow(){
     const a=NODE[e.f],b=NODE[e.t];
     const y0=a.y+(e.sOff||0), y1=b.y+(e.tOff||0);
     const faded=dimmed(e.f)&&dimmed(e.t);
+    const off=DOWN&&!(DOWN.has(e.f)&&DOWN.has(e.t));
+    const op=off?.18:.92;
     if(e.dash){ /* tunnels and pumps: dashed stroked pipe, not a ribbon */
       const mx=(a.x+b.x)/2;
       layer.append('path')
@@ -426,7 +494,8 @@ function drawFlow(){
         .attr('fill','none')
         .attr('stroke',faded?'#1B3240':(state.mode==='braid'?rgb2css(blendColour(COMP[e.f])):`url(#eg${i})`))
         .attr('stroke-width',Math.min(e.W,9)).attr('stroke-linecap','round')
-        .attr('stroke-dasharray','8 7').attr('opacity',faded?.4:.85);
+        .attr('stroke-dasharray','8 7').attr('class',faded||off?null:'tunanim')
+        .attr('opacity',faded?.4:(off?.18:.85));
       return;
     }
     const S=sampleBump(a.x,y0,b.x,y1,26);
@@ -435,15 +504,27 @@ function drawFlow(){
       return;
     }
     if(state.mode==='blend'){
-      layer.append('path').attr('d',ribbonPath(S,e.W,0,1)).attr('fill',`url(#eg${i})`).attr('opacity',.92);
+      layer.append('path').attr('d',ribbonPath(S,e.W,0,1)).attr('fill',`url(#eg${i})`).attr('opacity',op);
     }else{
       const parts=sortedParts(COMP[e.f]);
       const T=parts.reduce((s,p)=>s+p[1],0)||1;
       let acc=0;
       parts.forEach(([sid,w])=>{
         const a0=acc/T, a1=(acc+w)/T; acc+=w;
-        layer.append('path').attr('d',ribbonPath(S,e.W,a0,a1)).attr('fill',NODE[sid].hue).attr('opacity',.92);
+        layer.append('path').attr('d',ribbonPath(S,e.W,a0,a1)).attr('fill',NODE[sid].hue).attr('opacity',op);
       });
+    }
+    if(!off){ /* drift dashes downstream; a release visibly speeds the march */
+      const live=NODE[e.t].gage&&state.live[NODE[e.t].gage];
+      const q=(live||e.q||1)*qf;
+      const dur=Math.max(1.2,Math.min(8,140/Math.sqrt(q+1)));
+      const mx=(a.x+b.x)/2;
+      layer.append('path')
+        .attr('d',`M${a.x} ${y0} C${mx} ${y0}, ${mx} ${y1}, ${b.x} ${y1}`)
+        .attr('fill','none').attr('stroke','#EAF6FF').attr('opacity',.16)
+        .attr('stroke-width',Math.min(3,e.W*0.25)).attr('stroke-linecap','round')
+        .attr('stroke-dasharray','10 26').attr('class','flowanim')
+        .style('animation-duration',dur.toFixed(2)+'s');
     }
   });
 
@@ -457,42 +538,59 @@ function drawFlow(){
     if(n.k==='cf'||n.k==='pt'){ /* junction capsule sized to its throughput */
       const Hn=Math.max(n.Hin||0,n.Hout||0,5);
       ng.append('rect').attr('x',n.x-3.5).attr('y',n.y-Hn/2-2).attr('width',7).attr('height',Hn+4)
-        .attr('rx',3.5).attr('fill',col).attr('stroke','#071119').attr('stroke-width',1).attr('opacity',faded?.4:.95);
+        .attr('rx',3.5).attr('fill',col).attr('stroke','#071119').attr('stroke-width',1)
+        .attr('opacity',faded?.4:(offN(n.id)?.2:.95));
       if(n.l)CSTEXT.push({el:ng.append('text').attr('x',n.x).attr('y',n.y-Hn/2-8).attr('class','lbl2')
-        .attr('text-anchor','middle').text(n.l).node(),x:n.x,y:n.y-Hn/2-8,p:0.5,minK:1.7,o:faded?.35:1});
+        .attr('text-anchor','middle').text(n.l).node(),x:n.x,y:n.y-Hn/2-8,p:0.5,minK:1.7,o:faded||offN(n.id)?.35:1});
       return;
     }
     if(n.k==='src'){
       ng.append('g').attr('transform',`translate(${n.x},${n.y})`).append('g').attr('class','gfx')
         .append('circle').attr('r',5.5)
-        .attr('fill',faded?'#2A4757':n.hue).attr('stroke','#08131B').attr('stroke-width',1.5);
+        .attr('fill',faded?'#2A4757':n.hue).attr('stroke','#08131B').attr('stroke-width',1.5)
+        .attr('opacity',offN(n.id)?.25:1);
       CSTEXT.push({el:ng.append('text').attr('x',n.x+off).attr('y',n.y+3.5).attr('class','lbl')
-        .attr('text-anchor',anchor).text(n.l).node(),x:n.x+off,y:n.y+3.5,p:0.5,o:faded?.35:1});
+        .attr('text-anchor',anchor).text(n.l).node(),x:n.x+off,y:n.y+3.5,p:0.5,o:faded||offN(n.id)?.35:1});
       return;
     }
     if(n.k==='res'){
       const r=RESBY[n.res];if(!r)return;
-      const dimRes=faded||!passesFilter(r);
-      const dims=glassDims(r.cap,0.62);
+      const dimRes=faded||!passesFilter(r)||offN(n.id);
+      const dims=glassDims(r.cap,0.8);
       const grp=ng.append('g').attr('transform',`translate(${n.x},${n.y})`)
         .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n)
         .attr('opacity',dimRes&&!faded?.45:1);
       const gfx=grp.append('g').attr('class','gfx')
         .append('g').attr('transform',`translate(0,${dims.h/2})`); /* center vessel on the node */
+      gfx.append('rect').attr('x',-dims.a-5).attr('y',-dims.h-5).attr('width',2*dims.a+10)
+        .attr('height',dims.h+10).attr('rx',4).attr('fill','#071119').attr('opacity',.78);
       if(dimRes){
         gfx.append('path').attr('d',glassPathD(dims.h,dims.a,dims.b)).attr('fill','#0D1B24')
            .attr('stroke','#2A4757').attr('stroke-width',1).attr('stroke-dasharray',r.c==='est'?'2.5 2.5':null);
       }else{
-        drawGlass(gfx,r,col,0.62);
+        drawGlass(gfx,r,col,0.8,true);
       }
-      if(state.selected===r.id)glassRing(gfx,r,0.62);
-      const smallK=dims.h<15?1.7:null;
-      CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',dims.h/2+12).attr('class','lbl')
-        .attr('text-anchor','middle').text(n.l).node(),x:0,y:dims.h/2+12,p:1,minK:smallK,o:faded?.35:1});
-      if(!dimRes)CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',dims.h/2+23).attr('class','pmlbl')
-        .attr('text-anchor','middle').attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'%').node(),
-        x:0,y:dims.h/2+23,p:1,minK:smallK||1.4});
-      grp.on('click',ev=>{if(ev.defaultPrevented)return;
+      if(state.selected===r.id)glassRing(gfx,r,0.8);
+      /* storage trend: is the glass being drawn down to feed the river? */
+      const dd=drawdownCfs(r,state.mi);
+      const ly=dims.h/2*1.25+12;
+      const lab=grp.append('g').attr('class','lab');
+      lab.append('text').attr('x',0).attr('y',ly).attr('class','lbl')
+        .attr('text-anchor','middle').text(n.l);
+      const sub=lab.append('text').attr('x',0).attr('y',ly+11.5).attr('class','pmlbl')
+        .attr('text-anchor','middle').attr('fill',ramp(pmAt(r,state.mi)))
+        .text(pmAt(r,state.mi)+'%'+(dimRes?'':(dd>15?' · drawing down ~'+fmt(dd)+' cfs':(dd<-15?' · filling ~'+fmt(-dd)+' cfs':''))));
+      if(!dimRes&&Math.abs(dd)>15){
+        const tx=dims.a+7,ty=-dims.h*0.5;
+        gfx.append('path')
+          .attr('d',dd>0?`M${tx},${ty} l9,0 l-4.5,7 z`:`M${tx},${ty+7} l9,0 l-4.5,-7 z`)
+          .attr('fill',dd>0?'#00D6E6':'#5C7484').attr('opacity',.95);
+      }
+      const nm=n.l||r.n;
+      LABELS.push({el:lab.node(),x:n.x,y:n.y,pri:r.cap,sub:sub.node(),
+        bx0:-nm.length*3.4,by0:ly-9,bx1:nm.length*3.4,by1:ly+4});
+      if(faded)lab.attr('opacity',.35);
+      grp.on('click',ev=>{if(ev.defaultPrevented)return;ev.stopPropagation();
         state.selected=r.id;state.selectedNode=n.id;draw();renderSheet();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
         state.selected=r.id;state.selectedNode=n.id;draw();renderSheet();}});
@@ -500,22 +598,28 @@ function drawFlow(){
     }
     if(n.k==='gage'){
       const live=state.live[n.gage];
-      const grp=ng.append('g').attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',n.l);
-      grp.append('g').attr('transform',`translate(${n.x},${n.y})`).append('g').attr('class','gfx')
+      const dimG=faded||offN(n.id);
+      const grp=ng.append('g').attr('transform',`translate(${n.x},${n.y})`)
+        .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',n.l)
+        .attr('opacity',dimG&&!faded?.35:1);
+      grp.append('g').attr('class','gfx')
         .append('rect').attr('x',-4.5).attr('y',-4.5).attr('width',9).attr('height',9)
         .attr('fill',col).attr('stroke','#071119').attr('stroke-width',1.4)
         .attr('transform','rotate(45)');
       if(state.selectedNode===n.id&&!state.selected)
-        grp.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',11).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.3);
-      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y-16).attr('class','lbl').attr('text-anchor','middle')
-        .text(n.l).node(),x:n.x,y:n.y-16,p:0.5,o:faded?.35:1});
+        grp.append('circle').attr('r',11).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.3);
       const edge=G.edges.find(e=>e.t===n.id);
-      const q=live!=null?live:(edge?Math.round(edge.q*qFactor(state.mi)):null);
-      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y-6).attr('class','gval').attr('text-anchor','middle')
+      const q=live!=null?live:(edge?Math.round(edge.q*qf):null);
+      const lab=grp.append('g').attr('class','lab');
+      lab.append('text').attr('x',0).attr('y',-17).attr('class','lbl').attr('text-anchor','middle').text(n.l);
+      lab.append('text').attr('x',0).attr('y',-6).attr('class','gval').attr('text-anchor','middle')
         .attr('fill',live!=null?'#00D6E6':null)
-        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live':''):'').node(),x:n.x,y:n.y-6,p:0.5,o:faded?.35:1});
-      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y+17).attr('class','gid').attr('text-anchor','middle')
-        .text('USGS '+n.gage).node(),x:n.x,y:n.y+17,p:0.5,minK:3.2});
+        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live':''):'');
+      if(faded)lab.attr('opacity',.35);
+      LABELS.push({el:lab.node(),x:n.x,y:n.y,pri:250000,
+        bx0:-n.l.length*3.4,by0:-26,bx1:n.l.length*3.4,by1:-1});
+      CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',17).attr('class','gid').attr('text-anchor','middle')
+        .text('USGS '+n.gage).node(),x:0,y:17,p:0.5,minK:3.2});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
         state.selectedNode=n.id;state.selected=null;draw();renderSheet();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -524,15 +628,16 @@ function drawFlow(){
     }
     if(n.k==='exit'){
       const dir=n.side==='w'?-1:1;
+      const dimX=faded||offN(n.id);
       const grp=ng.append('g').attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',n.l);
       grp.append('path').attr('d',`M${n.x-10*dir} ${n.y-10} L${n.x+10*dir} ${n.y} L${n.x-10*dir} ${n.y+10} Z`)
-        .attr('fill',col).attr('opacity',faded?.35:.95);
+        .attr('fill',col).attr('opacity',dimX?.3:.95);
       if(state.selectedNode===n.id&&!state.selected)
         grp.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',14).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.3);
-      grp.append('text').attr('x',n.x).attr('y',n.y-17).attr('class','xlbl').attr('text-anchor','middle')
-        .attr('opacity',faded?.35:1).text(n.l);
-      grp.append('text').attr('x',n.x).attr('y',n.y+23).attr('class','xq').attr('text-anchor','middle')
-        .attr('opacity',faded?.35:1).text(fmt(FLOWQ[n.id]*qFactor(state.mi))+' cfs leaving');
+      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y-17).attr('class','xlbl').attr('text-anchor','middle')
+        .text(n.l).node(),x:n.x,y:n.y-17,p:0.5,o:dimX?.35:1});
+      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y+23).attr('class','xq').attr('text-anchor','middle')
+        .text(fmt(FLOWQ[n.id]*qFactor(state.mi))+' cfs leaving').node(),x:n.x,y:n.y+23,p:0.5,o:dimX?.35:1});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
         state.selectedNode=n.id;state.selected=null;draw();renderSheet();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -553,8 +658,10 @@ function drawFlow(){
   g.append('text').attr('x',44,).attr('y',30).attr('class','lbl-big')
    .text('FLOW & MIXING · '+MONTHS[state.mi].toUpperCase()+' · RIBBON WIDTH = FLOW · COLOUR = SOURCE MIX');
 
-  d3.select('#viewnote').text(state.mode==='blend'
-    ?'Blend · ribbon colour is the flow-weighted mix of everything upstream · dashed = tunnel under the Divide'
+  d3.select('#viewnote').text(DOWN
+    ?'Showing where '+(NODE[state.selectedNode].l||'this water')+'’s water goes — everything off its downstream path is dimmed · click open water to clear'
+    :state.mode==='blend'
+    ?'Blend · ribbon colour is the flow-weighted mix of everything upstream · ▼ = drawing down storage · dashed = tunnel under the Divide'
     :'Braid · each ribbon splits into its true source shares — widths are the arithmetic · dashed = tunnel under the Divide');
 }
 
@@ -585,8 +692,10 @@ function renderSheet(){
         <tr><td class="lab">Flow (${MONTHS[mi]})</td><td>${fmt((live||FLOWQ[state.selectedNode])*(live?1:qFactor(mi)))} cfs${live?' · live':''}</td></tr>
         <tr><td class="lab">Headwaters upstream</td><td>${sortedParts(COMP[state.selectedNode]).length}</td></tr>
       </table>
+      ${n.gage?'<div class="hydro" id="hydrobox"></div>':''}
       ${compBlockHTML(state.selectedNode,'What this water is')}
       <div class="prov"><b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
+    if(n.gage&&window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'gage',site:n.gage,label:n.l});
     return;
   }
   if(!state.selected){
@@ -622,7 +731,14 @@ function renderSheet(){
       <tr><td class="lab">Percent of normal</td><td style="color:${ramp(pm)}">${pm}%</td></tr>
       ${deficit>0?`<tr><td class="lab">Below normal by</td><td>${fmt(deficit)} AF</td></tr>`:''}
       <tr><td class="lab">Reading</td><td>${past?'basin-scaled':(lv?lv.asOf+' · live':(r.d||'1 Jun 2026 basin'))}</td></tr>
+      ${(()=>{
+        const dd=drawdownCfs(r,mi);
+        if(dd>15)return `<tr><td class="lab">Storage trend</td><td style="color:#8a3a1d">drawing down ~${fmt(dd)} cfs</td></tr>`;
+        if(dd<-15)return `<tr><td class="lab">Storage trend</td><td style="color:#1d5c4a">filling ~${fmt(-dd)} cfs</td></tr>`;
+        return '';
+      })()}
     </table>
+    <div class="hydro" id="hydrobox"></div>
     ${nid?compBlockHTML(nid,'Water arriving here'):''}
     <div class="prov">${past
       ? `<b>Timeline mode</b> — storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
@@ -631,6 +747,7 @@ function renderSheet(){
       : r.c==='obs'
         ? `<b>Source</b> ${r.s}. Storage as published for ${r.d}. Percent of normal compares to the NRCS 1991–2020 median for this calendar day.`
         : `<b>Estimate</b> No same-day public reading was available; scaled to the basin's reported percent of median (NRCS, 1 June 2026).`}</div>`;
+  if(window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'res',r});
 }
 
 /* =====================================================================
