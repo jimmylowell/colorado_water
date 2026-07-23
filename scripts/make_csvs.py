@@ -11,21 +11,23 @@ import csv, json, pathlib, shutil, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DATA_JS = ROOT / 'js' / 'data.js'
+NORMALS_JS = ROOT / 'js' / 'normals.js'  # defines PMH_DERIVED etc. that data.js builds PMH from
 OUT = ROOT / 'data'
 
 EXTRACT = "return JSON.stringify({RES:RES,PMH:PMH,MONTHS:MONTHS,FLOWPCT:FLOWPCT,G:G,BASINS:BASINS});"
 
 
 def eval_data_js():
-    src = DATA_JS.read_text()
+    # normals.js MUST load first: data.js's runtime PMH is seeded from PMH_DERIVED
+    # (defined there); without it PMH silently falls back and the CSV would not
+    # match the site.
+    src = NORMALS_JS.read_text() + "\n" + DATA_JS.read_text()
     if shutil.which('node'):
         out = subprocess.run(
             ['node', '-e', f'const f=new Function({json.dumps(src + ";" + EXTRACT)});process.stdout.write(f())'],
             capture_output=True, text=True, check=True).stdout
     else:
-        jxa = (f'ObjC.import("Foundation");'
-               f'var s=ObjC.unwrap($.NSString.stringWithContentsOfFileEncodingError({json.dumps(str(DATA_JS))},$.NSUTF8StringEncoding,null));'
-               f'(new Function(s+";"+{json.dumps(EXTRACT)}))()')
+        jxa = (f'(new Function({json.dumps(src + ";" + EXTRACT)}))()')
         out = subprocess.run(['osascript', '-l', 'JavaScript', '-e', jxa],
                              capture_output=True, text=True, check=True).stdout
     return json.loads(out)

@@ -83,7 +83,13 @@ const RESHUE_FALLBACK={shadow:H.blue,willow:H.blue,wolford:H.blue,riflegap:H.blu
    interpolated; July carries the June reading forward.
    ===================================================================== */
 const MONTHS=['Oct 2025','Nov 2025','Dec 2025','Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026'];
-const PMH={
+const NOW=9;
+/* Monthly basin storage % of the 1991–2020 median, Oct→Jul.
+   The real, derived series is PMH_DERIVED in js/normals.js (built by
+   scripts/build_normals.py from CDSS daily history). It carries null for any
+   basin with no live-telemetered reservoir (yampa: Steamboat Lake stopped
+   reporting in 2022), so we fall back to this hand-anchored series there. */
+const PMH_FALLBACK={
  colorado:[91,90,88,88,89,91,93,84,80,80],
  gunnison:[90,86,79,78,77,76,75,72,70,70],
  yampa:  [92,89,85,84,83,82,81,80,78,78],
@@ -92,23 +98,45 @@ const PMH={
  arkansas:[100,100,100,100,100,99,100,96,91,91],
  platte: [98,99,100,100,99,100,93,92,90,90]
 };
+const PMH=(function(){
+ const out={};
+ for(const b in PMH_FALLBACK){
+  const d=(typeof PMH_DERIVED!=='undefined')&&PMH_DERIVED[b];
+  out[b]=(d&&d.length===PMH_FALLBACK[b].length&&d.every(v=>v!=null))
+    ? d.map(v=>Math.round(v)) : PMH_FALLBACK[b].slice();
+ }
+ return out;
+})();
 /* Statewide streamflow % of normal by month — note the record-early March
-   melt spike. Illustrative series anchored to NRCS/USGS statements. */
+   melt spike. Illustrative reconstruction anchored to NRCS/USGS statements;
+   the LIVE streamflow % (current ÷ baked GAGE_NORMALS median) is derived in
+   js/live.js. Kept here for the timeline animation (qFactor). */
 const FLOWPCT=[55,50,48,45,46,135,70,55,34,44];
-const NOW=9;
 /* LIVE_STO is filled by live.js with {sto, asOf} per reservoir id when a
    fresh DWR telemetry reading arrives; the snapshot stands otherwise.
    LIVE_DELTA holds the week's storage trend as cfs (+ = drawing down). */
 const LIVE_STO={};
 const LIVE_DELTA={};
 function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][NOW]:1); }
+/* week-of-year index 0..51, matching the baked weekly medians in normals.js */
+function weekIdx(d){ d=d||new Date();
+  const day=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
+  return Math.max(0,Math.min(51,Math.floor((day-1)/7))); }
+/* this-week baked median storage (AF) for a reservoir, or null if none baked */
+function resMedianNow(r){
+  const s=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+  return s?s[weekIdx()]:null;
+}
 function stoAt(r,mi){
   if(mi===NOW&&LIVE_STO[r.id])return Math.min(r.cap*1.05,LIVE_STO[r.id].sto);
   return Math.min(r.cap*1.02, r.sto*pmFactor(r.b,mi));
 }
 function pmAt(r,mi){
-  if(mi===NOW&&LIVE_STO[r.id]&&r.pm>0&&r.sto>0)
-    return Math.round(LIVE_STO[r.id].sto/(r.sto/(r.pm/100))*100);
+  if(mi===NOW&&LIVE_STO[r.id]){
+    const med=resMedianNow(r);
+    if(med>0)return Math.round(LIVE_STO[r.id].sto/med*100);      /* derived: live ÷ real median */
+    if(r.pm>0&&r.sto>0)return Math.round(LIVE_STO[r.id].sto/(r.sto/(r.pm/100))*100);
+  }
   return Math.round(r.pm*pmFactor(r.b,mi));
 }
 function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[NOW]; }
