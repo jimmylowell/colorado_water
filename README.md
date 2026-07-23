@@ -7,17 +7,21 @@ area so the level is honest), rivers as source-coloured ribbons, and the
 transmountain tunnels that move West Slope water to the Front Range as dashed
 crossings of the Continental Divide.
 
-Enter a ZIP code (or link to one, e.g. `/#80302`) to light up the reservoirs
-and tunnels behind that ZIP's tap — a simplified provider map (`TAPS` in
-`js/data.js`) covering Colorado's populated areas by ZIP prefix.
+The front door is a clean, click-through **story** (`index.html`): enter your
+ZIP (or pick a city) → a blurb on the basin you live in → where your water
+actually comes from, with the transmountain reveal → **Explore** into the live
+map. Provider/basin data is `TAPS` (+ `hb` home basin) and `BASININFO` in
+`js/data.js`. A shareable `/#80302` opens the story on that ZIP.
 
 Navigable map state lives in the URL hash (`#r=<reservoir>`, `#n=<gage/node>`,
 `#zip=<zip>`, `#view=flow`, `#basin=<id>`), so the browser Back button walks
-selections and every view is a shareable link.
+selections and every view is a shareable link. Legacy/map deep-links opened on
+the root auto-redirect from the story to `map.html`.
 
 **Pages**
 
-- `index.html` — the map and the flow-and-mixing diagram, with sparkline
+- `index.html` — the story front door (ZIP/city → basin → source → Explore)
+- `map.html` — the interactive map and flow-and-mixing diagram, with sparkline
   headline stats
 - `timeline.html` — scrub/play water year 2026 and watch the drawdown
 - `data.html` — the full dataset as downloadable CSVs, with sources

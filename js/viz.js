@@ -7,20 +7,7 @@ const RESNODE={}; G.nodes.forEach(n=>{if(n.k==='res')RESNODE[n.res]=n.id;});
    ===================================================================== */
 const fmt=n=>Math.round(n).toLocaleString('en-US');
 const kaf=n=>(n/1000).toFixed(n<10000?1:0);
-function hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
-function rgb2css(c){return 'rgb('+c.map(v=>Math.round(Math.max(0,Math.min(255,v)))).join(',')+')';}
-const RAMPS=[[0,'#B4321E'],[55,'#D9552C'],[75,'#D99A3C'],[90,'#C9C08A'],[100,'#4FD6A0'],[112,'#35C2E8']];
-function ramp(p){
-  if(p<=RAMPS[0][0])return RAMPS[0][1];
-  for(let i=1;i<RAMPS.length;i++){
-    if(p<=RAMPS[i][0]){
-      const[p0,c0]=RAMPS[i-1],[p1,c1]=RAMPS[i],t=(p-p0)/(p1-p0);
-      const a=hex2rgb(c0),b=hex2rgb(c1);
-      return rgb2css([0,1,2].map(j=>a[j]+(b[j]-a[j])*t));
-    }
-  }
-  return RAMPS[RAMPS.length-1][1];
-}
+/* hex2rgb, rgb2css, RAMPS, ramp — relocated to js/data.js (shared with story.js) */
 const GEO={n:41.0,s:37.0,w:-109.05,e:-102.05};
 const PAD={l:56,r:56,t:64,b:64};
 const IW=MAPW-PAD.l-PAD.r, IH=MAPH-PAD.t-PAD.b;
@@ -835,16 +822,7 @@ function statSeries(kind){
   }
   return null;
 }
-const SPARKCOL={low:'#FF7A45',mid:'#EFD01B',ok:'#2FD94F'};
-function sparkSVG(series,color){
-  const w=100,h=20,mn=Math.min(...series),mx=Math.max(...series),rng=(mx-mn)||1;
-  const X=i=>i/(series.length-1)*w, Y=v=>h-2-((v-mn)/rng)*(h-4);
-  const d=series.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join('');
-  const lx=X(series.length-1).toFixed(1),ly=Y(series[series.length-1]).toFixed(1);
-  return `<svg class="sparksvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">`
-    +`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`
-    +`<circle cx="${lx}" cy="${ly}" r="1.7" fill="${color}"/></svg>`;
-}
+/* SPARKCOL, sparkSVG — relocated to js/data.js (shared with story.js) */
 function renderStrip(){
   const el=document.getElementById('strip');if(!el)return;
   el.innerHTML=STATEWIDE.map(s=>{
@@ -989,13 +967,7 @@ window.addEventListener('popstate',restoreFromHash);
 /* =====================================================================
    YOUR TAP — ZIP lookup: longest matching prefix in TAPS wins
    ===================================================================== */
-function zipLookup(zip){
-  let best=null,bestLen=0;
-  TAPS.forEach(t=>t.zips.forEach(p=>{
-    if(zip.startsWith(p)&&p.length>bestLen){best=t;bestLen=p.length;}
-  }));
-  return best;
-}
+/* zipLookup — relocated to js/data.js (shared with story.js) */
 function zipMsg(txt){const el=document.getElementById('zipmsg');if(el)el.textContent=txt;}
 function frameTap(t){
   const pts=(t.res||[]).concat(t.fcres||[]).map(id=>RESBY[id]).filter(Boolean)

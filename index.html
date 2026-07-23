@@ -3,8 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Colorado Water — where it sits, where it combines</title>
-<meta name="description" content="An interactive map of Colorado's reservoirs and rivers — where the water sits, where it combines, and how the 2026 drought is drawing it down.">
+<title>Colorado Water — where does your water come from?</title>
+<meta name="description" content="Enter your ZIP and trace your tap back to its river, its reservoir, and the tunnel it crosses under the Continental Divide — a drought-awareness story for Colorado.">
+<script>
+/* Legacy/shared map deep-links (#r=, #n=, #view=, #basin=, #m=) belong to the
+   map, which now lives at map.html. Forward them before anything renders.
+   A pure ZIP hash (#zip=… or #80302) stays and opens the story on that place. */
+(function(){var h=location.hash.replace(/^#/,'');if(/(^|&)(r|n|view|basin|m)=/.test(h))location.replace('map.html'+location.hash);})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,114 +21,59 @@
 
   <nav class="nav" aria-label="Site">
     <a class="brand" href="index.html">Colorado Water</a>
-    <a href="index.html" aria-current="page">Map</a>
+    <a href="map.html">Map</a>
     <a href="timeline.html">Timeline</a>
     <a href="data.html">Data</a>
     <a href="about.html">About</a>
   </nav>
 
-  <header class="masthead">
-    <div>
-      <p class="eyebrow">Colorado surface water · water year 2026</p>
-      <h1>Where the water sits,<br>and where it <em>combines</em></h1>
-      <p class="standfirst">Reservoirs drawn as glasses of water, rivers as ribbons of colour, and the Continental Divide down the middle. A reservoir wears the colour of the water that fills it; the level in the glass is the reading. Enter your ZIP to trace your own tap, or <a href="timeline.html">watch the 2026 drought arrive over the water year</a>.</p>
-    </div>
-    <div class="asof">
-      <div>reading as of <b>22 Jul 2026</b></div>
-      <div>storage <b>KAF</b> · flow <b>cfs</b></div>
-      <div>normals <b>NRCS 1991–2020</b></div>
-    </div>
-  </header>
+  <main class="story-stage" id="story">
 
-  <section class="strip" id="strip"></section>
-
-  <div class="zipbar">
-    <label for="zip">Where does <em>your</em> water come from?</label>
-    <input id="zip" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="ZIP code" aria-label="ZIP code">
-    <button id="zipgo">Show me</button>
-    <button id="zipclear" style="display:none" aria-label="Clear ZIP">clear ✕</button>
-    <span id="zipmsg" aria-live="polite"></span>
-  </div>
-
-  <div class="controls">
-    <div class="seg" role="group" aria-label="View">
-      <button id="btn-map" aria-pressed="true">Geographic</button>
-      <button id="btn-flow" aria-pressed="false">Flow &amp; mixing</button>
-    </div>
-    <div id="modewrap" style="display:none;align-items:center;gap:10px">
-      <span class="seglab">Colour</span>
-      <div class="seg" role="group" aria-label="Colour mode">
-        <button id="btn-blend" aria-pressed="true">Blend</button>
-        <button id="btn-braid" aria-pressed="false">Braid</button>
+    <section class="story-step is-active" id="step-entry" aria-label="Start">
+      <div class="story-hero">
+        <p class="eyebrow">Colorado water · a drought story</p>
+        <h1>Where does <em>your</em> water come from?</h1>
+        <p class="lede">The tap just runs, so most of us never ask. But every drop has a source — a river, a reservoir, and often a tunnel bored clear under the Continental Divide. In a drought year, knowing that source is the difference between a headline and your own backyard. Start with your ZIP code.</p>
+        <div class="zip-entry">
+          <input id="zip" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="ZIP code" aria-label="ZIP code" autocomplete="postal-code">
+          <button id="zipgo">Show me</button>
+        </div>
+        <div class="zipmsg" id="zipmsg" aria-live="polite"></div>
+        <p class="orpick">or pick a city</p>
+        <div class="citychips" id="citychips"></div>
+        <a class="skiplink" href="map.html">skip straight to the map →</a>
       </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <span class="seglab">Show</span>
-      <div class="seg" role="group" aria-label="Size filter">
-        <button data-cap="0" class="capbtn" aria-pressed="true">All</button>
-        <button data-cap="25000" class="capbtn" aria-pressed="false">≥25 KAF</button>
-        <button data-cap="100000" class="capbtn" aria-pressed="false">≥100 KAF</button>
+    </section>
+
+    <section class="story-step" id="step-basin" aria-label="Your basin">
+      <div class="story-top">
+        <button class="story-back" data-to="entry">← start over</button>
+        <div class="progress-rail"><span class="dot on"></span><span class="dot"></span></div>
       </div>
-      <button class="chip" id="btn-meas" aria-pressed="false">Measured only</button>
-    </div>
-    <div class="chips" id="chips"></div>
-  </div>
+      <div class="story-body" id="basin-body"></div>
+      <button class="story-cta" id="to-source">Where it actually comes from →</button>
+    </section>
 
-  <div class="stage">
-    <div class="chart" id="chartbox">
-      <svg id="viz" data-z="1"></svg>
-      <div class="zoomctl" role="group" aria-label="Zoom">
-        <button id="z-in" aria-label="Zoom in">+</button>
-        <button id="z-out" aria-label="Zoom out">−</button>
-        <button id="z-rst" aria-label="Reset view" style="font-size:11px">⌂</button>
+    <section class="story-step" id="step-source" aria-label="Your water source">
+      <div class="story-top">
+        <button class="story-back" data-to="basin">← your basin</button>
+        <div class="progress-rail"><span class="dot"></span><span class="dot on"></span></div>
       </div>
-      <div class="viewnote" id="viewnote"></div>
-    </div>
-    <aside class="sheet" id="sheet"></aside>
-  </div>
+      <div class="story-body" id="source-body"></div>
+      <a class="story-cta" id="to-map" href="map.html">Explore the live map →</a>
+    </section>
 
-  <div class="below">
-    <div class="card">
-      <h3>How to read it</h3>
-      <div class="keyrow"><svg width="26" height="18"><path d="M5,1 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L21,1 Z" fill="#0A1620" stroke="#54798C" stroke-width="1.2"/><path d="M7.7,8 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L18.3,8 Z" fill="#2F6BFF"/></svg><span><b style="color:var(--bone)">Solid glass</b> — a measured, dated reading</span></div>
-      <div class="keyrow"><svg width="26" height="18"><path d="M5,1 L10,14 Q10,16 12,16 L14,16 Q16,16 16,14 L21,1 Z" fill="#0A1620" stroke="#3A5A6B" stroke-width="1" stroke-dasharray="2.5 2.5"/></svg><span><b style="color:var(--bone)">Dashed glass</b> — estimated from its basin's % of median</span></div>
-      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#EDE6D6" stroke-width="2"/></svg><span><b style="color:var(--bone)">Bone tick</b> — where the level normally sits today</span></div>
-      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed line</b> — a tunnel carrying water under the Divide</span></div>
-      <div class="keyrow"><svg width="26" height="18"><path d="M8,6 l10,0 l-5,8 z" fill="#00D6E6"/></svg><span><b style="color:var(--bone)">▼ marker</b> — the glass is being drawn down to feed the river</span></div>
-      <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity — wide at the rim, narrow at the base, the way a canyon reservoir actually holds water. Fill colour is the water's source; the level is filled by <em>area</em>, so a half-full glass really is half-full. The % figure under each glass is condition against the 1991–2020 median.</p>
-    </div>
-
-    <div class="card">
-      <h3>The seven colours</h3>
-      <div id="huekey"></div>
-      <p style="margin-top:12px">Colours repeat only between rivers that can never mix, so within any one river every colour is unique and a blend is always traceable. Map rivers wear the same hues — mainstems fade toward the blend of everything they've collected. <b style="color:var(--bone)">Braid</b> mode on the flow view splits every ribbon into its true source shares.</p>
-    </div>
-
-    <div class="card">
-      <h3>Data &amp; live readings</h3>
-      <ul class="src">
-        <li><b>Colorado DWR telemetry (CDSS)</b> dwr.state.co.us · live storage for 27 reservoirs, fetched on load</li>
-        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · live discharge at 18 gages, fetched on load</li>
-        <li><b>Denver Water · USBR · Northern Water</b> published storage in the baseline snapshot</li>
-        <li><b>NRCS Water Supply Outlook</b> monthly basin % of 1991–2020 median — the timeline's backbone</li>
-      </ul>
-      <button class="livebtn" id="live">Refresh live readings</button>
-      <div class="livestat" id="livestat">Live readings load automatically; the snapshot stands in wherever they can't.</div>
-      <p style="margin-top:12px">Want the numbers themselves? The full dataset is on the <a href="data.html" style="color:var(--aqua)">data page</a> as downloadable CSVs.</p>
-    </div>
-  </div>
+  </main>
 
   <footer class="foot">
     An educational project on drought — knowing where your water actually comes from ·
-    <a href="about.html">the story &amp; methods</a> · <a href="data.html">raw data (CSV)</a><br>
+    <a href="map.html">the live map</a> · <a href="about.html">the story &amp; methods</a><br>
     Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
   </footer>
 </div>
 
-<script src="js/vendor/d3.v7.min.js"></script>
 <script src="js/data.js"></script>
-<script src="js/viz.js"></script>
 <script src="js/live.js"></script>
-<script src="js/hydro.js"></script>
+<script src="js/story.js"></script>
 </body>
 </html>
