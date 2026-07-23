@@ -92,7 +92,60 @@ function passesFilter(r){
   if(state.measOnly&&r.c!=='obs')return false;
   return true;
 }
-function radiusFor(cap){return Math.max(5.5,Math.min(30,Math.sqrt(cap)/26));}
+/* ---- the glass ----
+   Reservoirs are drawn as tapered vessels — wide rim, narrow base — the
+   cross-section of a canyon reservoir. Vessel area encodes capacity, and
+   the fill level is solved so the filled AREA (not height) is the stored
+   fraction: a reservoir holds less water per foot at depth, and the
+   glass says so. Base center sits on the geographic point. */
+function glassDims(cap,S){
+  const h=Math.max(12,Math.min(48,Math.sqrt(cap)/16))*(S||1);
+  return{h,a:h*0.52,b:h*0.28};
+}
+function glassPathD(h,a,b){
+  const r=Math.min(3,b*0.6);
+  return `M${-a},${-h} L${-b},${-r} Q${-b},0 ${-b+r},0 L${b-r},0 Q${b},0 ${b},${-r} L${a},${-h} Z`;
+}
+/* level y (up from base) at which filled trapezoid area = f × total area */
+function fillLevel(f,h,a,b){
+  if(f<=0)return 0;
+  const f1=Math.min(f,1);
+  let y=h*(Math.sqrt(b*b+(a*a-b*b)*f1)-b)/(a-b);
+  if(f>1)y+=(f-1)*(a+b)*h/(2*a);
+  return y;
+}
+let GID=0;
+function drawGlass(grp,r,color,S){
+  const {h,a,b}=glassDims(r.cap,S), est=r.c==='est';
+  grp.append('rect').attr('x',-a-5).attr('y',-h-6).attr('width',2*a+10).attr('height',h+18)
+     .attr('fill','transparent');
+  const d=glassPathD(h,a,b);
+  grp.append('path').attr('d',d).attr('fill','#0A1620')
+     .attr('stroke',est?'#3A5A6B':'#54798C').attr('stroke-width',est?1:1.3)
+     .attr('stroke-dasharray',est?'2.5 2.5':null);
+  const cid='c'+r.id+(GID++);
+  grp.append('clipPath').attr('id',cid).append('path').attr('d',d);
+  const y=Math.min(h,fillLevel(stoAt(r,state.mi)/r.cap,h,a,b));
+  if(y>0.3){
+    grp.append('rect').attr('x',-a).attr('y',-y).attr('width',2*a).attr('height',y)
+       .attr('fill',color).attr('opacity',.92).attr('clip-path',`url(#${cid})`);
+    grp.append('line').attr('x1',-a).attr('x2',a).attr('y1',-y).attr('y2',-y)
+       .attr('stroke','#071119').attr('stroke-width',.8).attr('opacity',.6).attr('clip-path',`url(#${cid})`);
+  }
+  const med=medianFullPct(r,state.mi)/100;
+  if(med>0){
+    const ym=fillLevel(med,h,a,b);
+    const wm=b+(a-b)*Math.min(ym/h,1);
+    grp.append('line').attr('x1',-wm-3).attr('x2',wm+3).attr('y1',-ym).attr('y2',-ym)
+       .attr('stroke','#EDE6D6').attr('stroke-width',1.4).attr('opacity',.9);
+  }
+  return {h,a,b};
+}
+function glassRing(grp,r,S){
+  const {h,a,b}=glassDims(r.cap,S);
+  grp.append('path').attr('d',glassPathD(h+7,a+5,b+5)).attr('transform','translate(0,3.5)')
+     .attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.4);
+}
 function medianFullPct(r,mi){
   const pm=pmAt(r,mi),sto=stoAt(r,mi);
   if(!pm)return 0;
@@ -105,12 +158,49 @@ function medianFullPct(r,mi){
    ===================================================================== */
 const svg=d3.select('#viz');
 const camera=svg.append('g').attr('class','camera');
-const zoom=d3.zoom().scaleExtent([1,14])
-  .on('zoom',ev=>{
-    camera.attr('transform',ev.transform);
-    const k=ev.transform.k;
-    svg.attr('data-z', k>=3.2?'3':(k>=1.7?'2':'1'));
+
+/* ---- semantic zoom ----
+   Geometry lives in the camera transform; labels counter-scale so text
+   stays a constant screen size, and more of them surface as k grows.
+   LABELS: anchored label groups, revealed by priority and culled on
+   screen-space collision, biggest reservoirs first.
+   CSTEXT: loose texts (rivers, flow view) scaled about their own anchor. */
+let LABELS=[],CSTEXT=[],curT=d3.zoomIdentity,lastPass=0;
+const thrCap=k=>k>=3?0:60000*Math.pow((3-k)/2,2);
+const thrSub=k=>k>=4.2?0:60000*Math.pow((4.2-k)/3.2,2);
+function applyZoom(){
+  const k=curT.k, sg=Math.pow(k,-0.65);
+  camera.selectAll('g.gfx').attr('transform',`scale(${sg})`);
+  camera.selectAll('g.lab').attr('transform',`scale(${1/k})`);
+  camera.selectAll('.zw').attr('stroke-width',function(){return this.dataset.bw*Math.pow(k,-0.7);});
+  CSTEXT.forEach(t=>{
+    const s=Math.pow(k,-t.p);
+    t.el.setAttribute('transform',(t.rot?`rotate(${t.rot} ${t.x} ${t.y}) `:'')
+      +`translate(${t.x*(1-s)},${t.y*(1-s)}) scale(${s})`);
+    if(t.minK!=null||t.o!=null)
+      t.el.style.opacity=(t.minK!=null&&k<t.minK)?0:(t.o==null?1:t.o);
   });
+  const now=performance.now();
+  if(now-lastPass>120){lastPass=now;labelPass();}
+}
+function labelPass(){
+  const k=curT.k,placed=[],tN=thrCap(k),tS=thrSub(k);
+  LABELS.slice().sort((a,b)=>b.pri-a.pri).forEach(L=>{
+    let vis=L.minK?k>=L.minK:L.pri>=tN;
+    const sub=!!L.sub&&L.pri>=tS;
+    if(vis){
+      const sx=curT.applyX(L.x),sy=curT.applyY(L.y);
+      const box=[sx+L.bx0,sy+L.by0,sx+L.bx1,sy+L.by1+(sub?12:0)];
+      if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1]))vis=false;
+      else placed.push(box);
+    }
+    L.el.style.opacity=vis?1:0;
+    if(L.sub)L.sub.style.display=sub?null:'none';
+  });
+}
+const zoom=d3.zoom().scaleExtent([1,14])
+  .on('zoom',ev=>{curT=ev.transform;camera.attr('transform',curT);applyZoom();})
+  .on('end',()=>{lastPass=0;labelPass();});
 svg.call(zoom).on('dblclick.zoom',null);
 function viewDims(){return state.view==='map'?[MAPW,MAPH]:[FW,FH];}
 function setViewBox(){const[w,h]=viewDims();svg.attr('viewBox',`0 0 ${w} ${h}`);
@@ -215,65 +305,76 @@ function drawMap(){
 
   const ig=g.append('g');
   INTERSTATES.forEach(hw=>{
-    ig.append('path').attr('d',geoLine(hw.p)).attr('fill','none').attr('stroke','#3A3F46').attr('stroke-width',3.2).attr('stroke-linecap','round').attr('opacity',.9);
-    ig.append('path').attr('d',geoLine(hw.p)).attr('fill','none').attr('stroke','#8C8577').attr('stroke-width',1.1).attr('stroke-dasharray','7 5').attr('opacity',.75);
+    ig.append('path').attr('d',geoLine(hw.p)).attr('fill','none').attr('stroke','#3A3F46').attr('class','zw').attr('data-bw',3.2).attr('stroke-width',3.2).attr('stroke-linecap','round').attr('opacity',.9);
+    ig.append('path').attr('d',geoLine(hw.p)).attr('fill','none').attr('stroke','#8C8577').attr('class','zw').attr('data-bw',1.1).attr('stroke-width',1.1).attr('stroke-dasharray','7 5').attr('opacity',.75);
     hw.shields.forEach(s=>{
-      const sx=px(s[0]),sy=py(s[1]);
-      ig.append('rect').attr('x',sx-12).attr('y',sy-7).attr('width',24).attr('height',14).attr('rx',3).attr('fill','#8C8577').attr('stroke','#0A1721');
-      ig.append('text').attr('x',sx).attr('y',sy+3).attr('class','ilbl').attr('text-anchor','middle').text(hw.n);
+      const gfx=ig.append('g').attr('transform',`translate(${px(s[0])},${py(s[1])})`)
+        .append('g').attr('class','gfx');
+      gfx.append('rect').attr('x',-12).attr('y',-7).attr('width',24).attr('height',14).attr('rx',3).attr('fill','#8C8577').attr('stroke','#0A1721');
+      gfx.append('text').attr('x',0).attr('y',3).attr('class','ilbl').attr('text-anchor','middle').text(hw.n);
     });
   });
 
   g.append('path').attr('d',geoLine(DIVIDE)).attr('fill','none').attr('stroke','#4E6E80')
-   .attr('stroke-width',1.4).attr('stroke-dasharray','1 5').attr('stroke-linecap','round').attr('opacity',.9);
+   .attr('class','zw').attr('data-bw',1.4).attr('stroke-width',1.4).attr('stroke-dasharray','1 5').attr('stroke-linecap','round').attr('opacity',.9);
   g.append('text').attr('x',px(-106.9)).attr('y',py(38.05)).attr('class','lbl-big')
    .attr('transform',`rotate(-72 ${px(-106.9)} ${py(38.05)})`).text('CONTINENTAL DIVIDE');
 
   const rl=g.append('g').attr('class','riverlayer').style('mix-blend-mode','screen');
   RIVERS.forEach(rv=>{
     const on=state.basin==='all'||rv.b===state.basin;
+    const w=rv.w*(on?1.6:1);
     rl.append('path').attr('d',geoLine(rv.p)).attr('fill','none')
-      .attr('stroke',on?'#2E7E96':'#1A2E39').attr('stroke-width',rv.w*(on?1.6:1))
+      .attr('stroke',on?'#2E7E96':'#1A2E39').attr('class','zw').attr('data-bw',w).attr('stroke-width',w)
       .attr('stroke-linecap','round').attr('opacity',on?.95:.3)
       .attr('filter',on?'url(#glow)':null);
   });
 
   const rlab=g.append('g');
   RIVERS.forEach(rv=>{
-    if(rv.w<1.5||!(state.basin==='all'||rv.b===state.basin))return;
+    if(!(state.basin==='all'||rv.b===state.basin))return;
     const i=Math.floor(rv.p.length/2),mid=rv.p[i];
     const a=rv.p[Math.max(0,i-1)],b=rv.p[Math.min(rv.p.length-1,i+1)];
-    const ang=Math.atan2(py(b[0])-py(a[0]),px(b[1])-px(a[1]))*180/Math.PI;
-    rlab.append('text').attr('x',px(mid[1])).attr('y',py(mid[0])-7)
-      .attr('class','lbl-riv '+(rv.w>=2?'':'t2')).attr('text-anchor','middle')
-      .attr('transform',`rotate(${Math.max(-42,Math.min(42,ang))} ${px(mid[1])} ${py(mid[0])-7})`)
-      .text(rv.n);
+    const ang=Math.max(-42,Math.min(42,Math.atan2(py(b[0])-py(a[0]),px(b[1])-px(a[1]))*180/Math.PI));
+    const X=px(mid[1]),Y=py(mid[0])-7;
+    const el=rlab.append('text').attr('x',X).attr('y',Y)
+      .attr('class','lbl-riv').attr('text-anchor','middle').text(rv.n);
+    CSTEXT.push({el:el.node(),x:X,y:Y,rot:ang,p:0.8,
+      minK:rv.w>=2?0.1:(rv.w>=1.3?1.6:3)});
   });
 
   const cg=g.append('g');
   CITIES.forEach(c=>{
-    cg.append('rect').attr('x',px(c.lon)-1.6).attr('y',py(c.lat)-1.6).attr('width',3.2).attr('height',3.2).attr('fill','#5C7484');
-    cg.append('text').attr('x',px(c.lon)+6).attr('y',py(c.lat)+3).attr('class','lbl2 t2').text(c.n);
+    const node=cg.append('g').attr('transform',`translate(${px(c.lon)},${py(c.lat)})`);
+    node.append('g').attr('class','gfx')
+      .append('rect').attr('x',-1.6).attr('y',-1.6).attr('width',3.2).attr('height',3.2).attr('fill','#5C7484');
+    const lab=node.append('g').attr('class','lab');
+    lab.append('text').attr('x',6).attr('y',3).attr('class','lbl2').text(c.n);
+    LABELS.push({el:lab.node(),x:px(c.lon),y:py(c.lat),pri:90000,minK:1.6,
+      bx0:4,by0:-7,bx1:8+c.n.length*6.2,by1:7});
   });
 
   const list=RES.filter(r=>(state.basin==='all'||r.b===state.basin)&&passesFilter(r))
     .slice().sort((a,b)=>b.cap-a.cap);
   const rg=g.append('g');
   list.forEach(r=>{
-    const cx=px(r.lon),cy=py(r.lat),rad=radiusFor(r.cap);
-    const grp=rg.append('g').attr('class','node-hit').attr('tabindex',0).attr('role','button')
-      .attr('aria-label',r.n);
-    drawGlyph(grp,rad,cx,cy,r,resColour(r.id));
-    if(state.selected===r.id)
-      grp.append('circle').attr('cx',cx).attr('cy',cy).attr('r',rad+5).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.4);
-    const tier=r.cap>=60000?'':'t2';
-    grp.append('text').attr('x',cx).attr('y',cy+rad+12).attr('class','lbl '+tier).attr('text-anchor','middle')
-      .text(r.n.replace(/ (Reservoir|Res\.|Lake)$/,''));
-    grp.append('text').attr('x',cx).attr('y',cy+rad+23).attr('class','pmlbl '+tier).attr('text-anchor','middle')
+    const cx=px(r.lon),cy=py(r.lat);
+    const node=rg.append('g').attr('transform',`translate(${cx},${cy})`)
+      .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n);
+    const gfx=node.append('g').attr('class','gfx');
+    drawGlass(gfx,r,resColour(r.id),1);
+    if(state.selected===r.id)glassRing(gfx,r,1);
+    const lab=node.append('g').attr('class','lab');
+    const name=r.n.replace(/ (Reservoir|Res\.|Lake)$/,'');
+    lab.append('text').attr('x',0).attr('y',12).attr('class','lbl').attr('text-anchor','middle')
+      .text(name);
+    const sub=lab.append('text').attr('x',0).attr('y',23).attr('class','pmlbl').attr('text-anchor','middle')
       .attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'% of normal');
-    grp.on('click',ev=>{if(ev.defaultPrevented)return;
+    LABELS.push({el:lab.node(),x:cx,y:cy,pri:r.cap,sub:sub.node(),
+      bx0:-name.length*3.1,by0:3,bx1:name.length*3.1,by1:15});
+    node.on('click',ev=>{if(ev.defaultPrevented)return;
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();});
-    grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
+    node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();}});
   });
 
@@ -281,30 +382,7 @@ function drawMap(){
    .text((state.basin==='all'?'ALL BASINS':BASINS.find(b=>b.id===state.basin).n.toUpperCase())
      +' · '+list.length+' RESERVOIRS · '+kaf(list.reduce((s,r)=>s+r.cap,0))+' KAF CAPACITY · '+MONTHS[state.mi].toUpperCase());
 
-  d3.select('#viewnote').text('Fill colour = source water · fill height = storage · bone tick = normal level · zoom in for more labels · drag to pan');
-}
-
-function drawGlyph(grp,R,cx,cy,r,color){
-  const est=r.c==='est';
-  grp.append('circle').attr('cx',cx).attr('cy',cy).attr('r',R).attr('fill','#0A1620')
-     .attr('stroke',est?'#3A5A6B':'#54798C').attr('stroke-width',est?1:1.3)
-     .attr('stroke-dasharray',est?'2.5 2.5':null);
-  const cid='c'+r.id+Math.floor(Math.random()*1e5);
-  grp.append('clipPath').attr('id',cid).append('circle').attr('cx',cx).attr('cy',cy).attr('r',R);
-  const fillPct=Math.min(105,stoAt(r,state.mi)/r.cap*100);
-  const h=Math.max(0,Math.min(1,fillPct/100))*2*R;
-  if(h>0.3){
-    grp.append('rect').attr('x',cx-R).attr('y',cy+R-h).attr('width',2*R).attr('height',h)
-       .attr('fill',color).attr('opacity',.92).attr('clip-path',`url(#${cid})`);
-    grp.append('line').attr('x1',cx-R).attr('x2',cx+R).attr('y1',cy+R-h).attr('y2',cy+R-h)
-       .attr('stroke','#071119').attr('stroke-width',.8).attr('opacity',.6).attr('clip-path',`url(#${cid})`);
-  }
-  const med=medianFullPct(r,state.mi);
-  if(med>0){
-    const hm=Math.max(0,Math.min(1,med/100))*2*R;
-    grp.append('line').attr('x1',cx-R-3).attr('x2',cx+R+3).attr('y1',cy+R-hm).attr('y2',cy+R-hm)
-       .attr('stroke','#EDE6D6').attr('stroke-width',1.4).attr('opacity',.9);
-  }
+  d3.select('#viewnote').text('Fill colour = source water · fill level = storage · bone tick = normal level · zoom in for more labels · drag to pan');
 }
 
 /* =====================================================================
@@ -330,10 +408,10 @@ function drawFlow(){
   sp.append('line').attr('x1',SPINE).attr('x2',SPINE).attr('y1',60).attr('y2',FH-46)
     .attr('stroke','#31586B').attr('stroke-width',1.4).attr('stroke-dasharray','2 7').attr('stroke-linecap','round');
   sp.append('text').attr('x',SPINE).attr('y',50).attr('class','lbl-big').attr('text-anchor','middle').text('CONTINENTAL DIVIDE');
-  sp.append('text').attr('x',SPINE-26).attr('y',72).attr('class','lbl2 t2').attr('text-anchor','end')
-    .text('◀ WEST SLOPE — Colorado River system');
-  sp.append('text').attr('x',SPINE+26).attr('y',72).attr('class','lbl2 t2').attr('text-anchor','start')
-    .text('EAST SLOPE — Platte · Arkansas · Rio Grande ▶');
+  CSTEXT.push({el:sp.append('text').attr('x',SPINE-26).attr('y',72).attr('class','lbl2').attr('text-anchor','end')
+    .text('◀ WEST SLOPE — Colorado River system').node(),x:SPINE-26,y:72,p:0.5});
+  CSTEXT.push({el:sp.append('text').attr('x',SPINE+26).attr('y',72).attr('class','lbl2').attr('text-anchor','start')
+    .text('EAST SLOPE — Platte · Arkansas · Rio Grande ▶').node(),x:SPINE+26,y:72,p:0.5});
 
   /* ribbons */
   const layer=g.append('g').style('mix-blend-mode','screen');
@@ -380,35 +458,40 @@ function drawFlow(){
       const Hn=Math.max(n.Hin||0,n.Hout||0,5);
       ng.append('rect').attr('x',n.x-3.5).attr('y',n.y-Hn/2-2).attr('width',7).attr('height',Hn+4)
         .attr('rx',3.5).attr('fill',col).attr('stroke','#071119').attr('stroke-width',1).attr('opacity',faded?.4:.95);
-      if(n.l)ng.append('text').attr('x',n.x).attr('y',n.y-Hn/2-8).attr('class','lbl2 t2')
-        .attr('text-anchor','middle').text(n.l);
+      if(n.l)CSTEXT.push({el:ng.append('text').attr('x',n.x).attr('y',n.y-Hn/2-8).attr('class','lbl2')
+        .attr('text-anchor','middle').text(n.l).node(),x:n.x,y:n.y-Hn/2-8,p:0.5,minK:1.7,o:faded?.35:1});
       return;
     }
     if(n.k==='src'){
-      ng.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',5.5)
+      ng.append('g').attr('transform',`translate(${n.x},${n.y})`).append('g').attr('class','gfx')
+        .append('circle').attr('r',5.5)
         .attr('fill',faded?'#2A4757':n.hue).attr('stroke','#08131B').attr('stroke-width',1.5);
-      ng.append('text').attr('x',n.x+off).attr('y',n.y+3.5).attr('class','lbl')
-        .attr('text-anchor',anchor).attr('opacity',faded?.35:1).text(n.l);
+      CSTEXT.push({el:ng.append('text').attr('x',n.x+off).attr('y',n.y+3.5).attr('class','lbl')
+        .attr('text-anchor',anchor).text(n.l).node(),x:n.x+off,y:n.y+3.5,p:0.5,o:faded?.35:1});
       return;
     }
     if(n.k==='res'){
       const r=RESBY[n.res];if(!r)return;
       const dimRes=faded||!passesFilter(r);
-      const rad=Math.max(8,Math.min(23,Math.sqrt(r.cap)/32));
-      const grp=ng.append('g').attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n)
+      const dims=glassDims(r.cap,0.62);
+      const grp=ng.append('g').attr('transform',`translate(${n.x},${n.y})`)
+        .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n)
         .attr('opacity',dimRes&&!faded?.45:1);
+      const gfx=grp.append('g').attr('class','gfx')
+        .append('g').attr('transform',`translate(0,${dims.h/2})`); /* center vessel on the node */
       if(dimRes){
-        grp.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',rad).attr('fill','#0D1B24')
+        gfx.append('path').attr('d',glassPathD(dims.h,dims.a,dims.b)).attr('fill','#0D1B24')
            .attr('stroke','#2A4757').attr('stroke-width',1).attr('stroke-dasharray',r.c==='est'?'2.5 2.5':null);
       }else{
-        drawGlyph(grp,rad,n.x,n.y,r,col);
+        drawGlass(gfx,r,col,0.62);
       }
-      if(state.selected===r.id)
-        grp.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',rad+5).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.4);
-      grp.append('text').attr('x',n.x).attr('y',n.y+rad+12).attr('class','lbl'+(rad<12?' t2':''))
-        .attr('text-anchor','middle').attr('opacity',faded?.35:1).text(n.l);
-      if(!dimRes)grp.append('text').attr('x',n.x).attr('y',n.y+rad+23).attr('class','pmlbl'+(rad<12?' t2':''))
-        .attr('text-anchor','middle').attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'%');
+      if(state.selected===r.id)glassRing(gfx,r,0.62);
+      const smallK=dims.h<15?1.7:null;
+      CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',dims.h/2+12).attr('class','lbl')
+        .attr('text-anchor','middle').text(n.l).node(),x:0,y:dims.h/2+12,p:1,minK:smallK,o:faded?.35:1});
+      if(!dimRes)CSTEXT.push({el:grp.append('text').attr('x',0).attr('y',dims.h/2+23).attr('class','pmlbl')
+        .attr('text-anchor','middle').attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'%').node(),
+        x:0,y:dims.h/2+23,p:1,minK:smallK||1.4});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
         state.selected=r.id;state.selectedNode=n.id;draw();renderSheet();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -418,20 +501,21 @@ function drawFlow(){
     if(n.k==='gage'){
       const live=state.live[n.gage];
       const grp=ng.append('g').attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',n.l);
-      grp.append('rect').attr('x',n.x-4.5).attr('y',n.y-4.5).attr('width',9).attr('height',9)
+      grp.append('g').attr('transform',`translate(${n.x},${n.y})`).append('g').attr('class','gfx')
+        .append('rect').attr('x',-4.5).attr('y',-4.5).attr('width',9).attr('height',9)
         .attr('fill',col).attr('stroke','#071119').attr('stroke-width',1.4)
-        .attr('transform',`rotate(45 ${n.x} ${n.y})`);
+        .attr('transform','rotate(45)');
       if(state.selectedNode===n.id&&!state.selected)
         grp.append('circle').attr('cx',n.x).attr('cy',n.y).attr('r',11).attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.3);
-      grp.append('text').attr('x',n.x).attr('y',n.y-16).attr('class','lbl').attr('text-anchor','middle')
-        .attr('opacity',faded?.35:1).text(n.l);
+      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y-16).attr('class','lbl').attr('text-anchor','middle')
+        .text(n.l).node(),x:n.x,y:n.y-16,p:0.5,o:faded?.35:1});
       const edge=G.edges.find(e=>e.t===n.id);
       const q=live!=null?live:(edge?Math.round(edge.q*qFactor(state.mi)):null);
-      grp.append('text').attr('x',n.x).attr('y',n.y-6).attr('class','gval').attr('text-anchor','middle')
-        .attr('fill',live!=null?'#00D6E6':null).attr('opacity',faded?.35:1)
-        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live':''):'');
-      grp.append('text').attr('x',n.x).attr('y',n.y+17).attr('class','gid t3').attr('text-anchor','middle')
-        .text('USGS '+n.gage);
+      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y-6).attr('class','gval').attr('text-anchor','middle')
+        .attr('fill',live!=null?'#00D6E6':null)
+        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live':''):'').node(),x:n.x,y:n.y-6,p:0.5,o:faded?.35:1});
+      CSTEXT.push({el:grp.append('text').attr('x',n.x).attr('y',n.y+17).attr('class','gid').attr('text-anchor','middle')
+        .text('USGS '+n.gage).node(),x:n.x,y:n.y+17,p:0.5,minK:3.2});
       grp.on('click',ev=>{if(ev.defaultPrevented)return;
         state.selectedNode=n.id;state.selected=null;draw();renderSheet();});
       grp.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
@@ -462,7 +546,8 @@ function drawFlow(){
     if(state.basin!=='all'&&a.sys!==state.basin&&b.sys!==state.basin)return;
     const t=(SPINE-a.x)/(b.x-a.x), y=(a.y+(e.sOff||0))+((b.y+(e.tOff||0))-(a.y+(e.sOff||0)))*t;
     ng.append('circle').attr('cx',SPINE).attr('cy',y).attr('r',3.2).attr('fill','#08131B').attr('stroke','#C7D4DA').attr('stroke-width',1.1);
-    ng.append('text').attr('x',SPINE+8).attr('y',y-5).attr('class','lbl t2').text(e.tun);
+    CSTEXT.push({el:ng.append('text').attr('x',SPINE+8).attr('y',y-5).attr('class','lbl').text(e.tun).node(),
+      x:SPINE+8,y:y-5,p:0.5,minK:1.7});
   });
 
   g.append('text').attr('x',44,).attr('y',30).attr('class','lbl-big')
@@ -570,7 +655,11 @@ function renderLegend(){
   document.getElementById('huekey').innerHTML=Object.entries(used).map(([c,v])=>
     `<div class="keyrow"><span class="swatch" style="background:${c}"></span>${v}</div>`).join('');
 }
-function draw(){ if(state.view==='map')drawMap(); else drawFlow(); }
+function draw(){
+  LABELS=[];CSTEXT=[];
+  if(state.view==='map')drawMap(); else drawFlow();
+  applyZoom();lastPass=0;labelPass();
+}
 function setView(v){
   state.view=v;
   d3.select('#btn-map').attr('aria-pressed',String(v==='map'));

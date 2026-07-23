@@ -139,8 +139,7 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 .hudlbl{font-family:var(--mono);font-size:9px;letter-spacing:.05em;fill:#8DA4B0}
 .node-hit{cursor:pointer}
 .node-hit:focus-visible{outline:none}
-/* semantic zoom: labels tiered by importance, shown as you zoom in */
-svg[data-z="1"] .t2, svg[data-z="1"] .t3{display:none}
-svg[data-z="2"] .t3{display:none}
+/* semantic zoom: label visibility is driven from JS; fade softly */
+#viz g.lab,#viz text{transition:opacity .22s linear}
 @media (max-width:940px){.stage{grid-template-columns:1fr}.sheet{position:static}.asof{text-align:left}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
