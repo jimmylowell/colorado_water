@@ -577,7 +577,19 @@ function zipLookup(zip){
   TAPS.forEach(t=>t.zips.forEach(p=>{
     if(zip.startsWith(p)&&p.length>bestLen){best=t;bestLen=p.length;}
   }));
-  return best;
+  if(best)return best;
+  /* No curated provider prefix on file — map this Colorado ZIP to the nearest
+     mapped water system by its Census centroid (js/zipcodes.js), flagged so we
+     can say it's approximate. This gives every CO ZIP a real answer. */
+  if(typeof ZIP_CO!=='undefined'&&ZIP_CO[zip]){
+    const la=ZIP_CO[zip][0],lo=ZIP_CO[zip][1],ck=Math.cos(la*Math.PI/180);
+    let near=null,bd=Infinity;
+    TAPS.forEach(t=>{if(!t.loc)return;
+      const dLa=t.loc[0]-la,dLo=(t.loc[1]-lo)*ck,d=dLa*dLa+dLo*dLo;
+      if(d<bd){bd=d;near=t;}});
+    if(near)return Object.assign({_approx:true},near);
+  }
+  return null;
 }
 
 /* =====================================================================

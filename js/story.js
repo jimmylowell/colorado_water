@@ -121,8 +121,11 @@ function secTap(tap){
   const fc=(tap.fcres&&tap.fcres.length)
     ? `<p class="fc-note">${W(`The big lakes you see nearby — ${tap.fcres.map(id=>cleanName(RESBY[id].n)).join(', ')} — are {{flash flood|flood-control}} pools, not your supply. Nobody drinks from them.`)}</p>`
     : '';
+  const approx=tap._approx
+    ? `<p class="lr-p lr-aside">${W(`We don’t have ZIP ${tap.zip}’s exact provider mapped yet, so this shows the nearest system we do — <b>${tap.prov}</b> — to give you the regional picture. Your actual provider, and near the Divide sometimes the basin, may differ.`)}</p>`
+    : '';
   return sec('tap','Your tap',tap.prov,
-    `<p class="lr-p">${W(`Your tap is only as specific as your provider. <b>${tap.prov}</b> holds particular water rights and particular plumbing — which is why a neighbor two towns over, on a different utility, may drink an entirely different river. Under Colorado’s {{prior appropriation}} system, who got there first decides who gets water in a dry year.`)}</p>
+    approx+`<p class="lr-p">${W(`Your tap is only as specific as your provider. <b>${tap.prov}</b> holds particular water rights and particular plumbing — which is why a neighbor two towns over, on a different utility, may drink an entirely different river. Under Colorado’s {{prior appropriation}} system, who got there first decides who gets water in a dry year.`)}</p>
      <p class="lr-p">${tap.desc}</p>
      ${reveal}
      ${glassGroup('Across the Divide — West Slope',across)}
