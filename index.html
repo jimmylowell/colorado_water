@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colorado Water — where it sits, where it combines</title>
+<meta name="description" content="An interactive map of Colorado's reservoirs and rivers — where the water sits, where it combines, and how the 2026 drought is drawing it down.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Colorado surface water · water year 2026</p>
+      <h1>Where the water sits,<br>and where it <em>combines</em></h1>
+      <p class="standfirst">Reservoirs drawn as staff gages, rivers as ribbons of colour, and the Continental Divide down the middle. A reservoir wears the colour of the water that fills it; the level of that colour is the reading. Drag the timeline to watch the 2026 drought arrive.</p>
+    </div>
+    <div class="asof">
+      <div>reading as of <b>22 Jul 2026</b></div>
+      <div>storage <b>KAF</b> · flow <b>cfs</b></div>
+      <div>normals <b>NRCS 1991–2020</b></div>
+    </div>
+  </header>
+
+  <section class="strip" id="strip"></section>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="View">
+      <button id="btn-map" aria-pressed="true">Geographic</button>
+      <button id="btn-flow" aria-pressed="false">Flow &amp; mixing</button>
+    </div>
+    <div id="modewrap" style="display:none;align-items:center;gap:10px">
+      <span class="seglab">Colour</span>
+      <div class="seg" role="group" aria-label="Colour mode">
+        <button id="btn-blend" aria-pressed="true">Blend</button>
+        <button id="btn-braid" aria-pressed="false">Braid</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="seglab">Show</span>
+      <div class="seg" role="group" aria-label="Size filter">
+        <button data-cap="0" class="capbtn" aria-pressed="true">All</button>
+        <button data-cap="25000" class="capbtn" aria-pressed="false">≥25 KAF</button>
+        <button data-cap="100000" class="capbtn" aria-pressed="false">≥100 KAF</button>
+      </div>
+      <button class="chip" id="btn-meas" aria-pressed="false">Measured only</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="timeline">
+    <button class="playbtn" id="play" aria-label="Play timeline">▶</button>
+    <input type="range" id="tslider" min="0" max="9" step="1" value="9" aria-label="Month">
+    <div class="month" id="monthlbl"><small>storage timeline</small>Jul 2026</div>
+  </div>
+
+  <div class="stage">
+    <div class="chart" id="chartbox">
+      <svg id="viz" data-z="1"></svg>
+      <div class="zoomctl" role="group" aria-label="Zoom">
+        <button id="z-in" aria-label="Zoom in">+</button>
+        <button id="z-out" aria-label="Zoom out">−</button>
+        <button id="z-rst" aria-label="Reset view" style="font-size:11px">⌂</button>
+      </div>
+      <div class="viewnote" id="viewnote"></div>
+    </div>
+    <aside class="sheet" id="sheet"></aside>
+  </div>
+
+  <div class="below">
+    <div class="card">
+      <h3>How to read it</h3>
+      <div class="keyrow"><svg width="26" height="18"><circle cx="9" cy="9" r="7" fill="#0A1620" stroke="#54798C" stroke-width="1.2"/><rect x="2.5" y="9" width="13" height="6.5" fill="#2F6BFF" clip-path="circle(7px at 6.5px 0px)"/><circle cx="9" cy="9" r="7" fill="none" stroke="#54798C" stroke-width="1.2"/></svg><span><b style="color:var(--bone)">Solid ring</b> — a measured, dated reading</span></div>
+      <div class="keyrow"><svg width="26" height="18"><circle cx="9" cy="9" r="7" fill="#0A1620" stroke="#3A5A6B" stroke-width="1" stroke-dasharray="2.5 2.5"/></svg><span><b style="color:var(--bone)">Dashed ring</b> — estimated from its basin's % of median</span></div>
+      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#EDE6D6" stroke-width="2"/></svg><span><b style="color:var(--bone)">Bone tick</b> — where the level normally sits today</span></div>
+      <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed ribbon</b> — a tunnel carrying water under the Divide</span></div>
+      <p style="margin-top:10px">Disc area is total capacity. Fill colour is the water's source; fill height is storage. The % figure under each disc is condition against the 1991–2020 median.</p>
+    </div>
+
+    <div class="card">
+      <h3>The seven colours</h3>
+      <div id="huekey"></div>
+      <p style="margin-top:12px">Colours repeat only between rivers that can never mix, so within any one river every colour is unique and a blend is always traceable. <b style="color:var(--bone)">Braid</b> mode splits every ribbon into its true source shares — nothing overlaps; the widths are the arithmetic.</p>
+    </div>
+
+    <div class="card">
+      <h3>Data &amp; live flows</h3>
+      <ul class="src">
+        <li><b>Denver Water reservoir CSV</b> denverwater.org · daily storage for 12 reservoirs</li>
+        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · real-time discharge</li>
+        <li><b>USBR</b> ARCWEB + UC Region ops · Granby, Navajo, Blue Mesa, Pueblo</li>
+        <li><b>NRCS Water Supply Outlook</b> monthly basin % of 1991–2020 median — the timeline's backbone</li>
+      </ul>
+      <button class="livebtn" id="live">Pull live USGS flows</button>
+      <div class="livestat" id="livestat">Updates the 18 gage readings on the flow view.</div>
+      <div class="paste" id="paste">
+        <textarea id="pastebox" placeholder="…or open the data URL above, copy the JSON, paste it here."></textarea>
+        <button class="livebtn" id="pastego">Apply pasted JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/vendor/d3.v7.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/viz.js"></script>
+</body>
+</html>
