@@ -17,51 +17,51 @@ const STATEWIDE=[
 ];
 
 const RES=[
- {id:'granby',n:'Lake Granby',lat:40.150,lon:-105.910,cap:539758,sto:366074,pm:84,b:'colorado',r:'Colorado River',c:'obs',d:'7 Jun 2026',s:'USBR ARCWEB'},
- {id:'shadow',n:'Shadow Mountain',lat:40.222,lon:-105.848,cap:18369,sto:17450,pm:99,b:'colorado',r:'Colorado River',c:'est'},
- {id:'willow',n:'Willow Creek Res.',lat:40.143,lon:-106.018,cap:10553,sto:7280,pm:80,b:'colorado',r:'Willow Creek',c:'est'},
- {id:'wmsfork',n:'Williams Fork Res.',lat:39.958,lon:-106.203,cap:96822,sto:42094,pm:56,b:'colorado',r:'Williams Fork',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'granby',dwr:'GRARESCO',n:'Lake Granby',lat:40.150,lon:-105.910,cap:539758,sto:366074,pm:84,b:'colorado',r:'Colorado River',c:'obs',d:'7 Jun 2026',s:'USBR ARCWEB'},
+ {id:'shadow',dwr:'SHARESCO',n:'Shadow Mountain',lat:40.222,lon:-105.848,cap:18369,sto:17450,pm:99,b:'colorado',r:'Colorado River',c:'est'},
+ {id:'willow',dwr:'WILRESCO',n:'Willow Creek Res.',lat:40.143,lon:-106.018,cap:10553,sto:7280,pm:80,b:'colorado',r:'Willow Creek',c:'est'},
+ {id:'wmsfork',dwr:'WLFRESCO',n:'Williams Fork Res.',lat:39.958,lon:-106.203,cap:96822,sto:42094,pm:56,b:'colorado',r:'Williams Fork',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'wolford',n:'Wolford Mountain',lat:40.100,lon:-106.340,cap:65985,sto:41400,pm:80,b:'colorado',r:'Muddy Creek',c:'est'},
- {id:'greenmtn',n:'Green Mountain',lat:39.880,lon:-106.330,cap:154645,sto:34947,pm:50,b:'colorado',r:'Blue River',c:'obs',d:'22 Jul 2026',s:'USBR via Snoflo'},
- {id:'dillon',n:'Dillon Reservoir',lat:39.610,lon:-106.060,cap:257304,sto:199482,pm:82,b:'colorado',r:'Blue River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'ruedi',n:'Ruedi Reservoir',lat:39.362,lon:-106.820,cap:102373,sto:70170,pm:102,b:'colorado',r:'Fryingpan River',c:'obs',d:'15 Jul 2026',s:'USBR via Snoflo'},
- {id:'homestake',n:'Homestake Res.',lat:39.420,lon:-106.420,cap:43600,sto:31400,pm:80,b:'colorado',r:'Homestake Creek',c:'est'},
+ {id:'greenmtn',dwr:'GRERESCO',n:'Green Mountain',lat:39.880,lon:-106.330,cap:154645,sto:34947,pm:50,b:'colorado',r:'Blue River',c:'obs',d:'22 Jul 2026',s:'USBR via Snoflo'},
+ {id:'dillon',dwr:'DILRESCO',n:'Dillon Reservoir',lat:39.610,lon:-106.060,cap:257304,sto:199482,pm:82,b:'colorado',r:'Blue River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'ruedi',dwr:'RUERESCO',n:'Ruedi Reservoir',lat:39.362,lon:-106.820,cap:102373,sto:70170,pm:102,b:'colorado',r:'Fryingpan River',c:'obs',d:'15 Jul 2026',s:'USBR via Snoflo'},
+ {id:'homestake',dwr:'HOMRESCO',n:'Homestake Res.',lat:39.420,lon:-106.420,cap:43600,sto:31400,pm:80,b:'colorado',r:'Homestake Creek',c:'est'},
  {id:'vega',n:'Vega Reservoir',lat:39.230,lon:-107.790,cap:33171,sto:23900,pm:80,b:'colorado',r:'Plateau Creek',c:'est'},
- {id:'riflegap',n:'Rifle Gap',lat:39.630,lon:-107.750,cap:13600,sto:9800,pm:80,b:'colorado',r:'Rifle Creek',c:'est'},
+ {id:'riflegap',dwr:'RIFRESCO',n:'Rifle Gap',lat:39.630,lon:-107.750,cap:13600,sto:9800,pm:80,b:'colorado',r:'Rifle Creek',c:'est'},
  {id:'taylor',n:'Taylor Park Res.',lat:38.820,lon:-106.600,cap:106225,sto:66900,pm:70,b:'gunnison',r:'Taylor River',c:'est'},
- {id:'bluemesa',n:'Blue Mesa Res.',lat:38.460,lon:-107.200,cap:940700,sto:259379,pm:54,b:'gunnison',r:'Gunnison River',c:'obs',d:'17 Jul 2026',s:'USBR via Snoflo'},
+ {id:'bluemesa',dwr:'BLMRESCO',n:'Blue Mesa Res.',lat:38.460,lon:-107.200,cap:940700,sto:259379,pm:54,b:'gunnison',r:'Gunnison River',c:'obs',d:'17 Jul 2026',s:'USBR via Snoflo'},
  {id:'morrow',n:'Morrow Point',lat:38.480,lon:-107.420,cap:117190,sto:114834,pm:99,b:'gunnison',r:'Gunnison River',c:'obs',d:'29 Jun 2026',s:'USBR'},
  {id:'crystalg',n:'Crystal Reservoir',lat:38.510,lon:-107.580,cap:25236,sto:22700,pm:97,b:'gunnison',r:'Gunnison River',c:'est'},
  {id:'paonia',n:'Paonia Reservoir',lat:38.990,lon:-107.340,cap:20950,sto:13200,pm:70,b:'gunnison',r:'N. Fork Gunnison',c:'est'},
  {id:'ridgway',n:'Ridgway Reservoir',lat:38.200,lon:-107.750,cap:84590,sto:53300,pm:70,b:'gunnison',r:'Uncompahgre River',c:'est'},
  {id:'crawford',n:'Crawford Res.',lat:38.710,lon:-107.600,cap:14395,sto:9070,pm:70,b:'gunnison',r:'Smith Fork',c:'est'},
  {id:'stagecoach',n:'Stagecoach Res.',lat:40.280,lon:-106.860,cap:33275,sto:23300,pm:78,b:'yampa',r:'Yampa River',c:'est'},
- {id:'steamboatl',n:'Steamboat Lake',lat:40.790,lon:-106.950,cap:26000,sto:18200,pm:78,b:'yampa',r:'Willow Creek',c:'est'},
+ {id:'steamboatl',dwr:'STELAKCO',n:'Steamboat Lake',lat:40.790,lon:-106.950,cap:26000,sto:18200,pm:78,b:'yampa',r:'Willow Creek',c:'est'},
  {id:'elkhead',n:'Elkhead Reservoir',lat:40.550,lon:-107.400,cap:25610,sto:17900,pm:78,b:'yampa',r:'Elkhead Creek',c:'est'},
- {id:'mcphee',n:'McPhee Reservoir',lat:37.550,lon:-108.600,cap:381195,sto:210000,pm:69,b:'sw',r:'Dolores River',c:'est'},
- {id:'vallecito',n:'Vallecito Res.',lat:37.380,lon:-107.570,cap:129700,sto:71500,pm:69,b:'sw',r:'Los Pinos River',c:'est'},
+ {id:'mcphee',dwr:'MCPRESCO',n:'McPhee Reservoir',lat:37.550,lon:-108.600,cap:381195,sto:210000,pm:69,b:'sw',r:'Dolores River',c:'est'},
+ {id:'vallecito',dwr:'VALRESCO',n:'Vallecito Res.',lat:37.380,lon:-107.570,cap:129700,sto:71500,pm:69,b:'sw',r:'Los Pinos River',c:'est'},
  {id:'lemon',n:'Lemon Reservoir',lat:37.380,lon:-107.660,cap:40146,sto:22100,pm:69,b:'sw',r:'Florida River',c:'est'},
- {id:'nighthorse',n:'Lake Nighthorse',lat:37.230,lon:-107.900,cap:123541,sto:117000,pm:97,b:'sw',r:'Animas (pumped)',c:'est'},
+ {id:'nighthorse',dwr:'BASRESCO',n:'Lake Nighthorse',lat:37.230,lon:-107.900,cap:123541,sto:117000,pm:97,b:'sw',r:'Animas (pumped)',c:'est'},
  {id:'navajo',n:'Navajo Reservoir',lat:37.000,lon:-107.400,cap:1708600,sto:969000,pm:70,b:'sw',r:'San Juan River',c:'obs',d:'1 Jul 2026',s:'USBR UC Region'},
- {id:'riogrande',n:'Rio Grande Res.',lat:37.730,lon:-107.270,cap:52192,sto:34500,pm:86,b:'rio',r:'Rio Grande',c:'est'},
- {id:'platoro',n:'Platoro Reservoir',lat:37.350,lon:-106.530,cap:59570,sto:39400,pm:86,b:'rio',r:'Conejos River',c:'est'},
- {id:'sanchez',n:'Sanchez Reservoir',lat:37.100,lon:-105.420,cap:103000,sto:68100,pm:86,b:'rio',r:'Ventero Creek',c:'est'},
- {id:'turquoise',n:'Turquoise Lake',lat:39.250,lon:-106.400,cap:129432,sto:94500,pm:91,b:'arkansas',r:'Lake Fork Arkansas',c:'est'},
- {id:'twinlakes',n:'Twin Lakes',lat:39.080,lon:-106.350,cap:141000,sto:103000,pm:91,b:'arkansas',r:'Lake Creek',c:'est'},
+ {id:'riogrande',dwr:'RIORESCO',n:'Rio Grande Res.',lat:37.730,lon:-107.270,cap:52192,sto:34500,pm:86,b:'rio',r:'Rio Grande',c:'est'},
+ {id:'platoro',dwr:'PLARESCO',n:'Platoro Reservoir',lat:37.350,lon:-106.530,cap:59570,sto:39400,pm:86,b:'rio',r:'Conejos River',c:'est'},
+ {id:'sanchez',dwr:'SANRESCO',n:'Sanchez Reservoir',lat:37.100,lon:-105.420,cap:103000,sto:68100,pm:86,b:'rio',r:'Ventero Creek',c:'est'},
+ {id:'turquoise',dwr:'TURQLACO',n:'Turquoise Lake',lat:39.250,lon:-106.400,cap:129432,sto:94500,pm:91,b:'arkansas',r:'Lake Fork Arkansas',c:'est'},
+ {id:'twinlakes',dwr:'TWIRESCO',n:'Twin Lakes',lat:39.080,lon:-106.350,cap:141000,sto:103000,pm:91,b:'arkansas',r:'Lake Creek',c:'est'},
  {id:'pueblo',n:'Pueblo Reservoir',lat:38.260,lon:-104.720,cap:357000,sto:196000,pm:93,b:'arkansas',r:'Arkansas River',c:'est'},
  {id:'trinidad',n:'Trinidad Lake',lat:37.140,lon:-104.600,cap:114000,sto:22800,pm:52,b:'arkansas',r:'Purgatoire River',c:'est'},
- {id:'johnmartin',n:'John Martin Res.',lat:38.070,lon:-102.930,cap:616000,sto:31000,pm:41,b:'arkansas',r:'Arkansas River',c:'est'},
+ {id:'johnmartin',dwr:'JMRCADCO',n:'John Martin Res.',lat:38.070,lon:-102.930,cap:616000,sto:31000,pm:41,b:'arkansas',r:'Arkansas River',c:'est'},
  {id:'antero',n:'Antero Reservoir',lat:39.000,lon:-105.900,cap:20122,sto:0,pm:0,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'elevenmile',n:'Eleven Mile Canyon',lat:38.930,lon:-105.480,cap:97779,sto:98664,pm:104,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'cheesman',n:'Cheesman Reservoir',lat:39.200,lon:-105.270,cap:79064,sto:59114,pm:88,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'strontia',n:'Strontia Springs',lat:39.420,lon:-105.130,cap:7864,sto:6849,pm:95,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'chatfield',n:'Chatfield Res.',lat:39.540,lon:-105.070,cap:28709,sto:24148,pm:92,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'cheesman',dwr:'CHERESCO',n:'Cheesman Reservoir',lat:39.200,lon:-105.270,cap:79064,sto:59114,pm:88,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'strontia',dwr:'STRRESCO',n:'Strontia Springs',lat:39.420,lon:-105.130,cap:7864,sto:6849,pm:95,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'chatfield',dwr:'CHARESCO',n:'Chatfield Res.',lat:39.540,lon:-105.070,cap:28709,sto:24148,pm:92,b:'platte',r:'South Platte River',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'marston',n:'Marston Reservoir',lat:39.650,lon:-105.080,cap:19108,sto:18265,pm:99,b:'platte',r:'Denver system',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'gross',n:'Gross Reservoir',lat:39.950,lon:-105.360,cap:41811,sto:23389,pm:70,b:'platte',r:'S. Boulder Creek',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
+ {id:'gross',dwr:'GROSRECO',n:'Gross Reservoir',lat:39.950,lon:-105.360,cap:41811,sto:23389,pm:70,b:'platte',r:'S. Boulder Creek',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
  {id:'ralston',n:'Ralston Reservoir',lat:39.830,lon:-105.250,cap:10776,sto:10113,pm:98,b:'platte',r:'Ralston Creek',c:'obs',d:'16 Jul 2026',s:'Denver Water CSV'},
- {id:'standley',n:'Standley Lake',lat:39.870,lon:-105.130,cap:42000,sto:33600,pm:90,b:'platte',r:'Clear Creek (div.)',c:'est'},
- {id:'horsetooth',n:'Horsetooth Res.',lat:40.570,lon:-105.170,cap:156735,sto:141000,pm:96,b:'platte',r:'C-BT terminal',c:'est'},
- {id:'carter',n:'Carter Lake',lat:40.330,lon:-105.220,cap:108900,sto:88200,pm:84,b:'platte',r:'C-BT terminal',c:'obs',d:'Jul 2026',s:'Northern Water via Snoflo'},
+ {id:'standley',dwr:'STALAKCO',n:'Standley Lake',lat:39.870,lon:-105.130,cap:42000,sto:33600,pm:90,b:'platte',r:'Clear Creek (div.)',c:'est'},
+ {id:'horsetooth',dwr:'HORTOOCO',n:'Horsetooth Res.',lat:40.570,lon:-105.170,cap:156735,sto:141000,pm:96,b:'platte',r:'C-BT terminal',c:'est'},
+ {id:'carter',dwr:'CARTERCO',n:'Carter Lake',lat:40.330,lon:-105.220,cap:108900,sto:88200,pm:84,b:'platte',r:'C-BT terminal',c:'obs',d:'Jul 2026',s:'Northern Water via Snoflo'},
  {id:'boyd',n:'Boyd Lake',lat:40.440,lon:-105.050,cap:48871,sto:12200,pm:32,b:'platte',r:'Big Thompson (div.)',c:'est'},
  {id:'jackson',n:'Jackson Lake',lat:40.380,lon:-104.090,cap:35000,sto:27650,pm:79,b:'platte',r:'S. Platte (div.)',c:'est'},
  {id:'prewitt',n:'Prewitt Reservoir',lat:40.630,lon:-103.400,cap:28840,sto:22780,pm:79,b:'platte',r:'S. Platte (div.)',c:'est'},
@@ -90,9 +90,19 @@ const PMH={
    melt spike. Illustrative series anchored to NRCS/USGS statements. */
 const FLOWPCT=[55,50,48,45,46,135,70,55,34,44];
 const NOW=9;
+/* LIVE_STO is filled by live.js with {sto, asOf} per reservoir id when a
+   fresh DWR telemetry reading arrives; the snapshot stands otherwise. */
+const LIVE_STO={};
 function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][NOW]:1); }
-function stoAt(r,mi){ return Math.min(r.cap*1.02, r.sto*pmFactor(r.b,mi)); }
-function pmAt(r,mi){ return Math.round(r.pm*pmFactor(r.b,mi)); }
+function stoAt(r,mi){
+  if(mi===NOW&&LIVE_STO[r.id])return Math.min(r.cap*1.05,LIVE_STO[r.id].sto);
+  return Math.min(r.cap*1.02, r.sto*pmFactor(r.b,mi));
+}
+function pmAt(r,mi){
+  if(mi===NOW&&LIVE_STO[r.id]&&r.pm>0&&r.sto>0)
+    return Math.round(LIVE_STO[r.id].sto/(r.sto/(r.pm/100))*100);
+  return Math.round(r.pm*pmFactor(r.b,mi));
+}
 function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[NOW]; }
 
 /* =====================================================================

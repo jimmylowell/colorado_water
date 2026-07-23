@@ -89,7 +89,7 @@ function resColour(rid){
 }
 function passesFilter(r){
   if(r.cap<state.minCap)return false;
-  if(state.measOnly&&r.c!=='obs')return false;
+  if(state.measOnly&&r.c!=='obs'&&!LIVE_STO[r.id])return false;
   return true;
 }
 /* ---- the glass ----
@@ -116,7 +116,7 @@ function fillLevel(f,h,a,b){
 }
 let GID=0;
 function drawGlass(grp,r,color,S){
-  const {h,a,b}=glassDims(r.cap,S), est=r.c==='est';
+  const {h,a,b}=glassDims(r.cap,S), est=r.c==='est'&&!LIVE_STO[r.id];
   grp.append('rect').attr('x',-a-5).attr('y',-h-6).attr('width',2*a+10).attr('height',h+18)
      .attr('fill','transparent');
   const d=glassPathD(h,a,b);
@@ -599,7 +599,10 @@ function renderSheet(){
   const sto=stoAt(r,mi), pm=pmAt(r,mi);
   const fill=sto/r.cap*100, med=medianFullPct(r,mi);
   const deficit=pm?Math.round(sto/(pm/100)-sto):null;
-  const badge=r.c==='obs'&&!past?`<span class="badge obs">measured</span>`:`<span class="badge est">${past?'reconstructed':'basin estimate'}</span>`;
+  const lv=!past&&LIVE_STO[r.id];
+  const badge=lv?`<span class="badge obs">live</span>`
+    :r.c==='obs'&&!past?`<span class="badge obs">measured</span>`
+    :`<span class="badge est">${past?'reconstructed':'basin estimate'}</span>`;
   const col=resColour(r.id), nid=RESNODE[r.id];
   s.innerHTML=`
     <div class="tag"><span>${BASINS.find(b=>b.id===r.b).n}</span>${badge}</div>
@@ -618,11 +621,13 @@ function renderSheet(){
       <tr><td class="lab">Capacity</td><td>${fmt(r.cap)} AF</td></tr>
       <tr><td class="lab">Percent of normal</td><td style="color:${ramp(pm)}">${pm}%</td></tr>
       ${deficit>0?`<tr><td class="lab">Below normal by</td><td>${fmt(deficit)} AF</td></tr>`:''}
-      <tr><td class="lab">Reading</td><td>${past?'basin-scaled':(r.d||'1 Jun 2026 basin')}</td></tr>
+      <tr><td class="lab">Reading</td><td>${past?'basin-scaled':(lv?lv.asOf+' · live':(r.d||'1 Jun 2026 basin'))}</td></tr>
     </table>
     ${nid?compBlockHTML(nid,'Water arriving here'):''}
     <div class="prov">${past
       ? `<b>Timeline mode</b> — storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
+      : lv
+        ? `<b>Live</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. Percent of normal compares to the NRCS 1991–2020 median.`
       : r.c==='obs'
         ? `<b>Source</b> ${r.s}. Storage as published for ${r.d}. Percent of normal compares to the NRCS 1991–2020 median for this calendar day.`
         : `<b>Estimate</b> No same-day public reading was available; scaled to the basin's reported percent of median (NRCS, 1 June 2026).`}</div>`;
@@ -706,48 +711,6 @@ playBtn.addEventListener('click',()=>{
   },850);
 });
 
-/* live USGS pull, with a paste-JSON fallback for locked-down contexts */
-const GAGES=[...new Set(G.nodes.filter(n=>n.gage).map(n=>n.gage))];
-const LIVEURL='https://waterservices.usgs.gov/nwis/iv/?format=json&sites='+GAGES.join(',')+'&parameterCd=00060&siteStatus=all';
-function ingest(j){
-  let n=0;
-  ((j.value&&j.value.timeSeries)||[]).forEach(ts=>{
-    const site=ts.sourceInfo&&ts.sourceInfo.siteCode&&ts.sourceInfo.siteCode[0]&&ts.sourceInfo.siteCode[0].value;
-    const vv=ts.values&&ts.values[0]&&ts.values[0].value&&ts.values[0].value[0];
-    const v=vv?parseFloat(vv.value):NaN;
-    if(site&&isFinite(v)&&v>=0){state.live[site]=v;n++;}
-  });
-  return n;
-}
-d3.select('#live').on('click',async()=>{
-  const btn=document.getElementById('live'),out=document.getElementById('livestat');
-  btn.disabled=true;out.textContent='Requesting '+GAGES.length+' gages…';
-  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),9000);
-  try{
-    const res=await fetch(LIVEURL,{signal:ctl.signal});
-    clearTimeout(to);
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const n=ingest(await res.json());
-    out.innerHTML=n?`Updated <b style="color:var(--bone)">${n}</b> of ${GAGES.length} gages — labels and ribbon widths now use live readings.`
-      :'The request succeeded but returned no discharge values.';
-    if(n&&state.view!=='flow')setView('flow');else draw();
-  }catch(err){
-    clearTimeout(to);
-    out.innerHTML=`This page can't reach USGS directly (the hosting sandbox blocks outside requests). `+
-      `<a href="${LIVEURL}" target="_blank" rel="noopener">Open the data URL</a>, copy everything, and paste it below — same result.`;
-    document.getElementById('paste').style.display='block';
-  }
-  btn.disabled=false;
-});
-d3.select('#pastego').on('click',()=>{
-  const out=document.getElementById('livestat');
-  try{
-    const n=ingest(JSON.parse(document.getElementById('pastebox').value));
-    out.innerHTML=n?`Parsed <b style="color:var(--bone)">${n}</b> live gage readings from the pasted JSON.`:'Parsed, but found no discharge values.';
-    if(n&&state.view!=='flow')setView('flow');else draw();
-  }catch(e){out.textContent='That didn\u2019t parse as USGS JSON — copy the whole response, braces and all.';}
-});
-
-/* boot */
+/* boot — live fetches are wired up in js/live.js */
 renderStrip();renderChips();renderLegend();renderSheet();
 setViewBox();draw();
