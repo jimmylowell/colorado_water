@@ -14,6 +14,10 @@ const IW=MAPW-PAD.l-PAD.r, IH=MAPH-PAD.t-PAD.b;
 const px=lon=>PAD.l+(lon-GEO.w)/(GEO.e-GEO.w)*IW;
 const py=lat=>PAD.t+(GEO.n-lat)/(GEO.n-GEO.s)*IH;
 const geoLine=d3.line().x(p=>px(p[1])).y(p=>py(p[0])).curve(d3.curveCatmullRom.alpha(0.6));
+/* USGS site id → flow-graph node id, so a gage clicked on the geographic
+   view opens the same node sheet the flow view uses. */
+const GAGE_NODE={};
+G.nodes.forEach(n=>{if(n.gage&&GAGE_NODE[n.gage]==null)GAGE_NODE[n.gage]=n.id;});
 
 /* =====================================================================
    STATE
@@ -389,6 +393,38 @@ function drawMap(){
       bx0:4,by0:-7,bx1:8+c.n.length*6.8,by1:7});
   });
 
+  /* USGS streamgages — small diamonds; click for the gage sheet (flow,
+     % of normal, what the water is). Aqua = a live reading is in. */
+  if(typeof GAGE_META!=='undefined'){
+    const gaugeG=g.append('g');
+    Object.keys(GAGE_META).forEach(site=>{
+      const m=GAGE_META[site], nid=GAGE_NODE[site];
+      const on=state.basin==='all'||m.basin===state.basin;
+      const cx=px(m.lon),cy=py(m.lat), live=state.live[site];
+      const node=gaugeG.append('g').attr('transform',`translate(${cx},${cy})`)
+        .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',m.name)
+        .attr('opacity',on?(state.tap?.55:1):.28);
+      const gfx=node.append('g').attr('class','gfx');
+      if(!state.selected&&state.selectedNode===nid)
+        gfx.append('path').attr('d','M0,-9 L9,0 L0,9 L-9,0 Z')
+          .attr('fill','none').attr('stroke','#EDE6D6').attr('stroke-width',1.3);
+      gfx.append('path').attr('d','M0,-5 L5,0 L0,5 L-5,0 Z')
+        .attr('fill',live!=null?'#00D6E6':'#0A1620')
+        .attr('stroke',live!=null?'#0A1620':'#4E7488').attr('stroke-width',1.1);
+      const short=m.name.split(/,| At | Near | Below | Nr /i)[0].trim();
+      const lab=node.append('g').attr('class','lab');
+      lab.append('text').attr('x',8).attr('y',3).attr('class','lbl2').text(short);
+      LABELS.push({el:lab.node(),x:cx,y:cy,pri:40000,minK:2.2,
+        bx0:6,by0:-6,bx1:10+short.length*6,by1:6});
+      if(nid){
+        const pick=ev=>{if(ev.defaultPrevented)return;
+          state.selected=null;state.selectedNode=nid;commit();};
+        node.on('click',pick);
+        node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick(ev);}});
+      }
+    });
+  }
+
   const tapRes=state.tap?new Set(state.tap.res):null;
   const tapFc=state.tap&&state.tap.fcres?new Set(state.tap.fcres):null;
   const list=RES.filter(r=>(state.basin==='all'||r.b===state.basin)&&passesFilter(r))
@@ -416,11 +452,8 @@ function drawMap(){
     const name=r.n.replace(/ (Reservoir|Res\.|Lake)$/,'');
     lab.append('text').attr('x',0).attr('y',13).attr('class','lbl').attr('text-anchor','middle')
       .text(name);
-    const sub=lab.append('text').attr('x',0).attr('y',24.5).attr('class','pmlbl').attr('text-anchor','middle')
-      .attr('fill',r.fc?'#8DA4B0':ramp(pmAt(r,state.mi)))
-      .text(r.fc?'flood control':pmAt(r,state.mi)+'% of normal');
     LABELS.push({el:lab.node(),x:cx,y:cy,
-      pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),sub:sub.node(),
+      pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),
       bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap||isFcTap?0.1:null});
     node.on('click',ev=>{if(ev.defaultPrevented)return;
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();});
@@ -446,7 +479,7 @@ function drawMap(){
    .text((state.basin==='all'?'ALL BASINS':BASINS.find(b=>b.id===state.basin).n.toUpperCase())
      +' · '+list.length+' RESERVOIRS · '+kaf(list.reduce((s,r)=>s+r.cap,0))+' KAF CAPACITY · '+MONTHS[state.mi].toUpperCase());
 
-  d3.select('#viewnote').text('River colour = its source water · dashed lines = tunnels under the Divide · fill level = storage · bone tick = normal · zoom in for more labels');
+  d3.select('#viewnote').text('Glasses = reservoirs (level = storage) · ◆ = USGS gages · dashed lines = tunnels under the Divide · click anything for detail · zoom in for more labels');
 }
 
 /* =====================================================================
@@ -859,11 +892,70 @@ function renderLegend(){
   el.innerHTML=Object.entries(used).map(([c,v])=>
     `<div class="keyrow"><span class="swatch" style="background:${c}"></span>${v}</div>`).join('');
 }
+/* ---- mobile per-ZIP list (the map is hard to use on a phone) ---- */
+function miniGlass(r){
+  const frac=Math.max(0,Math.min(1,stoAt(r,state.mi)/r.cap));
+  const col=r.fc?'#8DA4B0':ramp(pmAt(r,state.mi));
+  const topY=3,botY=30,rim=11,base=6,cx=14,WD=28,fillTop=(botY-(botY-topY)*frac).toFixed(1);
+  const path=`M${cx-rim},${topY} L${cx-base},${botY} Q${cx-base},${botY+2} ${cx-base+2},${botY+2} `
+    +`L${cx+base-2},${botY+2} Q${cx+base},${botY+2} ${cx+base},${botY} L${cx+rim},${topY} Z`;
+  const cid='zl'+r.id;
+  return `<svg width="${WD}" height="34" viewBox="0 0 ${WD} 34" aria-hidden="true">`
+    +`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
+    +`<path d="${path}" fill="#0A1620" stroke="#54798C" stroke-width="1"/>`
+    +`<rect x="0" y="${fillTop}" width="${WD}" height="34" fill="${col}" opacity=".95" clip-path="url(#${cid})"/>`
+    +`<path d="${path}" fill="none" stroke="#54798C" stroke-width="1"/></svg>`;
+}
+function renderZipList(){
+  const el=document.getElementById('ziplist'); if(!el||typeof GAGE_META==='undefined')return;
+  const t=state.tap;
+  let head, resIds, fcIds=[], gageSites;
+  if(t){
+    head=`Your water · ZIP ${t.zip} · ${t.prov}`;
+    resIds=(t.res||[]); fcIds=(t.fcres||[]);
+    gageSites=Object.keys(GAGE_META).filter(s=>GAGE_META[s].basin===t.hb);
+  }else{
+    const b=state.basin;
+    head=b==='all'?'All Colorado — largest reservoirs':BASINS.find(x=>x.id===b).n+' basin';
+    resIds=RES.filter(r=>(b==='all'||r.b===b)&&!r.fc).slice().sort((a,c)=>c.cap-a.cap).slice(0,14).map(r=>r.id);
+    gageSites=Object.keys(GAGE_META).filter(s=>b==='all'||GAGE_META[s].basin===b);
+  }
+  const resRow=id=>{const r=RESBY[id];if(!r)return'';const pm=pmAt(r,state.mi);
+    return `<button class="zl-row" data-res="${id}"><span class="zl-g">${miniGlass(r)}</span>`
+      +`<span class="zl-n">${r.n.replace(/ (Reservoir|Res\.|Lake)$/,'')}</span>`
+      +`<span class="zl-p" style="color:${r.fc?'#8DA4B0':ramp(pm)}">${r.fc?'flood':pm+'%'}</span></button>`;};
+  const gageRow=s=>{const nid=GAGE_NODE[s],live=state.live[s];
+    const med=(typeof gageMedianNow==='function')?gageMedianNow(s):null;
+    const pct=(live!=null&&med>0)?Math.round(live/med*100):null;
+    const nm=GAGE_META[s].name.split(/,| At | Near | Below | Nr /i)[0].trim();
+    return `<button class="zl-row zl-gage" data-node="${nid||''}"><span class="zl-g zl-dia">◆</span>`
+      +`<span class="zl-n">${nm}</span>`
+      +`<span class="zl-p" style="color:${pct!=null?ramp(pct):'#5C7484'}">`
+      +`${pct!=null?pct+'%':(live!=null?Math.round(live)+' cfs':'gage')}</span></button>`;};
+  el.innerHTML=`<div class="zl-head">${head}</div>`
+    +(resIds.length?`<div class="zl-sec">Reservoirs</div>`+resIds.map(resRow).join(''):'')
+    +(fcIds.length?`<div class="zl-sec">Flood-control lakes you see</div>`+fcIds.map(resRow).join(''):'')
+    +(gageSites.length?`<div class="zl-sec">Streamgages</div>`+gageSites.map(gageRow).join(''):'');
+  const focusSheet=()=>{const s=document.getElementById('sheet');if(s)s.scrollIntoView({behavior:'smooth',block:'start'});};
+  el.querySelectorAll('.zl-row[data-res]').forEach(b=>b.addEventListener('click',()=>{
+    state.selected=b.dataset.res;state.selectedNode=RESNODE[b.dataset.res]||null;commit();focusSheet();}));
+  el.querySelectorAll('.zl-row[data-node]').forEach(b=>b.addEventListener('click',()=>{
+    if(!b.dataset.node)return;state.selected=null;state.selectedNode=b.dataset.node;commit();focusSheet();}));
+}
+
 function draw(){
   LABELS=[];CSTEXT=[];
   if(state.view==='map')drawMap(); else drawFlow();
   applyZoom();lastPass=0;labelPass();
+  renderZipList();
 }
+/* fullscreen the map+sheet stage */
+d3.select('#z-fs').on('click',()=>{
+  const stage=document.querySelector('.stage');if(!stage)return;
+  const on=stage.classList.toggle('fs');
+  document.body.classList.toggle('fs-on',on);
+  setTimeout(()=>{setViewBox();applyZoom();lastPass=0;labelPass();},80);
+});
 function setView(v,push){
   state.view=v;
   d3.select('#btn-map').attr('aria-pressed',String(v==='map'));

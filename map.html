@@ -30,11 +30,9 @@
     <div class="asof">
       <div>reading as of <b>22 Jul 2026</b></div>
       <div>storage <b>KAF</b> · flow <b>cfs</b></div>
-      <div>normals <b>NRCS 1991–2020</b></div>
+      <div>medians <b>derived · CDSS/USGS</b></div>
     </div>
   </header>
-
-  <section class="strip" id="strip"></section>
 
   <div class="zipbar">
     <label for="zip">Where does <em>your</em> water come from?</label>
@@ -68,6 +66,8 @@
     <div class="chips" id="chips"></div>
   </div>
 
+  <div class="ziplist" id="ziplist" aria-label="Reservoirs and gages near you"></div>
+
   <div class="stage">
     <div class="chart" id="chartbox">
       <svg id="viz" data-z="1"></svg>
@@ -75,6 +75,7 @@
         <button id="z-in" aria-label="Zoom in">+</button>
         <button id="z-out" aria-label="Zoom out">−</button>
         <button id="z-rst" aria-label="Reset view" style="font-size:11px">⌂</button>
+        <button id="z-fs" aria-label="Toggle fullscreen" style="font-size:13px">⤢</button>
       </div>
       <div class="viewnote" id="viewnote"></div>
     </div>
@@ -89,7 +90,7 @@
       <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#EDE6D6" stroke-width="2"/></svg><span><b style="color:var(--bone)">Bone tick</b> — where the level normally sits today</span></div>
       <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed line</b> — a tunnel carrying water under the Divide</span></div>
       <div class="keyrow"><svg width="26" height="18"><path d="M8,6 l10,0 l-5,8 z" fill="#00D6E6"/></svg><span><b style="color:var(--bone)">▼ marker</b> — the glass is being drawn down to feed the river</span></div>
-      <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity — wide at the rim, narrow at the base, the way a canyon reservoir actually holds water. Fill colour is the water's source; the level is filled by <em>area</em>, so a half-full glass really is half-full. The % figure under each glass is condition against the 1991–2020 median.</p>
+      <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity — wide at the rim, narrow at the base, the way a canyon reservoir actually holds water. Fill colour is the water's source; the level is filled by <em>area</em>, so a half-full glass really is half-full. Click any glass for its percent of normal and the rest of its detail.</p>
     </div>
 
     <div class="card">

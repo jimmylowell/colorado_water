@@ -144,6 +144,40 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 /* semantic zoom: label visibility is driven from JS; fade softly */
 #viz g.lab,#viz text{transition:opacity .22s linear}
 @media (max-width:940px){.stage{grid-template-columns:1fr}.sheet{position:static}.asof{text-align:left}}
+
+/* fullscreen the map+sheet stage */
+body.fs-on{overflow:hidden}
+.stage.fs{position:fixed;inset:0;z-index:200;margin:0;padding:12px;gap:12px;background:var(--abyss);
+  grid-template-columns:minmax(0,1fr) 340px}
+.stage.fs .chart{height:100%}
+.stage.fs .chart svg{height:100%}
+.stage.fs .sheet{max-height:calc(100vh - 24px);overflow-y:auto}
+@media (max-width:940px){.stage.fs{grid-template-columns:1fr;grid-template-rows:1fr auto;overflow-y:auto}}
+
+/* per-ZIP list — the map is hard to use on a phone, so small screens get a
+   scannable list of your reservoirs + gages instead of the SVG */
+.ziplist{display:none}
+.zl-head{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--dust);
+  padding:2px 2px 10px;border-bottom:1px solid var(--silt);margin-bottom:6px}
+.zl-sec{font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim);margin:14px 0 4px}
+.zl-row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;appearance:none;cursor:pointer;
+  background:var(--basin);border:1px solid var(--silt);border-radius:0;color:var(--bone);
+  padding:8px 12px;margin-bottom:6px;font-family:var(--body)}
+.zl-row:active{background:var(--silt)}
+.zl-g{flex:0 0 28px;display:flex;justify-content:center}
+.zl-dia{color:var(--aqua);font-size:15px}
+.zl-n{flex:1;font-size:14px;color:var(--dust)}
+.zl-p{font-family:var(--mono);font-size:12px;font-weight:500}
+@media (max-width:700px){
+  .ziplist{display:block}
+  .controls{display:none}
+  .stage{display:block}      /* single column; chart hidden, sheet flows below the list */
+  .stage .chart{display:none}
+  .stage.fs{display:grid}
+  .stage.fs .chart{display:block}
+}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* ------- site nav + subpages ------- */
