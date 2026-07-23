@@ -77,6 +77,40 @@ function ingestWeek(j){
     LIVE_DELTA[idByAb[ab]]=-afday*0.50417; /* falling storage = releasing */
   });
 }
+/* Derive statewide % of normal from the baked weekly medians (js/normals.js):
+   streamflow = Σ live flow / Σ gage median; storage = capacity-weighted mean of
+   each live reservoir's (live / its median). Updates the matching headline
+   tiles in place so the strip shows a real, current, derived number. */
+function deriveStats(){
+  const out={};
+  if(typeof gageMedianNow==='function'){
+    let num=0,den=0;
+    Object.entries(S.live).forEach(([site,v])=>{
+      const m=gageMedianNow(site);
+      if(m>0&&isFinite(v)){num+=v;den+=m;}
+    });
+    if(den>0)out.flow=Math.round(num/den*100);
+  }
+  if(typeof resMedianNow==='function'){
+    let num=0,den=0;
+    RES.forEach(r=>{
+      const lv=LIVE_STO[r.id],m=resMedianNow(r);
+      if(r.fc||!lv||!(m>0))return;
+      num+=(lv.sto/m)*r.cap;den+=r.cap;
+    });
+    if(den>0)out.storage=Math.round(num/den*100);
+  }
+  if(typeof STATEWIDE!=='undefined'){
+    const at=new Date().toLocaleDateString('en-US',{day:'numeric',month:'short'});
+    STATEWIDE.forEach(s=>{
+      if(s.k==='Statewide streamflow'&&out.flow!=null){s.v=out.flow+'%';s.n='of the weekly median · USGS gages, '+at+' · derived';}
+      if(s.k==='Statewide storage'&&out.storage!=null){s.v=out.storage+'%';s.n='of the weekly median · DWR telemetry, '+at+' · derived';}
+    });
+    if(typeof renderStrip==='function')renderStrip();
+  }
+  window.CW_STATS=out;
+  return out;
+}
 function status(html){
   const el=document.getElementById('livestat');
   if(el)el.innerHTML=html;
@@ -93,6 +127,7 @@ async function refresh(){
   const nG=usgs.status==='fulfilled'?ingestUSGS(usgs.value):0;
   const nR=cdss.status==='fulfilled'?ingestCDSS(cdss.value):0;
   if(week.status==='fulfilled')ingestWeek(week.value);
+  deriveStats();
   if(nG||nR){
     const at=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     status(`Live: <b style="color:var(--bone)">${nR}</b> reservoirs (DWR telemetry) · `

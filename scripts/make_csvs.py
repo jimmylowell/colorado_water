@@ -14,7 +14,9 @@ DATA_JS = ROOT / 'js' / 'data.js'
 NORMALS_JS = ROOT / 'js' / 'normals.js'  # defines PMH_DERIVED etc. that data.js builds PMH from
 OUT = ROOT / 'data'
 
-EXTRACT = "return JSON.stringify({RES:RES,PMH:PMH,MONTHS:MONTHS,FLOWPCT:FLOWPCT,G:G,BASINS:BASINS});"
+EXTRACT = ("return JSON.stringify({RES:RES,PMH:PMH,"
+           "PMH_DERIVED:(typeof PMH_DERIVED!=='undefined'?PMH_DERIVED:{}),"
+           "MONTHS:MONTHS,FLOWPCT:FLOWPCT,G:G,BASINS:BASINS});")
 
 
 def eval_data_js():
@@ -48,19 +50,26 @@ def main():
 
     write(OUT / 'reservoirs.csv',
           ['id', 'name', 'lat', 'lon', 'basin', 'river', 'role', 'capacity_af', 'storage_af',
-           'pct_of_median_1991_2020', 'confidence', 'as_of', 'source', 'dwr_telemetry_abbrev'],
+           'pct_of_median', 'confidence', 'method', 'as_of', 'source', 'dwr_telemetry_abbrev'],
           [[r['id'], r['n'], r['lat'], r['lon'], basin_names.get(r['b'], r['b']), r['r'],
             'flood control' if r.get('fc') else 'water supply',
             r['cap'], r['sto'], '' if r.get('fc') else r['pm'],
             'observed' if r['c'] == 'obs' else 'basin estimate',
+            'measured' if r['c'] == 'obs' else 'estimated',
             r.get('d', ''), r.get('s', 'basin % of median (NRCS, 1 Jun 2026)'), r.get('dwr', '')]
            for r in d['RES']])
 
-    hist = [[basin_names.get(b, b), m, pcts[i]]
+    derived = d.get('PMH_DERIVED', {})
+
+    def basin_method(b):
+        dv = derived.get(b)
+        return 'derived' if dv and all(v is not None for v in dv) else 'estimated'
+    hist = [[basin_names.get(b, b), m, pcts[i], basin_method(b)]
             for b, pcts in d['PMH'].items() for i, m in enumerate(d['MONTHS'])]
-    hist += [['Statewide streamflow', m, d['FLOWPCT'][i]] for i, m in enumerate(d['MONTHS'])]
+    hist += [['Statewide streamflow', m, d['FLOWPCT'][i], 'reconstruction']
+             for i, m in enumerate(d['MONTHS'])]
     write(OUT / 'basin_history.csv',
-          ['basin', 'month', 'pct_of_median_1991_2020'], hist)
+          ['basin', 'month', 'pct_of_median', 'method'], hist)
 
     seen, gages = set(), []
     for n in d['G']['nodes']:

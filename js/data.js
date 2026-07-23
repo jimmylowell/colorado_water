@@ -127,6 +127,11 @@ function resMedianNow(r){
   const s=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
   return s?s[weekIdx()]:null;
 }
+/* this-week baked median streamflow (cfs) for a USGS gage id, or null */
+function gageMedianNow(site){
+  const s=(typeof GAGE_NORMALS!=='undefined')&&GAGE_NORMALS[site];
+  return s?s[weekIdx()]:null;
+}
 function stoAt(r,mi){
   if(mi===NOW&&LIVE_STO[r.id])return Math.min(r.cap*1.05,LIVE_STO[r.id].sto);
   return Math.min(r.cap*1.02, r.sto*pmFactor(r.b,mi));

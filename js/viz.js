@@ -711,11 +711,15 @@ function renderSheet(){
       <div class="sub">${n.side==='w'?'West slope':'East slope'} · ${BASINS.find(b=>b.id===n.sys).n}</div>
       <table class="rows">
         <tr><td class="lab">Flow (${MONTHS[mi]})</td><td>${fmt((live||FLOWQ[state.selectedNode])*(live?1:qFactor(mi)))} cfs${live?' · live':''}</td></tr>
+        ${(()=>{const med=n.gage&&gageMedianNow(n.gage);
+          if(live&&med>0){const p=Math.round(live/med*100);
+            return `<tr><td class="lab">Percent of normal</td><td style="color:${ramp(p)}">${p}%</td></tr>`;}
+          return '';})()}
         <tr><td class="lab">Headwaters upstream</td><td>${sortedParts(COMP[state.selectedNode]).length}</td></tr>
       </table>
       ${n.gage?'<div class="hydro" id="hydrobox"></div>':''}
       ${compBlockHTML(state.selectedNode,'What this water is')}
-      <div class="prov"><b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
+      <div class="prov">${live&&gageMedianNow(n.gage)>0?`<b>Live · measured flow, derived %.</b> Flow is the USGS instantaneous reading; percent of normal = that reading ÷ this gage's median for this week, built from the USGS daily record since 1991 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>). `:''}<b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice — a schematic model. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
     if(n.gage&&window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'gage',site:n.gage,label:n.l});
     return;
   }
@@ -794,7 +798,7 @@ function renderSheet(){
       : past
       ? `<b>Timeline mode</b> — storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
       : lv
-        ? `<b>Live</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. Percent of normal compares to the NRCS 1991–2020 median.`
+        ? `<b>Live · measured storage, derived %.</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. ${resMedianNow(r)?`Percent of normal = that reading ÷ this reservoir's own median for this week of the year, built from CDSS daily storage since 2005 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>).`:`Percent of normal compares to the basin's NRCS median.`}`
       : r.c==='obs'
         ? `<b>Source</b> ${r.s}. Storage as published for ${r.d}. Percent of normal compares to the NRCS 1991–2020 median for this calendar day.`
         : `<b>Estimate</b> No same-day public reading was available; scaled to the basin's reported percent of median (NRCS, 1 June 2026).`}</div>
