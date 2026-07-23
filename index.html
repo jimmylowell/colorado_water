@@ -45,22 +45,16 @@
       </div>
     </section>
 
-    <section class="story-step" id="step-basin" aria-label="Your basin">
-      <div class="story-top">
-        <button class="story-back" data-to="entry">← start over</button>
-        <div class="progress-rail"><span class="dot on"></span><span class="dot"></span></div>
+    <section class="story-step" id="step-article" aria-label="Your water story">
+      <div class="lr-bar">
+        <button class="story-back">← start over</button>
+        <span class="lr-place" id="article-place"></span>
+        <a class="lr-explore" id="to-map" href="map.html">Explore the live map →</a>
       </div>
-      <div class="story-body" id="basin-body"></div>
-      <button class="story-cta" id="to-source">Where it actually comes from →</button>
-    </section>
-
-    <section class="story-step" id="step-source" aria-label="Your water source">
-      <div class="story-top">
-        <button class="story-back" data-to="basin">← your basin</button>
-        <div class="progress-rail"><span class="dot"></span><span class="dot on"></span></div>
+      <article class="longread" id="article-body"></article>
+      <div class="lr-footcta">
+        <a class="story-cta" href="map.html" id="to-map2">Explore the live map →</a>
       </div>
-      <div class="story-body" id="source-body"></div>
-      <a class="story-cta" id="to-map" href="map.html">Explore the live map →</a>
     </section>
 
   </main>
@@ -73,9 +67,9 @@
 </div>
 
 <script src="js/normals.js"></script>
-
 <script src="js/data.js"></script>
 <script src="js/live.js"></script>
+<script src="js/history.js"></script>
 <script src="js/story.js"></script>
 </body>
 </html>

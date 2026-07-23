@@ -602,3 +602,95 @@ const STORY_CITIES=[
  {label:'Durango',tap:'durango',zip:'81301'},
  {label:'Vail',tap:'vail',zip:'81657'}
 ];
+
+/* =====================================================================
+   LONG-FORM STORY (js/story.js) — facts, tunnels, and wiki links so any
+   claim can be followed to its source. WIKI maps a term to a Wikipedia
+   slug; wikify() turns {{term}} or {{term|label}} in prose into a linked,
+   bold noun that opens in a new tab.
+   ===================================================================== */
+const WIKI={
+ 'water year':'Water_year',
+ 'snowpack':'Snowpack',
+ 'snow water equivalent':'Snow_water_equivalent',
+ 'snowmelt':'Snowmelt',
+ 'Continental Divide':'Continental_Divide_of_the_Americas',
+ 'transmountain diversion':'Transbasin_diversion',
+ 'Colorado River':'Colorado_River',
+ 'Colorado River Compact':'Colorado_River_Compact',
+ 'prior appropriation':'Prior_appropriation_water_rights',
+ 'acre-foot':'Acre-foot',
+ 'aridification':'Aridification',
+ 'megadrought':'2000s_Southwestern_North_American_megadrought',
+ 'North American Monsoon':'North_American_Monsoon',
+ 'soil moisture':'Soil_moisture',
+ 'evapotranspiration':'Evapotranspiration',
+ 'Lake Powell':'Lake_Powell',
+ 'Blue Mesa Reservoir':'Blue_Mesa_Reservoir',
+ 'flash flood':'Flash_flood',
+ 'Front Range':'Front_Range',
+ 'Rocky Mountains':'Rocky_Mountains',
+ 'Colorado–Big Thompson Project':'Colorado-Big_Thompson_Project',
+ 'Fryingpan–Arkansas Project':'Fryingpan-Arkansas_Project',
+ 'Continental Divide Snowpack':'Snowpack'
+};
+function wikiURL(term){const s=WIKI[term]||term.replace(/ /g,'_');return 'https://en.wikipedia.org/wiki/'+s;}
+function wikify(html){
+ return String(html).replace(/\{\{([^}|]+)(?:\|([^}]+))?\}\}/g,(m,term,label)=>
+   `<a class="wikilink" href="${wikiURL(term.trim())}" target="_blank" rel="noopener"><b>${(label||term).trim()}</b></a>`);
+}
+
+/* Transmountain tunnels, keyed by the names used in TAPS.tun / MAP_TUNNELS.
+   Years and lengths are the historical engineering record; wiki links let a
+   reader confirm and go deeper. */
+const TUNNELS={
+ 'Adams Tunnel':{year:1947,mi:13.1,proj:'Colorado–Big Thompson Project',
+   note:'carries Lake Granby water east beneath Rocky Mountain National Park to the northern Front Range',wiki:'Alva_B._Adams_Tunnel'},
+ 'Roberts Tunnel':{year:1962,mi:23.3,proj:'Denver Water',
+   note:'moves Blue River water banked in Dillon east to the North Fork of the South Platte — Colorado’s longest water tunnel',wiki:'Harold_D._Roberts_Tunnel'},
+ 'Moffat Tunnel':{year:1936,mi:6.2,proj:'Denver Water',
+   note:'skims Fraser and Williams Fork water under the Divide to South Boulder Creek and Gross Reservoir',wiki:'Moffat_Tunnel'},
+ 'Boustead Tunnel':{year:1972,mi:5.4,proj:'Fryingpan–Arkansas Project',
+   note:'brings Fryingpan headwaters under the Divide to Turquoise Lake for Pueblo and the plains',wiki:'Fryingpan-Arkansas_Project'},
+ 'Homestake Tunnel':{year:1967,mi:5.2,proj:'Homestake Project',
+   note:'diverts Homestake Creek from the Eagle basin east for Colorado Springs and Aurora',wiki:'Homestake_Reservoir'},
+ 'Twin Lakes Tunnel':{year:1935,mi:3.9,proj:'Independence Pass diversion',
+   note:'the oldest of these — Roaring Fork headwaters carried under Independence Pass to Twin Lakes and the Arkansas',wiki:'Twin_Lakes_(Colorado)'}
+};
+
+/* Cited, verifiable facts for the opening section. cite = attributable source;
+   wiki (optional) = the term to link. Phrasing is deliberately conservative. */
+const COLORADO_FACTS=[
+ {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}} — the snow, not the reservoirs, is the real storage',cite:'NRCS / NOAA'},
+ {stat:'Oct 1',lab:'the {{water year}} begins — hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
+ {stat:'~80 / 90',lab:'roughly 80% of the state’s water falls west of the {{Continental Divide}}, while nearly 90% of Coloradans live east of it',cite:'Colorado Water Plan (CWCB)'},
+ {stat:'40M',lab:'people across seven states and Mexico draw on the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'},
+ {stat:'325,851 gal',lab:'in one {{acre-foot}} — about a year of water for two to three Front Range households',cite:'USGS'},
+ {stat:'18 states',lab:'plus Mexico depend on rivers that rise in Colorado — the headwaters state exports water and imports none',cite:'Water Education Colorado'}
+];
+
+/* Provider → official conservation / current-status page. We link to the
+   provider’s own page for restrictions rather than ever stating rules here.
+   Keyed by substrings matched against TAPS.prov; first match wins. */
+const PROVIDER_LINKS=[
+ {m:'Denver Water',url:'https://www.denverwater.org/residential/rebates-and-conservation/watering-rules',lab:'Denver Water watering rules'},
+ {m:'Aurora',url:'https://www.aurorawater.org/conservation/',lab:'Aurora Water conservation'},
+ {m:'Colorado Springs',url:'https://www.csu.org/pages/water-wise.aspx',lab:'Colorado Springs Utilities Water-Wise'},
+ {m:'Pueblo',url:'https://www.pueblowater.org/conservation/',lab:'Pueblo Water conservation'},
+ {m:'Fort Collins',url:'https://www.fcgov.com/utilities/residential/conserve/water-efficiency',lab:'Fort Collins water efficiency'},
+ {m:'Boulder',url:'https://bouldercolorado.gov/services/water-conservation',lab:'City of Boulder water conservation'},
+ {m:'Greeley',url:'https://greeleygov.com/services/ws/conservation',lab:'Greeley water conservation'},
+ {m:'Longmont',url:'https://www.longmontcolorado.gov/departments/departments-n-z/water-conservation',lab:'Longmont water conservation'},
+ {m:'Northern',url:'https://www.northernwater.org/',lab:'Northern Water'}
+];
+function providerLink(prov){
+ const hit=PROVIDER_LINKS.find(p=>String(prov||'').toLowerCase().includes(p.m.toLowerCase()));
+ return hit||null;
+}
+/* Statewide conservation resources every Coloradan can use. */
+const SAVE_RESOURCES=[
+ {url:'https://denverwater.org/UseOnlyWhatYouNeed',lab:'Denver Water — “Use Only What You Need”'},
+ {url:'https://www.epa.gov/watersense',lab:'EPA WaterSense — efficient fixtures & tips'},
+ {url:'https://cwcb.colorado.gov/colorado-water-plan',lab:'Colorado Water Plan (CWCB)'},
+ {url:'https://www.nrcs.usda.gov/wps/portal/wcc/home/quickLinks/states/?state=CO',lab:'NRCS Colorado snow & water reports'}
+];

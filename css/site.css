@@ -294,3 +294,74 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
   background:transparent;border:1px solid var(--aqua);color:var(--aqua);
   font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:13px 22px}
 .story-cta:hover{background:rgba(0,214,230,.1)}
+
+/* =====================================================================
+   THE STORY — long-form scrolling article (index.html, #step-article)
+   ===================================================================== */
+.story-stage:has(#step-article.is-active){justify-content:flex-start}
+.lr-bar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;
+  background:rgba(6,15,22,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--silt);
+  padding:11px 2px;margin:0 0 8px}
+.lr-place{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--dust);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr-explore{margin-left:auto;text-decoration:none;white-space:nowrap;
+  border:1px solid var(--aqua);color:var(--aqua);font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.12em;text-transform:uppercase;padding:8px 14px}
+.lr-explore:hover{background:rgba(0,214,230,.1)}
+@media (max-width:640px){.lr-explore{display:none}}
+
+.longread{max-width:640px;margin:0 auto}
+.lr-hero{padding:14px 0 6px;border-bottom:1px solid var(--silt);margin-bottom:8px}
+.lr-eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0}
+.lr-title{font-family:var(--display);font-weight:400;font-size:clamp(32px,7vw,52px);line-height:1.02;
+  letter-spacing:-.02em;margin:8px 0 0;color:var(--bone)}
+.lr-sub{color:var(--dust);font-size:15px;line-height:1.65;margin:14px 0 0;max-width:56ch}
+
+.lr-sec{padding:34px 0;border-bottom:1px solid var(--silt)}
+.lr-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);margin:0 0 6px}
+.lr-h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.4vw,34px);line-height:1.1;
+  letter-spacing:-.01em;color:var(--bone);margin:0 0 16px}
+.lr-h3{font-family:var(--body);font-weight:600;font-size:16px;color:var(--bone);margin:26px 0 10px;letter-spacing:.01em}
+.lr-p{color:var(--dust);font-size:15.5px;line-height:1.72;margin:0 0 15px;max-width:60ch}
+.lr-p b,.lr-h2 b{color:var(--bone);font-weight:600}
+.lr-p i{color:#a9bdc7;font-style:italic}
+.lr-aside{border-left:2px solid var(--silt-2);padding-left:16px;color:var(--dim);font-size:14.5px}
+.lr-list{margin:0 0 15px;padding-left:20px;max-width:60ch}
+.lr-list li{color:var(--dust);font-size:15px;line-height:1.66;margin-bottom:11px}
+.lr-list.lr-links{list-style:none;padding-left:0}
+.lr-list.lr-links li{margin-bottom:8px}
+
+/* inline verify links on bold nouns */
+.wikilink{color:inherit;text-decoration:none;border-bottom:1px dotted var(--dim);transition:border-color .15s,color .15s}
+.wikilink b{color:var(--bone)}
+.wikilink:hover{border-bottom-color:var(--aqua)}
+.wikilink:hover b{color:var(--aqua)}
+.lr-cite{display:inline;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);white-space:nowrap}
+
+/* fact grid (§ snow) */
+.fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;
+  background:var(--silt);border:1px solid var(--silt);margin:20px 0}
+.fact{background:var(--basin);padding:16px 16px 15px}
+.fact-stat{font-family:var(--display);font-weight:400;font-size:26px;color:var(--bone);line-height:1;letter-spacing:-.01em}
+.fact-lab{color:var(--dust);font-size:12.5px;line-height:1.5;margin-top:8px}
+
+/* charts */
+.lr-chart{margin:18px 0;border:1px solid var(--silt);background:var(--basin);padding:14px 14px 8px}
+.histchart{display:block;width:100%;height:auto}
+.hc-ax{font-family:var(--mono);font-size:9px;fill:var(--dim)}
+.lr-chart-cap{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--dim);margin-top:8px;line-height:1.5}
+
+/* tunnel history list */
+.tunlist{list-style:none;padding:0;margin:10px 0 15px}
+.tunlist li{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--silt)}
+.tunlist li:last-child{border-bottom:1px solid var(--silt)}
+.tun-yr{font-family:var(--display);font-size:22px;color:var(--aqua);min-width:56px;line-height:1.1}
+.tun-body{color:var(--dust);font-size:14px;line-height:1.6}
+
+/* big single live number (§ scarcity) */
+.bignum{display:flex;align-items:baseline;gap:16px;border:1px solid var(--silt);background:var(--basin);
+  padding:18px 20px;margin:18px 0}
+.bignum-v{font-family:var(--display);font-size:48px;line-height:1;letter-spacing:-.02em}
+.bignum-lab{color:var(--dust);font-size:13.5px;line-height:1.55}
+
+.lr-footcta{text-align:center;padding:36px 0 8px}
