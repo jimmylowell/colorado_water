@@ -35,6 +35,14 @@
 
   <section class="strip" id="strip"></section>
 
+  <div class="zipbar">
+    <label for="zip">Where does <em>your</em> water come from?</label>
+    <input id="zip" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="ZIP code" aria-label="ZIP code">
+    <button id="zipgo">Show me</button>
+    <button id="zipclear" style="display:none" aria-label="Clear ZIP">clear ✕</button>
+    <span id="zipmsg" aria-live="polite"></span>
+  </div>
+
   <div class="controls">
     <div class="seg" role="group" aria-label="View">
       <button id="btn-map" aria-pressed="true">Geographic</button>

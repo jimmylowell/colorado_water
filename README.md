@@ -7,6 +7,10 @@ area so the level is honest), rivers as source-coloured ribbons, and the
 transmountain tunnels that move West Slope water to the Front Range as dashed
 crossings of the Continental Divide.
 
+Enter a ZIP code (or link to one, e.g. `/#80302`) to light up the reservoirs
+and tunnels behind that ZIP's tap — a simplified provider map (`TAPS` in
+`js/data.js`) covering Colorado's populated areas by ZIP prefix.
+
 **Pages**
 
 - `index.html` — the map and the flow-and-mixing diagram, with a monthly

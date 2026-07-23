@@ -190,3 +190,18 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 
 .hydro{margin:14px 0 4px;border-top:1px solid #d7cdb5;padding-top:10px}
 .hydro-cap{font-family:var(--mono);font-size:9px;color:#6d6450;margin-top:4px;letter-spacing:.04em;line-height:1.5}
+
+/* ------- your tap: ZIP lookup bar ------- */
+.zipbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;border:1px solid var(--silt);
+  background:linear-gradient(90deg,rgba(0,214,230,.07),transparent 55%),var(--basin);
+  padding:12px 16px;margin-bottom:14px}
+.zipbar label{font-family:var(--display);font-size:17px;letter-spacing:-.01em;color:var(--bone)}
+.zipbar label em{font-style:italic;color:var(--aqua)}
+.zipbar input{width:110px;background:#08131B;border:1px solid var(--silt-2);color:var(--bone);
+  font-family:var(--mono);font-size:13px;letter-spacing:.14em;padding:8px 11px;outline:none}
+.zipbar input:focus{border-color:var(--aqua)}
+.zipbar button{appearance:none;cursor:pointer;background:transparent;border:1px solid var(--aqua);color:var(--aqua);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;padding:8px 14px}
+.zipbar button:hover{background:rgba(0,214,230,.1)}
+.zipbar #zipclear{border-color:var(--silt-2);color:var(--dust)}
+.zipbar #zipmsg{font-family:var(--mono);font-size:10.5px;color:var(--dust)}

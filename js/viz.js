@@ -32,7 +32,7 @@ const geoLine=d3.line().x(p=>px(p[1])).y(p=>py(p[0])).curve(d3.curveCatmullRom.a
    STATE
    ===================================================================== */
 const state={view:'map',basin:'all',mode:'blend',minCap:0,measOnly:false,mi:NOW,
-  selected:null,selectedNode:null,live:{},playing:null};
+  selected:null,selectedNode:null,live:{},playing:null,tap:null};
 
 /* =====================================================================
    COMPOSITION SOLVER
@@ -377,14 +377,17 @@ function drawMap(){
   MAP_TUNNELS.forEach(tn=>{
     const P=pt=>Array.isArray(pt)?[px(pt[1]),py(pt[0])]:[px(RESBY[pt].lon),py(RESBY[pt].lat)];
     const [x0,y0]=P(tn.f),[x1,y1]=P(tn.t);
-    const on=state.basin==='all'||tn.fb===state.basin||tn.tb===state.basin;
+    const tapT=state.tap?state.tap.tun.includes(tn.n):null;
+    const on=(state.basin==='all'||tn.fb===state.basin||tn.tb===state.basin)&&tapT!==false;
+    const w=tapT?2.6:1.8;
     const mx=(x0+x1)/2,my=(y0+y1)/2-14;
     tg.append('path').attr('d',`M${x0},${y0} Q${mx},${my} ${x1},${y1}`)
       .attr('fill','none').attr('stroke',on?tn.hue:'#1A2E39')
-      .attr('class','zw'+(on?' mapdash':'')).attr('data-bw',1.8).attr('stroke-width',1.8)
-      .attr('stroke-dasharray','5 4').attr('stroke-linecap','round').attr('opacity',on?.85:.25);
+      .attr('class','zw'+(on?' mapdash':'')).attr('data-bw',w).attr('stroke-width',w)
+      .attr('stroke-dasharray','5 4').attr('stroke-linecap','round')
+      .attr('opacity',tapT?1:(on?.85:(state.tap?.15:.25)));
     if(on)CSTEXT.push({el:tg.append('text').attr('x',mx).attr('y',my-4).attr('class','lbl2')
-      .attr('text-anchor','middle').text(tn.n).node(),x:mx,y:my-4,p:0.8,minK:1.7});
+      .attr('text-anchor','middle').text(tn.n).node(),x:mx,y:my-4,p:0.8,minK:tapT?0.1:1.7});
   });
 
   const cg=g.append('g');
@@ -398,16 +401,20 @@ function drawMap(){
       bx0:4,by0:-7,bx1:8+c.n.length*6.8,by1:7});
   });
 
+  const tapRes=state.tap?new Set(state.tap.res):null;
   const list=RES.filter(r=>(state.basin==='all'||r.b===state.basin)&&passesFilter(r))
     .slice().sort((a,b)=>b.cap-a.cap);
   const rg=g.append('g');
   list.forEach(r=>{
     const cx=px(r.lon),cy=py(r.lat);
+    const isTap=tapRes&&tapRes.has(r.id);
     const node=rg.append('g').attr('transform',`translate(${cx},${cy})`)
-      .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n);
+      .attr('class','node-hit').attr('tabindex',0).attr('role','button').attr('aria-label',r.n)
+      .attr('opacity',tapRes&&!isTap?.3:1);
     const gfx=node.append('g').attr('class','gfx');
     drawGlass(gfx,r,resColour(r.id),1);
     if(state.selected===r.id)glassRing(gfx,r,1);
+    else if(isTap)glassRing(gfx,r,1);
     const dd=drawdownCfs(r,state.mi);
     if(Math.abs(dd)>15){
       const gd=glassDims(r.cap,1),tx=gd.a+5,ty=-gd.h*0.55;
@@ -421,13 +428,27 @@ function drawMap(){
       .text(name);
     const sub=lab.append('text').attr('x',0).attr('y',24.5).attr('class','pmlbl').attr('text-anchor','middle')
       .attr('fill',ramp(pmAt(r,state.mi))).text(pmAt(r,state.mi)+'% of normal');
-    LABELS.push({el:lab.node(),x:cx,y:cy,pri:r.cap,sub:sub.node(),
-      bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16});
+    LABELS.push({el:lab.node(),x:cx,y:cy,pri:isTap?1e9+r.cap:(tapRes?r.cap*0.02:r.cap),sub:sub.node(),
+      bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap?0.1:null});
     node.on('click',ev=>{if(ev.defaultPrevented)return;
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();});
     node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();
       state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;draw();renderSheet();}});
   });
+
+  if(state.tap){ /* the reader's tap, marked on the map */
+    const hx=px(state.tap.loc[1]),hy=py(state.tap.loc[0]);
+    const hg=g.append('g').attr('transform',`translate(${hx},${hy})`);
+    const hgfx=hg.append('g').attr('class','gfx');
+    hgfx.append('circle').attr('r',9).attr('fill','none').attr('stroke','#EDE6D6')
+      .attr('stroke-width',1.2).attr('opacity',.55);
+    hgfx.append('circle').attr('r',3.4).attr('fill','#EDE6D6').attr('stroke','#071119').attr('stroke-width',1.2);
+    const hlab=hg.append('g').attr('class','lab');
+    hlab.append('text').attr('x',0).attr('y',-14).attr('class','lbl').attr('text-anchor','middle')
+      .attr('fill','#EDE6D6').text('ZIP '+state.tap.zip+' — your tap');
+    LABELS.push({el:hlab.node(),x:hx,y:hy,pri:2e9,minK:0.1,
+      bx0:-62,by0:-24,bx1:62,by1:-4});
+  }
 
   g.append('text').attr('x',PAD.l).attr('y',40).attr('class','lbl-big')
    .text((state.basin==='all'?'ALL BASINS':BASINS.find(b=>b.id===state.basin).n.toUpperCase())
@@ -698,10 +719,34 @@ function renderSheet(){
     if(n.gage&&window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'gage',site:n.gage,label:n.l});
     return;
   }
+  if(state.tap&&!state.selected){
+    const t=state.tap;
+    const rows=t.res.map(id=>{
+      const r=RESBY[id];if(!r)return'';
+      const pm=pmAt(r,mi);
+      return `<tr class="taprow" data-res="${id}" style="cursor:pointer">
+        <td class="lab" style="text-transform:none;font-size:11px">${r.n}</td>
+        <td style="color:${ramp(pm)}">${pm}%<span style="color:#8a8069;font-weight:400"> · ${kaf(stoAt(r,mi))} KAF</span></td></tr>`;
+    }).join('');
+    s.innerHTML=`
+      <div class="tag"><span>Your water · ZIP ${t.zip}</span><span class="badge obs">tap</span></div>
+      <h2>${t.city}</h2>
+      <div class="sub">${t.prov}</div>
+      <div class="prov" style="margin-top:0;margin-bottom:12px;font-size:11px;color:#3c3a33">${t.desc}</div>
+      ${t.res.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">Your reservoirs today</div>
+      <table class="rows">${rows}</table>`:''}
+      ${t.tun.length?`<div class="prov"><b>Crossing the Divide for you:</b> ${t.tun.join(' · ')}</div>`:''}
+      <div class="prov">A simplified picture — providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
+    s.querySelectorAll('.taprow').forEach(el=>el.addEventListener('click',()=>{
+      state.selected=el.dataset.res;state.selectedNode=RESNODE[el.dataset.res]||null;draw();renderSheet();}));
+    const c2=s.querySelector('#tapclear2');
+    if(c2)c2.addEventListener('click',ev=>{ev.preventDefault();clearTap();});
+    return;
+  }
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
       <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond on the flow view to see what that water is made of.
-      <br><br>Drag the timeline to Oct 2025 and press play — watch the Rio Grande's October surplus drain and the Gunnison sink through spring.</div>`;
+      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap — or drag the timeline to Oct 2025 and press play to watch the drought arrive.</div>`;
     return;
   }
   const r=RESBY[state.selected];
@@ -746,7 +791,11 @@ function renderSheet(){
         ? `<b>Live</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. Percent of normal compares to the NRCS 1991–2020 median.`
       : r.c==='obs'
         ? `<b>Source</b> ${r.s}. Storage as published for ${r.d}. Percent of normal compares to the NRCS 1991–2020 median for this calendar day.`
-        : `<b>Estimate</b> No same-day public reading was available; scaled to the basin's reported percent of median (NRCS, 1 June 2026).`}</div>`;
+        : `<b>Estimate</b> No same-day public reading was available; scaled to the basin's reported percent of median (NRCS, 1 June 2026).`}</div>
+    ${state.tap?`<div class="prov"><a href="#" id="backtap" style="color:#1A2730">← back to your water (ZIP ${state.tap.zip})</a></div>`:''}`;
+  const bt=s.querySelector('#backtap');
+  if(bt)bt.addEventListener('click',ev=>{ev.preventDefault();
+    state.selected=null;state.selectedNode=null;draw();renderSheet();});
   if(window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'res',r});
 }
 
@@ -828,6 +877,53 @@ playBtn.addEventListener('click',()=>{
   },850);
 });
 
+/* =====================================================================
+   YOUR TAP — ZIP lookup: longest matching prefix in TAPS wins
+   ===================================================================== */
+function zipLookup(zip){
+  let best=null,bestLen=0;
+  TAPS.forEach(t=>t.zips.forEach(p=>{
+    if(zip.startsWith(p)&&p.length>bestLen){best=t;bestLen=p.length;}
+  }));
+  return best;
+}
+function zipMsg(txt){document.getElementById('zipmsg').textContent=txt;}
+function applyTap(zip){
+  if(!/^\d{5}$/.test(zip)){zipMsg('five digits, e.g. 80302');return;}
+  const t=zipLookup(zip);
+  if(!t){
+    zipMsg(/^8[01]/.test(zip)
+      ?'don’t have that ZIP mapped yet — try your nearest larger town'
+      :'this map covers Colorado — but wherever you are, your tap has a watershed too');
+    return;
+  }
+  state.tap=Object.assign({zip},t);
+  zipMsg('');
+  document.getElementById('zipclear').style.display='';
+  try{history.replaceState(null,'','#'+zip);}catch(e){}
+  state.selected=null;state.selectedNode=null;
+  if(state.view!=='map')setView('map');else draw();
+  renderSheet();
+  const pts=t.res.map(id=>RESBY[id]).filter(Boolean).map(r=>[px(r.lon),py(r.lat)])
+    .concat([[px(t.loc[1]),py(t.loc[0])]]);
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),m=70;
+  zoomToBBox(Math.min(...xs)-m,Math.min(...ys)-m,Math.max(...xs)+m,Math.max(...ys)+m);
+}
+function clearTap(){
+  state.tap=null;state.selected=null;state.selectedNode=null;
+  document.getElementById('zipclear').style.display='none';
+  zipMsg('');
+  try{history.replaceState(null,'',location.pathname);}catch(e){}
+  draw();renderSheet();zoomReset(true);
+}
+const zipInput=document.getElementById('zip');
+document.getElementById('zipgo').addEventListener('click',()=>applyTap(zipInput.value.trim()));
+zipInput.addEventListener('keydown',ev=>{if(ev.key==='Enter')applyTap(zipInput.value.trim());});
+document.getElementById('zipclear').addEventListener('click',clearTap);
+
 /* boot — live fetches are wired up in js/live.js */
 renderStrip();renderChips();renderLegend();renderSheet();
+/* shareable: site.com/#80302 lights up that ZIP's water on load */
+const hashZip=(location.hash.match(/^#(\d{5})$/)||[])[1];
+if(hashZip){zipInput.value=hashZip;setTimeout(()=>applyTap(hashZip),60);}
 setViewBox();draw();
