@@ -306,6 +306,12 @@ function drawMap(){
    .on('click',ev=>{if(ev.defaultPrevented)return;
      if(state.selected||state.selectedNode){state.selected=null;state.selectedNode=null;commit();}});
 
+  /* baked Natural Earth shaded relief (public domain), cropped to the map
+     bounds — a faint sense of the mountains. Geographic view only. */
+  g.append('image').attr('href','img/co-relief.webp').attr('xlink:href','img/co-relief.webp')
+   .attr('x',px(GEO.w)).attr('y',py(GEO.n)).attr('width',IW).attr('height',IH)
+   .attr('preserveAspectRatio','none').attr('opacity',0.5).attr('pointer-events','none');
+
   const grid=g.append('g').attr('opacity',.5);
   for(let lon=-108;lon>=-103;lon--)grid.append('line').attr('x1',px(lon)).attr('x2',px(lon)).attr('y1',py(GEO.n)).attr('y2',py(GEO.s)).attr('stroke','#14252F').attr('stroke-width',.6);
   for(let lat=38;lat<=40;lat++)grid.append('line').attr('y1',py(lat)).attr('y2',py(lat)).attr('x1',px(GEO.w)).attr('x2',px(GEO.e)).attr('stroke','#14252F').attr('stroke-width',.6);
