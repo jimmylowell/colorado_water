@@ -195,11 +195,16 @@ function secAction(tap){
 /* ---------- assemble ---------- */
 function renderArticle(tap,zip){
   const b=BASINS.find(x=>x.id===tap.hb);
-  document.getElementById('article-place').textContent=`${tap.city} · ${b.n} basin`;
+  const approx=!!tap._approx;
+  const title=approx?`Near ${tap.city}`:tap.city;
+  const servedBy=(approx?'Nearest mapped system: ':'Served by ')
+    +`<b>${tap.prov}</b> · ${b.n} basin`;
+  document.getElementById('article-place').textContent=`ZIP ${zip} · ${tap.prov}${approx?' (nearest)':''}`;
   ['to-map','to-map2'].forEach(id=>{const m=document.getElementById(id);if(m)m.href='map.html#zip='+zip;});
   document.getElementById('article-body').innerHTML=
-    `<header class="lr-hero"><p class="lr-eyebrow">Your water, from the snow down</p>
-       <h1 class="lr-title">${tap.city}</h1>
+    `<header class="lr-hero"><p class="lr-eyebrow">Your water · ZIP ${zip}</p>
+       <h1 class="lr-title">${title}</h1>
+       <p class="lr-servedby">${servedBy}</p>
        <p class="lr-sub">${W(`Follow one thread — your tap — from the snowfields that make it, through the reservoirs and tunnels that carry it, to the drought pressing on all of it. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
     +secSnow(tap)+secBasin(tap)+secTap(tap)+secSeason(tap)+secScarcity()+secAction(tap);
   // wire glass clicks are plain links; nothing else to bind

@@ -773,7 +773,7 @@ function renderSheet(){
     }).join('');
     s.innerHTML=`
       <div class="tag"><span>Your water · ZIP ${t.zip}</span><span class="badge obs">tap</span></div>
-      <h2>${t.city}</h2>
+      <h2>${t._approx?'Near '+t.city:t.city}</h2>
       <div class="sub">${t.prov}${t._approx?' · nearest mapped system':''}</div>
       ${t._approx?`<div class="prov" style="margin-top:0;margin-bottom:10px;font-size:11px">No exact provider on file for ZIP ${t.zip}, so this is the nearest system we map — your actual provider, and near the Divide sometimes the basin, may differ.</div>`:''}
       <div class="prov" style="margin-top:0;margin-bottom:12px;font-size:11px;color:#3c3a33">${t.desc}</div>

@@ -349,7 +349,9 @@ body.fs-on{overflow:hidden}
 .lr-eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0}
 .lr-title{font-family:var(--display);font-weight:400;font-size:clamp(32px,7vw,52px);line-height:1.02;
   letter-spacing:-.02em;margin:8px 0 0;color:var(--bone)}
-.lr-sub{color:var(--dust);font-size:15px;line-height:1.65;margin:14px 0 0;max-width:56ch}
+.lr-servedby{font-family:var(--mono);font-size:12.5px;letter-spacing:.02em;color:var(--dust);margin:10px 0 0}
+.lr-servedby b{color:var(--aqua);font-weight:500}
+.lr-sub{color:var(--dust);font-size:15px;line-height:1.65;margin:12px 0 0;max-width:56ch}
 
 .lr-sec{padding:34px 0;border-bottom:1px solid var(--silt)}
 .lr-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);margin:0 0 6px}
