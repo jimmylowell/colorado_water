@@ -98,5 +98,59 @@ function basinChart(basinId){
        <circle cx="${X(9).toFixed(1)}" cy="${Y(cur[NOW]).toFixed(1)}" r="3.4" fill="${col}"/>`:''}
   </svg>`;
 }
-window.CW_HISTORY={powellChart,wyChart,basinChart};
+/* Snowpack vs reservoir storage across the water year — the relationship that
+   matters: the snow (left axis, SWE) is the incoming water; it peaks in spring
+   and melts into the reservoirs (right axis, % of capacity). Solid = this year,
+   dashed = normal, so a low snow line above a low storage line tells the story. */
+function snowStoreChart(basinId){
+  const snow=(typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[basinId];
+  const bb=(typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[basinId];
+  const tcapB=(typeof BASIN_TCAP!=='undefined')&&BASIN_TCAP[basinId];
+  if(!snow&&!(bb&&tcapB))return wyChart(PMH[basinId],ramp(Math.round(PMH[basinId][NOW])));
+  const W=680,H=236,padL=34,padR=40,padT=30,padB=34, iw=W-padL-padR, ih=H-padT-padB;
+  const base=padT+ih, X=i=>padL+i/9*iw;
+  const hue=(typeof BASIN_HUE!=='undefined'&&BASIN_HUE[basinId])||'#8FA6B2';
+  const SNOW='#7FD8E6';
+  // storage % of telemetered capacity: this year + normal median
+  let stCur=null,stNrm=null;
+  if(bb&&tcapB){
+    const tel=RES.filter(r=>r.b===basinId&&!r.fc&&r.dwr&&typeof RES_NORMALS!=='undefined'&&RES_NORMALS[r.id]);
+    const tcap=tel.reduce((s,r)=>s+r.cap,0)||tcapB;
+    if(tel.length){stCur=MONTHS.map((_,mi)=>tel.reduce((s,r)=>s+stoAt(r,mi),0)/tcap*100);}
+    stNrm=MONTH_WK.map(w=>bb[1][w]/tcap*100);
+  }
+  const Yt=p=>base-Math.max(0,Math.min(100,p))/100*ih;
+  const snowMax=snow?Math.max(1,...snow.cur.concat(snow.nrm).filter(v=>v!=null))*1.1:1;
+  const Ys=v=>base-(v==null?0:v)/snowMax*ih;
+  const poly=(arr,Y)=>arr.map((v,i)=>(v==null?'':(X(i).toFixed(1)+','+Y(v).toFixed(1)))).filter(Boolean);
+  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
+     aria-label="${BASINS.find(b=>b.id===basinId).n} snowpack and reservoir storage across the water year.">`;
+  // gridlines on the storage (right) axis
+  s+=[0,50,100].map(p=>`<line x1="${padL}" y1="${Yt(p).toFixed(1)}" x2="${W-padR}" y2="${Yt(p).toFixed(1)}" stroke="#1b2b36"/>`
+    +`<text x="${W-padR+5}" y="${(Yt(p)+3).toFixed(1)}" class="hc-ax" fill="${hue}">${p}%</text>`).join('');
+  // month labels
+  const labs=['Oct','Dec','Feb','Apr','Jun','Jul'],idx=[0,2,4,6,8,9];
+  s+=idx.map((i,k)=>`<text x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" class="hc-ax">${labs[k]}</text>`).join('');
+  // snowpack: this-year area + line, normal dashed
+  if(snow){
+    const pts=poly(snow.cur,Ys);
+    if(pts.length>1){
+      s+=`<path d="M${X(0).toFixed(1)},${base} L${pts.join('L')} L${X(9).toFixed(1)},${base} Z" fill="${SNOW}" opacity="0.15"/>`;
+      s+=`<path d="M${pts.join('L')}" fill="none" stroke="${SNOW}" stroke-width="1.8" vector-effect="non-scaling-stroke"/>`;
+    }
+    s+=`<path d="M${poly(snow.nrm,Ys).join('L')}" fill="none" stroke="${SNOW}" stroke-width="1.1" stroke-dasharray="3 3" opacity="0.8"/>`;
+    s+=`<text x="${padL-4}" y="${(padT-6).toFixed(1)}" class="hc-ax" fill="${SNOW}">SWE in</text>`;
+  }
+  // storage: normal dashed + this-year bold line
+  if(stNrm)s+=`<path d="M${poly(stNrm,Yt).join('L')}" fill="none" stroke="${hue}" stroke-width="1.1" stroke-dasharray="3 3" opacity="0.85"/>`;
+  if(stCur){s+=`<path d="M${poly(stCur,Yt).join('L')}" fill="none" stroke="${hue}" stroke-width="2.4" vector-effect="non-scaling-stroke"/>`;
+    s+=`<circle cx="${X(9).toFixed(1)}" cy="${Yt(stCur[NOW]).toFixed(1)}" r="3.4" fill="${hue}"/>`;}
+  // legend
+  s+=`<g transform="translate(${padL},14)" font-family="var(--mono)" font-size="9">`
+    +`<line x1="0" y1="-3" x2="16" y2="-3" stroke="${SNOW}" stroke-width="1.8"/><text x="20" y="0" fill="#8DA4B0">snowpack</text>`
+    +`<line x1="92" y1="-3" x2="108" y2="-3" stroke="${hue}" stroke-width="2.4"/><text x="112" y="0" fill="#8DA4B0">storage</text>`
+    +`<text x="182" y="0" fill="#5C7484">solid = this year · dashed = normal</text></g>`;
+  return s+'</svg>';
+}
+window.CW_HISTORY={powellChart,wyChart,basinChart,snowStoreChart};
 })();

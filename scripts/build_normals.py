@@ -233,32 +233,71 @@ for b in BASINS:
     PMH[b] = filled
     print(f'  PMH {b:9} {filled}')
 
-# ---- 3. statewide snowpack: weekly SWE median from long-record SNOTEL ----
-SNOW_NORMALS = []
+# ---- 3. snowpack: per-basin SWE, this water year vs the normal, from
+# long-record SNOTEL assigned to basins by HUC (same split as the boundaries) ----
+HUC4_BASIN = {'1019': 'platte', '1018': 'yampa', '1102': 'arkansas', '1301': 'rio',
+              '1401': 'colorado', '1402': 'gunnison', '1405': 'yampa', '1408': 'sw'}
+
+
+def basin_of_huc(huc):
+    h4 = (huc or '')[:4]
+    if h4 == '1403':
+        return 'colorado' if (huc or '')[:8] in ('14030001', '14030005') else 'sw'
+    return HUC4_BASIN.get(h4)
+
+
+def cur_wy_weekly(pairs):
+    """this water year's (Oct 2025+) weekly mean, 52 values, None where absent."""
+    buckets = [[] for _ in range(52)]
+    for d, v in pairs:
+        if d >= datetime.date(2025, 10, 1):
+            buckets[weekidx(d)].append(v)
+    return [round(sum(b) / len(b), 2) if b else None for b in buckets]
+
+
+MONTH_WK = [41, 45, 49, 2, 6, 10, 14, 19, 23, 27]  # ~mid-month week idx, Oct..Jul
+SNOW_NORMALS = []          # statewide weekly median (kept for compatibility)
+SNOW_BASIN = {}            # basin -> {"cur":[10 monthly SWE], "nrm":[10 monthly SWE]}
 try:
     stations = json.loads(fetch(
         'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations'
         '?stationTriplets=*:CO:SNTL&returnStationElements=false', 'nrcs_stations.json'))
-    # long-record stations, spread statewide, capped for a tractable build
-    longrec = [s['stationTriplet'] for s in stations if s.get('beginDate', '2100')[:4] <= '1990'][:30]
-    swe = {}
-    for trip in longrec:
-        try:
-            j = json.loads(fetch(
-                'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data'
-                f'?stationTriplets={urllib.parse.quote(trip)}&elements=WTEQ&duration=DAILY'
-                f'&beginDate=1991-01-01&endDate={TODAY.isoformat()}', f'snow_{trip.split(":")[0]}.json'))
-            for row in j[0]['data'][0]['values']:
-                v = row.get('value')
-                if isinstance(v, (int, float)):
-                    d = datetime.date.fromisoformat(row['date'][:10])
-                    swe.setdefault(d, []).append(v)
-        except Exception:
+    longrec = [s for s in stations if s.get('beginDate', '2100')[:4] <= '1990']
+    by_basin = {}
+    for s in longrec:
+        b = basin_of_huc(s.get('huc'))
+        if b:
+            by_basin.setdefault(b, []).append(s['stationTriplet'])
+    picked = {b: trips[:8] for b, trips in by_basin.items()}     # cap per basin
+    swe_all, swe_basin = {}, {b: {} for b in picked}             # date -> [values]
+    for b, trips in picked.items():
+        for trip in trips:
+            try:
+                j = json.loads(fetch(
+                    'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data'
+                    f'?stationTriplets={urllib.parse.quote(trip)}&elements=WTEQ&duration=DAILY'
+                    f'&beginDate=1991-01-01&endDate={TODAY.isoformat()}', f'snow_{trip.split(":")[0]}.json'))
+                for row in j[0]['data'][0]['values']:
+                    v = row.get('value')
+                    if isinstance(v, (int, float)):
+                        d = datetime.date.fromisoformat(row['date'][:10])
+                        swe_all.setdefault(d, []).append(v)
+                        swe_basin[b].setdefault(d, []).append(v)
+            except Exception:
+                continue
+    daily_all = [(d, sum(vs) / len(vs)) for d, vs in swe_all.items() if vs]
+    SNOW_NORMALS = weekly_median(daily_all) if daily_all else []
+    for b, daymap in swe_basin.items():
+        pairs = [(d, sum(vs) / len(vs)) for d, vs in daymap.items() if vs]
+        if len(pairs) < 400:
             continue
-    # statewide daily mean SWE across stations, then weekly median across years
-    daily = [(d, sum(vs) / len(vs)) for d, vs in swe.items() if vs]
-    SNOW_NORMALS = weekly_median(daily) if daily else []
-    print(f'  snow: {len(longrec)} stations, {len(daily)} days -> {"ok" if SNOW_NORMALS else "empty"}')
+        nrm_wk = weekly_median(pairs)            # 52 weekly medians (all years)
+        cur_wk = cur_wy_weekly(pairs)            # 52 weekly means (this WY)
+        nrm = [round(nrm_wk[w], 1) for w in MONTH_WK]
+        cur = [round(cur_wk[w], 1) if cur_wk[w] is not None else None for w in MONTH_WK]
+        SNOW_BASIN[b] = {'cur': cur, 'nrm': nrm}
+    print(f'  snow: {sum(len(t) for t in picked.values())} stations -> '
+          f'basins {", ".join(sorted(SNOW_BASIN))}')
 except Exception as e:
     print('  snow: skipped (', e, ')')
 
@@ -316,6 +355,7 @@ with open(OUT, 'w') as f:
     f.write(js('BASIN_BANDS', BASIN_BANDS))  # basin -> [min, median, max] weekly totals (AF)
     f.write(js('BASIN_TCAP', BASIN_TCAP))    # basin -> telemetered capacity (AF)
     f.write(js('SNOW_NORMALS', SNOW_NORMALS))
+    f.write(js('SNOW_BASIN', SNOW_BASIN))    # basin -> {cur, nrm} monthly SWE, Oct..Jul
     f.write(js('PMH_DERIVED', PMH))        # data.js builds runtime PMH, filling dark basins (yampa)
     f.write(js('POWELL_ANNUAL', POWELL_ANNUAL))
 print(f'\nwrote {os.path.relpath(OUT, ROOT)}  '
