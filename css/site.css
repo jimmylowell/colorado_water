@@ -178,6 +178,12 @@ body.fs-on{overflow:hidden}
   .stage .chart{display:none}
   .stage.fs{display:grid}
   .stage.fs .chart{display:block}
+  /* Flow ("step-down") view IS shown on mobile — it's the one map view that
+     works on a phone. Show the chart + the view toggle, hide the ZIP list. */
+  body.view-flow .controls{display:flex}
+  body.view-flow .ziplist{display:none}
+  body.view-flow .stage .chart{display:block}
+  body.view-flow .stage .chart svg{min-height:60vh}
 }
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -382,6 +388,27 @@ body.fs-on{overflow:hidden}
 .fact{background:var(--basin);padding:16px 16px 15px}
 .fact-stat{font-family:var(--display);font-weight:400;font-size:26px;color:var(--bone);line-height:1;letter-spacing:-.01em}
 .fact-lab{color:var(--dust);font-size:12.5px;line-height:1.5;margin-top:8px}
+
+/* interactive seven-basin map */
+.basinmap-wrap{margin:18px 0}
+.basinmap{display:block;width:100%;height:auto;border:1px solid var(--silt);background:#08131B}
+.sbasin{fill-opacity:.15;stroke-width:.8;stroke-opacity:.7;cursor:pointer;transition:fill-opacity .15s}
+.sbasin:hover{fill-opacity:.32}
+.sbasin:focus-visible{outline:none;fill-opacity:.32}
+.sbasin.home{fill-opacity:.3;stroke-width:1.4;stroke-opacity:1}
+.sbasin.sel{fill-opacity:.48;stroke-width:1.9;stroke-opacity:1}
+.sbasin-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;fill:#EDE6D6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.sbasin-pct{font-family:var(--mono);font-size:11px;font-weight:500;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bx-panel{border:1px solid var(--silt);border-top:0;background:var(--basin);padding:14px 16px}
+.bx-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.bx-name{font-family:var(--display);font-size:20px;color:var(--bone)}
+.bx-pct{font-family:var(--mono);font-size:13px;font-weight:500}
+.bx-blurb{color:var(--dust);font-size:13.5px;line-height:1.6;margin:8px 0 10px;max-width:60ch}
+.bx-stats{display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:10px}
+.bx-links{display:flex;flex-wrap:wrap;gap:6px 20px}
+.bx-links a{color:var(--aqua);text-decoration:none;font-size:13px;border-bottom:1px dotted var(--dim)}
+.bx-links a:hover{border-bottom-color:var(--aqua)}
+.lr-cap{font-size:12.5px;color:var(--dim)}
 
 /* charts */
 .lr-chart{margin:18px 0;border:1px solid var(--silt);background:var(--basin);padding:14px 14px 8px}

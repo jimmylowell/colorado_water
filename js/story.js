@@ -74,17 +74,53 @@ function secSnow(tap){
     `<p class="lr-p">${W(`In Colorado the year’s water is written in winter. Storms stack {{snowpack|snow}} on the high country, and that frozen reservoir — measured all season as {{snow water equivalent|snow-water equivalent}} — is what melts into rivers and fills the lakes below. The reservoirs you’ll see in a moment are really just the snow’s second home.`)}</p>
      <div class="fact-grid">${facts}</div>
      <p class="lr-p">${W(`This is why hydrologists start counting on October 1 — the {{water year}} — and why a warm, early spring can undo a decent winter: the ${b.n} high country can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026. By the first of June, most of the state’s SNOTEL sites were already bare.`)}</p>
-     <p class="lr-p lr-aside">${W(`And summer rain? A good {{North American Monsoon|monsoon}} soaks the lawn and eases the strain, but it rarely refills a reservoir — more on that below. First, follow the snow down into your own basin.`)}</p>`);
+     <p class="lr-p lr-aside">${W(`And summer rain? A good {{North American Monsoon|monsoon}} soaks the lawn and eases the strain, but it rarely refills a reservoir — more on that below. The snow is where your water begins; next, whose tap it becomes.`)}</p>`);
 }
 
-/* ---------- §2 your basin + its plumbing ---------- */
+/* ---------- §2 the seven basins (interactive map) ---------- */
+const BMW=700,BMH=400, BGW=-109.05,BGE=-102.05,BGN=41,BGS=37;
+const bmx=lon=>(lon-BGW)/(BGE-BGW)*BMW, bmy=lat=>(BGN-lat)/(BGN-BGS)*BMH;
+function basinPathD(rings){
+  return rings.map(r=>'M'+r.map(p=>bmx(p[0]).toFixed(1)+','+bmy(p[1]).toFixed(1)).join('L')+'Z').join(' ');
+}
+function basinMapSVG(home,sel){
+  if(typeof BASIN_GEO==='undefined')return '';
+  let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage versus normal">`;
+  s+=`<image href="img/co-relief.webp" x="0" y="0" width="${BMW}" height="${BMH}" preserveAspectRatio="none" opacity="0.3"/>`;
+  Object.keys(BASIN_GEO).forEach(bid=>{
+    const hue=BASIN_HUE[bid]||'#6d8391';
+    s+=`<path class="sbasin${bid===home?' home':''}${bid===sel?' sel':''}" data-basin="${bid}" `
+      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${hue}" stroke="${hue}" tabindex="0" role="button" `
+      +`aria-label="${BASINS.find(x=>x.id===bid).n} basin"></path>`;
+  });
+  Object.keys(BASIN_GEO).forEach(bid=>{
+    const a=BASIN_LABEL[bid]; if(!a)return;
+    const x=bmx(a[0]).toFixed(0), y=bmy(a[1]).toFixed(0);
+    const bb=BASINS.find(x2=>x2.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+    s+=`<text class="sbasin-lab" x="${x}" y="${y}" text-anchor="middle" pointer-events="none">${bb.n.toUpperCase()}</text>`;
+    s+=`<text class="sbasin-pct" x="${x}" y="${(+y+13)}" text-anchor="middle" fill="${ramp(pct)}" pointer-events="none">${pct}%</text>`;
+  });
+  return s+'</svg>';
+}
+function basinSummaryHTML(bid,home){
+  const b=BASINS.find(x=>x.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+  const inb=RES.filter(r=>r.b===bid&&!r.fc);
+  const cap=inb.reduce((s,r)=>s+r.cap,0);
+  const below=inb.filter(r=>pmAt(r,NOW)<95).length;
+  const largest=inb.slice().sort((a,c)=>c.cap-a.cap)[0];
+  const west=WEST.includes(bid);
+  return `<div class="bx-head"><span class="bx-name">${b.n}${bid===home?' · your basin':''}</span>`
+    +`<span class="bx-pct" style="color:${ramp(pct)}">${pct}% of median</span></div>`
+    +`<p class="bx-blurb">${BASININFO[bid]||''}</p>`
+    +`<div class="bx-stats"><span>${west?'West slope':'East slope'}</span><span>${inb.length} reservoirs</span>`
+    +`<span>${kaf(cap)} KAF full</span><span>${below} below normal</span>`
+    +`${largest?`<span>largest: ${cleanName(largest.n)}</span>`:''}</div>`
+    +`<div class="bx-links"><a href="map.html#basin=${bid}">Explore the ${b.n} on the detailed map →</a>`
+    +`<a href="map.html#basin=${bid}&view=flow">See how its water steps down →</a></div>`;
+}
 function secBasin(tap){
   const hb=tap.hb, b=BASINS.find(x=>x.id===hb);
   const pct=Math.round(PMH[hb][NOW]);
-  const inb=RES.filter(r=>r.b===hb&&!r.fc);
-  const cap=inb.reduce((s,r)=>s+r.cap,0);
-  const largest=inb.slice().sort((a,b)=>b.cap-a.cap)[0];
-  const below=inb.filter(r=>pmAt(r,NOW)<95).length;
   const chart=(window.CW_HISTORY?CW_HISTORY.wyChart(PMH[hb],ramp(pct)):sparkSVG(PMH[hb],ramp(pct)));
   const tuns=(tap.tun||[]).map(n=>TUNNELS[n]?[n,TUNNELS[n]]:null).filter(Boolean);
   const hist=tuns.length
@@ -94,18 +130,13 @@ function secBasin(tap){
       +tuns.map(([n,t])=>`<li><span class="tun-yr">${t.year}</span><span class="tun-body"><a class="wikilink" href="https://en.wikipedia.org/wiki/${t.wiki}" target="_blank" rel="noopener"><b>${n}</b></a> — ${t.mi} mi · ${t.proj}. ${t.note}.</span></li>`).join('')
       +`</ul>`
     : `<p class="lr-p">${W(`Your basin lives on its own snowmelt — no tunnel under the {{Continental Divide}} feeds it. What falls here is what you get, which makes the size of the winter snowpack everything.`)}</p>`;
-  return sec('basin','Your basin',`The ${b.n} basin`,
-    `<p class="lr-p">${BASININFO[hb]}</p>
-     <div class="basin-panel">
-       <div class="bp-cell"><div class="bp-num" style="color:${ramp(pct)}">${pct}%</div>
-         <div class="bp-lab">of the 1991–2020 median<br>in storage today</div></div>
-       <div class="bp-cell"><div class="bp-num">${inb.length}</div>
-         <div class="bp-lab">reservoirs here holding<br>${kaf(cap)} KAF when full</div></div>
-       <div class="bp-cell"><div class="bp-num" style="color:${below?'#EF9A1B':'#2FD94F'}">${below}</div>
-         <div class="bp-lab">of them sitting<br>below normal now</div></div>
-     </div>
+  return sec('basin','Colorado runs on seven basins',`Your basin: the ${b.n}`,
+    `<p class="lr-p">${W(`Colorado divides into seven great river basins — four west of the {{Continental Divide}}, three east. Yours is the <b>${b.n}</b>. Each region is shaded by how its storage is holding up against its own normal this year; tap any basin to compare.`)}</p>
+     <div class="basinmap-wrap" id="basin-explorer">${basinMapSVG(hb,hb)}
+       <div class="bx-panel" id="basin-sel">${basinSummaryHTML(hb,hb)}</div></div>
+     <p class="lr-p lr-cap">Seven basins · shading = storage vs each basin’s own normal · boundaries from the public-domain USGS Watershed Boundary Dataset. The full reservoir-by-reservoir map is the <a class="wikilink" href="map.html">detailed view →</a> (best on a big screen).</p>
+     <h3 class="lr-h3">Your basin, this year</h3>
      <div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} storage across the water year, % of median · derived from CDSS history</div></div>
-     ${largest?`<p class="lr-p">${W(`The basin’s biggest single glass is <b>${cleanName(largest.n)}</b> — ${kaf(largest.cap)} KAF full, ${pmAt(largest,NOW)}% of normal today.`)}</p>`:''}
      ${hist}`);
 }
 
@@ -205,9 +236,19 @@ function renderArticle(tap,zip){
     `<header class="lr-hero"><p class="lr-eyebrow">Your water · ZIP ${zip}</p>
        <h1 class="lr-title">${title}</h1>
        <p class="lr-servedby">${servedBy}</p>
-       <p class="lr-sub">${W(`Follow one thread — your tap — from the snowfields that make it, through the reservoirs and tunnels that carry it, to the drought pressing on all of it. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
-    +secSnow(tap)+secBasin(tap)+secTap(tap)+secSeason(tap)+secScarcity()+secAction(tap);
-  // wire glass clicks are plain links; nothing else to bind
+       <p class="lr-sub">${W(`Follow one thread — your tap — from the basin it sits in and the snowfields that make it, through the reservoirs and tunnels that carry it, to the drought pressing on all of it. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
+    +secBasin(tap)+secSnow(tap)+secTap(tap)+secSeason(tap)+secScarcity()+secAction(tap);
+  // interactive basin map: click/keyboard a basin to swap the summary panel
+  const bx=document.getElementById('basin-explorer');
+  if(bx){
+    const sel=document.getElementById('basin-sel');
+    bx.querySelectorAll('.sbasin').forEach(p=>{
+      const pick=()=>{bx.querySelectorAll('.sbasin').forEach(x=>x.classList.toggle('sel',x===p));
+        if(sel)sel.innerHTML=basinSummaryHTML(p.dataset.basin,tap.hb);};
+      p.addEventListener('click',pick);
+      p.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick();}});
+    });
+  }
 }
 
 /* ---------- entry wiring ---------- */

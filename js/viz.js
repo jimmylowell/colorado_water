@@ -19,9 +19,7 @@ const geoLine=d3.line().x(p=>px(p[1])).y(p=>py(p[0])).curve(d3.curveCatmullRom.a
 const GAGE_NODE={};
 G.nodes.forEach(n=>{if(n.gage&&GAGE_NODE[n.gage]==null)GAGE_NODE[n.gage]=n.id;});
 
-/* a representative hue per basin, for the full-state basin outlines */
-const BASIN_HUE={colorado:'#3F7BFF',gunnison:'#B667F2',yampa:'#39C46A',
-  sw:'#22B9C9',rio:'#5C86FF',arkansas:'#F09248',platte:'#8FA6B2'};
+/* BASIN_HUE / BASIN_LABEL — relocated to js/data.js (shared with story.js) */
 /* convex hull (monotone chain) of [x,y] points */
 function convexHull(pts){
   pts=pts.filter(Boolean).slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
@@ -332,28 +330,25 @@ function drawMap(){
    .attr('x',px(GEO.w)).attr('y',py(GEO.n)).attr('width',IW).attr('height',IH)
    .attr('preserveAspectRatio','none').attr('opacity',0.5).attr('pointer-events','none');
 
-  /* full-state view: a soft dashed outline grouping each basin's features,
-     with a clickable label to focus that basin. */
-  if(state.basin==='all'){
+  /* full-state view: real river-basin boundaries (USGS WBD, baked in
+     js/basins_geo.js) — a faint fill + dashed outline, clickable to focus. */
+  if(state.basin==='all'&&typeof BASIN_GEO!=='undefined'){
     const bl=g.append('g').attr('class','basinlayer');
     BASINS.filter(b=>b.id!=='all').forEach(b=>{
-      const pts=[];
-      RES.forEach(r=>{if(r.b===b.id)pts.push([px(r.lon),py(r.lat)]);});
-      RIVERS.forEach(rv=>{if(rv.b===b.id)rv.p.forEach(p=>pts.push([px(p[1]),py(p[0])]));});
-      if(typeof GAGE_META!=='undefined')Object.keys(GAGE_META).forEach(s=>{
-        if(GAGE_META[s].basin===b.id)pts.push([px(GAGE_META[s].lon),py(GAGE_META[s].lat)]);});
-      const hull=padHull(convexHull(pts),26);
-      if(hull.length<3)return;
+      const rings=BASIN_GEO[b.id]; if(!rings)return;
       const hue=BASIN_HUE[b.id]||'#6d8391';
-      const dd=d3.line().curve(d3.curveCatmullRomClosed.alpha(0.6))(hull);
+      const dPath=rings.map(r=>'M'+r.map(p=>px(p[0]).toFixed(1)+','+py(p[1]).toFixed(1)).join('L')+'Z').join(' ');
       const grp=bl.append('g').attr('class','node-hit').attr('role','button').attr('aria-label',b.n+' basin');
-      grp.append('path').attr('d',dd).attr('fill','none').attr('stroke',hue)
-        .attr('class','zw').attr('data-bw',1.1).attr('stroke-width',1.1)
-        .attr('stroke-dasharray','3 6').attr('opacity',0.55).attr('pointer-events','stroke');
-      const lx=hull.reduce((s,p)=>s+p[0],0)/hull.length, ly=Math.min.apply(null,hull.map(p=>p[1]));
-      const lab=grp.append('text').attr('x',lx).attr('y',ly+15).attr('text-anchor','middle')
-        .attr('class','lbl-basin').attr('fill',hue).text(b.n.toUpperCase());
-      CSTEXT.push({el:lab.node(),x:lx,y:ly+15,p:0.85,o:0.72});
+      grp.append('path').attr('d',dPath).attr('fill',hue).attr('fill-opacity',0.045)
+        .attr('stroke','none').attr('pointer-events','none');
+      grp.append('path').attr('d',dPath).attr('fill','none').attr('stroke',hue)
+        .attr('class','zw').attr('data-bw',1).attr('stroke-width',1)
+        .attr('stroke-dasharray','4 5').attr('opacity',0.5).attr('pointer-events','stroke');
+      const a=BASIN_LABEL[b.id];
+      if(a){const lx=px(a[0]),ly=py(a[1]);
+        const lab=grp.append('text').attr('x',lx).attr('y',ly).attr('text-anchor','middle')
+          .attr('class','lbl-basin').attr('fill',hue).text(b.n.toUpperCase());
+        CSTEXT.push({el:lab.node(),x:lx,y:ly,p:0.85,o:0.72});}
       grp.on('click',ev=>{ev.preventDefault();ev.stopPropagation();selectBasin(b.id);});
     });
   }
@@ -1057,6 +1052,7 @@ function setView(v,push){
   d3.select('#btn-map').attr('aria-pressed',String(v==='map'));
   d3.select('#btn-flow').attr('aria-pressed',String(v==='flow'));
   const mw=document.getElementById('modewrap');if(mw)mw.style.display=v==='flow'?'flex':'none';
+  document.body.classList.toggle('view-flow',v==='flow'); /* mobile: flow view is shown */
   setViewBox();zoomReset(false);draw();
   if(state.basin!=='all')zoomToBasin();
   if(push)pushHistory();
@@ -1128,6 +1124,7 @@ function syncControls(){
   d3.select('#btn-map').attr('aria-pressed',String(state.view==='map'));
   d3.select('#btn-flow').attr('aria-pressed',String(state.view==='flow'));
   const mw=document.getElementById('modewrap');if(mw)mw.style.display=state.view==='flow'?'flex':'none';
+  document.body.classList.toggle('view-flow',state.view==='flow');
   renderChips();
   const zc=document.getElementById('zipclear');if(zc)zc.style.display=state.tap?'':'none';
   if(zipInput&&state.tap)zipInput.value=state.tap.zip;

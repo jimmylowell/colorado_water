@@ -224,6 +224,12 @@ const BASINS=[
  {id:'yampa',n:'Yampa & White'},{id:'sw',n:'San Juan & Dolores'},{id:'rio',n:'Rio Grande'},
  {id:'arkansas',n:'Arkansas'},{id:'platte',n:'South Platte'}
 ];
+/* a representative hue per basin (basin outlines + the story's basin map) */
+const BASIN_HUE={colorado:'#3F7BFF',gunnison:'#B667F2',yampa:'#39C46A',
+  sw:'#22B9C9',rio:'#5C86FF',arkansas:'#F09248',platte:'#8FA6B2'};
+/* hand-picked label anchors [lon,lat] so basin names sit inside their region */
+const BASIN_LABEL={colorado:[-107.65,39.75],gunnison:[-107.35,38.5],yampa:[-107.4,40.45],
+  sw:[-108.25,37.6],rio:[-106.05,37.62],arkansas:[-104.75,38.25],platte:[-104.5,39.95]};
 
 /* =====================================================================
    FLOW GRAPH — both slopes, spine at x = 720
