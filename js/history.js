@@ -66,5 +66,37 @@ function wyChart(series,color){
   </svg>`;
 }
 
-window.CW_HISTORY={powellChart,wyChart};
+/* A basin's storage across the water year (Oct→Jul) as % of its telemetered
+   capacity, over the historical min–max band and median (baked BASIN_BANDS).
+   Falls back to the plain % -of-median line where no band is available. */
+const MONTH_WK=[41,45,49,2,6,10,14,19,23,27];  // ~mid-month week index, Oct..Jul
+function basinChart(basinId){
+  const bb=(typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[basinId];
+  const tcapB=(typeof BASIN_TCAP!=='undefined')&&BASIN_TCAP[basinId];
+  if(!bb||!tcapB)return wyChart(PMH[basinId],ramp(Math.round(PMH[basinId][NOW])));
+  const tel=RES.filter(r=>r.b===basinId&&!r.fc&&r.dwr&&typeof RES_NORMALS!=='undefined'&&RES_NORMALS[r.id]);
+  const tcap=tel.reduce((s,r)=>s+r.cap,0)||tcapB;
+  const band=MONTH_WK.map(w=>({lo:bb[0][w]/tcap*100,med:bb[1][w]/tcap*100,hi:bb[2][w]/tcap*100}));
+  const cur=tel.length?MONTHS.map((_,mi)=>tel.reduce((s,r)=>s+stoAt(r,mi),0)/tcap*100):[];
+  const W=680,H=196,padL=40,padR=14,padT=14,padB=26, iw=W-padL-padR, ih=H-padT-padB;
+  const X=i=>padL+i/9*iw, Y=v=>padT+ih-Math.max(0,Math.min(100,v))/100*ih;
+  const col=ramp(Math.round(cur.length?cur[NOW]:PMH[basinId][NOW]));
+  const top=band.map((p,i)=>X(i).toFixed(1)+','+Y(p.hi).toFixed(1)).join('L');
+  const bot=band.map((p,i)=>X(i).toFixed(1)+','+Y(p.lo).toFixed(1)).reverse().join('L');
+  const med='M'+band.map((p,i)=>X(i).toFixed(1)+','+Y(p.med).toFixed(1)).join('L');
+  const line=cur.length?'M'+cur.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join('L'):'';
+  const gy=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="#1b2b36"/>`
+    +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">${v}%</text>`).join('');
+  const labs=['Oct','Dec','Feb','Apr','Jun','Jul'],idx=[0,2,4,6,8,9];
+  const xt=idx.map((i,k)=>`<text x="${X(i).toFixed(1)}" y="${H-7}" text-anchor="middle" class="hc-ax">${labs[k]}</text>`).join('');
+  return `<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
+     aria-label="${BASINS.find(b=>b.id===basinId).n} basin storage across the water year, versus the historical range.">
+    ${gy}${xt}
+    <path d="M${top}L${bot}Z" fill="#8FA6B2" opacity="0.14"/>
+    <path d="${med}" fill="none" stroke="#8FA6B2" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.9"/>
+    ${line?`<path d="${line}" fill="none" stroke="${col}" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
+       <circle cx="${X(9).toFixed(1)}" cy="${Y(cur[NOW]).toFixed(1)}" r="3.4" fill="${col}"/>`:''}
+  </svg>`;
+}
+window.CW_HISTORY={powellChart,wyChart,basinChart};
 })();

@@ -121,7 +121,11 @@ function basinSummaryHTML(bid,home){
 function secBasin(tap){
   const hb=tap.hb, b=BASINS.find(x=>x.id===hb);
   const pct=Math.round(PMH[hb][NOW]);
-  const chart=(window.CW_HISTORY?CW_HISTORY.wyChart(PMH[hb],ramp(pct)):sparkSVG(PMH[hb],ramp(pct)));
+  const banded=window.CW_HISTORY&&typeof BASIN_BANDS!=='undefined'&&BASIN_BANDS[hb];
+  const chart=(window.CW_HISTORY?CW_HISTORY.basinChart(hb):sparkSVG(PMH[hb],ramp(pct)));
+  const chartCap=banded
+    ? `${b.n} storage across the water year, % of the basin's telemetered capacity · line = this year, shaded band = 2005–now min–max, dashed = median`
+    : `${b.n} storage across the water year, % of median · derived from CDSS history`;
   const tuns=(tap.tun||[]).map(n=>TUNNELS[n]?[n,TUNNELS[n]]:null).filter(Boolean);
   const hist=tuns.length
     ? `<h3 class="lr-h3">The plumbing that made it livable</h3>
@@ -135,8 +139,8 @@ function secBasin(tap){
      <div class="basinmap-wrap" id="basin-explorer">${basinMapSVG(hb,hb)}
        <div class="bx-panel" id="basin-sel">${basinSummaryHTML(hb,hb)}</div></div>
      <p class="lr-p lr-cap">Seven basins · shading = storage vs each basin’s own normal · boundaries from the public-domain USGS Watershed Boundary Dataset. The full reservoir-by-reservoir map is the <a class="wikilink" href="map.html">detailed view →</a> (best on a big screen).</p>
-     <h3 class="lr-h3">Your basin, this year</h3>
-     <div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} storage across the water year, % of median · derived from CDSS history</div></div>
+     <h3 class="lr-h3">Your basin, this year — against the record</h3>
+     <div class="lr-chart">${chart}<div class="lr-chart-cap">${chartCap}</div></div>
      ${hist}`);
 }
 

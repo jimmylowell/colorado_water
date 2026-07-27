@@ -47,18 +47,31 @@ def weekidx(d):
     return min(51, (d.timetuple().tm_yday - 1) // 7)
 
 
+def _fill(arr):
+    """forward/backward-fill empty weeks from the nearest populated one."""
+    for i in range(52):
+        if arr[i] is None:
+            for j in list(range(i, 52)) + list(range(i, -1, -1)):
+                if arr[j] is not None:
+                    arr[i] = arr[j]; break
+    return [round(x, 1) if x is not None else 0 for x in arr]
+
+
 def weekly_median(pairs):
     """[(date,value)] -> 52 weekly medians, gaps filled from neighbours."""
     buckets = [[] for _ in range(52)]
     for d, v in pairs:
         buckets[weekidx(d)].append(v)
-    out = [statistics.median(b) if b else None for b in buckets]
-    for i in range(52):  # forward/backward fill any empty week
-        if out[i] is None:
-            for j in list(range(i, 52)) + list(range(i, -1, -1)):
-                if out[j] is not None:
-                    out[i] = out[j]; break
-    return [round(x, 1) if x is not None else 0 for x in out]
+    return _fill([statistics.median(b) if b else None for b in buckets])
+
+
+def weekly_bands(pairs):
+    """[(date,value)] -> ([52 weekly mins],[52 weekly maxs]) — the record range."""
+    buckets = [[] for _ in range(52)]
+    for d, v in pairs:
+        buckets[weekidx(d)].append(v)
+    return (_fill([min(b) if b else None for b in buckets]),
+            _fill([max(b) if b else None for b in buckets]))
 
 
 # ---- parse the canonical dataset for gage/reservoir wiring ----
@@ -133,6 +146,7 @@ for gid in sorted(GAGE_BASIN):
 MONTHS = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03',
           '2026-04', '2026-05', '2026-06', '2026-07']
 RES_NORMALS = {}
+RES_BANDS = {}   # id -> [ [52 weekly mins], [52 weekly maxs] ] — historical range
 res_hist = {}  # id -> {date: value} for month-end lookups
 for rid, meta in RES_META.items():
     if not meta['dwr']:
@@ -140,8 +154,39 @@ for rid, meta in RES_META.items():
     hist = cdss_daily(meta['dwr'])
     if len(hist) > 365:
         RES_NORMALS[rid] = weekly_median(hist)
+        RES_BANDS[rid] = list(weekly_bands(hist))
         res_hist[rid] = {d: v for d, v in hist}
     print(f'  res  {rid:14} {meta["dwr"]:9} {len(hist):6} days')
+
+
+# ---- 2b. basin storage bands: weekly min/median/max of the basin's TOTAL
+# telemetered storage, from daily totals on dates where >=80% of the basin's
+# telemetered capacity is reporting (so coverage gaps don't distort it) ----
+BASIN_BANDS = {}   # basin -> [ [52 min], [52 median], [52 max] ]  (acre-feet)
+BASIN_TCAP = {}    # basin -> summed capacity of its telemetered reservoirs
+_basin_res = {}
+for rid in RES_NORMALS:
+    _basin_res.setdefault(RES_META[rid]['b'], []).append(rid)
+for b, rids in _basin_res.items():
+    tcap = sum(RES_META[r]['cap'] for r in rids)
+    BASIN_TCAP[b] = tcap
+    daily, dcap = {}, {}
+    for r in rids:
+        cap = RES_META[r]['cap']
+        for d, v in res_hist[r].items():
+            daily[d] = daily.get(d, 0.0) + v
+            dcap[d] = dcap.get(d, 0.0) + cap
+    buckets = [[] for _ in range(52)]
+    for d, tot in daily.items():
+        if dcap[d] >= 0.8 * tcap:
+            buckets[weekidx(d)].append(tot)
+    if sum(len(x) for x in buckets) < 200:
+        continue
+    mn = _fill([min(x) if x else None for x in buckets])
+    md = _fill([statistics.median(x) if x else None for x in buckets])
+    mx = _fill([max(x) if x else None for x in buckets])
+    BASIN_BANDS[b] = [mn, md, mx]
+print(f'  basin bands: {", ".join(sorted(BASIN_BANDS))}')
 
 
 def month_end_value(rid, ym):
@@ -267,6 +312,9 @@ with open(OUT, 'w') as f:
     f.write(js('GAGE_META', GAGES))       # coords/name/basin — not the live.js GAGES id-list
     f.write(js('GAGE_NORMALS', GAGE_NORMALS))
     f.write(js('RES_NORMALS', RES_NORMALS))
+    f.write(js('RES_BANDS', RES_BANDS))     # [minWeekly, maxWeekly] historical range
+    f.write(js('BASIN_BANDS', BASIN_BANDS))  # basin -> [min, median, max] weekly totals (AF)
+    f.write(js('BASIN_TCAP', BASIN_TCAP))    # basin -> telemetered capacity (AF)
     f.write(js('SNOW_NORMALS', SNOW_NORMALS))
     f.write(js('PMH_DERIVED', PMH))        # data.js builds runtime PMH, filling dark basins (yampa)
     f.write(js('POWELL_ANNUAL', POWELL_ANNUAL))
