@@ -610,14 +610,16 @@ function zipLookup(zip){
 /* =====================================================================
    STORY — per-basin education blurbs + city quick-picks (js/story.js)
    ===================================================================== */
+/* Character of each basin — deliberately free of year-specific numbers, because
+   the live derived percentage renders directly beside this text. */
 const BASININFO={
- colorado:'The Colorado River is born here in the high country astride the Divide — and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream. In 2026 its headwater reservoirs held around 80% of the median, and slipping.',
- gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa — Colorado’s largest reservoir and a linchpin of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell. Water year 2026 hit the Gunnison hard: about 70% of median, among the steepest declines in the state.',
- yampa:'The Yampa is one of the last great free-flowing rivers in the West, running wild through northwest Colorado. Ranching, Steamboat, and the sage country all lean on its snowmelt. A warm, early melt left it near 78% of median in 2026.',
- sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan — rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and Lake Powell. It is dry country that lives or dies by the snowpack, and 2026 ran near 69% of median, one of the lowest in the state.',
- rio:'The Rio Grande rises in the San Juans and crosses the San Luis Valley, where three states share every drop by compact and farmers pump a shrinking aquifer between deliveries. The valley opened 2026 with a rare surplus that drained away by summer, to about 86% of median.',
- arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it — Fry-Ark tunnel imports from the West Slope ride it downstream to Pueblo and the plains. Storage held near 91% of median in 2026, propped up by those imports.',
- platte:'The South Platte drains the Front Range, where most of Colorado lives — and most of its water is imported. Denver, Boulder, and the northern cities pull nearly half their supply across the Divide through tunnels. Native storage sat near 90% of median in 2026, but the real story is how much rides in from the other side of the mountains.'
+ colorado:'The Colorado River is born here in the high country astride the Divide — and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream.',
+ gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa — Colorado’s largest reservoir and a linchpin of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell.',
+ yampa:'The Yampa is one of the last great free-flowing rivers in the West, running wild through northwest Colorado. Ranching, Steamboat, and the sage country all lean on its snowmelt — there is no tunnel bringing in water from anywhere else.',
+ sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan — rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and Lake Powell. It is dry country that lives or dies by the snowpack.',
+ rio:'The Rio Grande rises in the San Juans and crosses the San Luis Valley, where three states share every drop by compact and farmers pump a shrinking aquifer between deliveries.',
+ arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it — Fry-Ark tunnel imports from the West Slope ride it downstream to Pueblo and the plains.',
+ platte:'The South Platte drains the Front Range, where most of Colorado lives — and most of its water is imported. Denver, Boulder, and the northern cities pull nearly half their supply across the Divide through tunnels.'
 };
 const STORY_CITIES=[
  {label:'Denver',tap:'denver',zip:'80202'},
@@ -687,13 +689,15 @@ const TUNNELS={
 
 /* Cited, verifiable facts for the opening section. cite = attributable source;
    wiki (optional) = the term to link. Phrasing is deliberately conservative. */
+/* Four load-bearing facts, each making a distinct point: snow is the storage,
+   the year starts in October, the people and the water are on opposite sides
+   of the Divide, and the whole Southwest is downstream. Deliberately short —
+   no two facts should lead with the same number. */
 const COLORADO_FACTS=[
  {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}} — the snow, not the reservoirs, is the real storage',cite:'NRCS / NOAA'},
  {stat:'Oct 1',lab:'the {{water year}} begins — hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
- {stat:'~80 / 90',lab:'roughly 80% of the state’s water falls west of the {{Continental Divide}}, while nearly 90% of Coloradans live east of it',cite:'Colorado Water Plan (CWCB)'},
- {stat:'40M',lab:'people across seven states and Mexico draw on the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'},
- {stat:'325,851 gal',lab:'in one {{acre-foot}} — about a year of water for two to three Front Range households',cite:'USGS'},
- {stat:'18 states',lab:'plus Mexico depend on rivers that rise in Colorado — the headwaters state exports water and imports none',cite:'Water Education Colorado'}
+ {stat:'~9 in 10',lab:'Coloradans live east of the {{Continental Divide}} — while most of the state’s water falls west of it. That mismatch is why the tunnels exist',cite:'Colorado Water Plan (CWCB)'},
+ {stat:'40M',lab:'people across seven states and Mexico drink from the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'}
 ];
 
 /* Provider → official conservation / current-status page. We link to the
