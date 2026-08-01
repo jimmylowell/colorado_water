@@ -115,24 +115,37 @@ const bmx=lon=>(lon-BGW)/(BGE-BGW)*BMW, bmy=lat=>(BGN-lat)/(BGN-BGS)*BMH;
 function basinPathD(rings){
   return rings.map(r=>'M'+r.map(p=>bmx(p[0]).toFixed(1)+','+bmy(p[1]).toFixed(1)).join('L')+'Z').join(' ');
 }
+/* Choropleth: fill encodes storage vs that basin's own normal (ramp), at a
+   CONSTANT opacity — selection/hover are shown on the stroke only, because
+   varying fill-opacity would read as a different storage value. */
 function basinMapSVG(home,sel){
   if(typeof BASIN_GEO==='undefined')return '';
-  let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage versus normal">`;
+  let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage against each basin's own normal">`;
   s+=`<image href="img/co-relief.webp" x="0" y="0" width="${BMW}" height="${BMH}" preserveAspectRatio="none" opacity="0.3"/>`;
   Object.keys(BASIN_GEO).forEach(bid=>{
-    const hue=BASIN_HUE[bid]||'#6d8391';
+    const pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+    const bn=BASINS.find(x=>x.id===bid).n;
     s+=`<path class="sbasin${bid===home?' home':''}${bid===sel?' sel':''}" data-basin="${bid}" `
-      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${hue}" stroke="${hue}" tabindex="0" role="button" `
-      +`aria-label="${BASINS.find(x=>x.id===bid).n} basin"></path>`;
+      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${ramp(pct)}" tabindex="0" role="button" `
+      +`aria-label="${bn} basin, ${pct}% of normal storage"><title>${bn} — ${pct}% of normal</title></path>`;
   });
   Object.keys(BASIN_GEO).forEach(bid=>{
     const a=BASIN_LABEL[bid]; if(!a)return;
     const x=bmx(a[0]).toFixed(0), y=bmy(a[1]).toFixed(0);
     const bb=BASINS.find(x2=>x2.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+    /* neutral, not ramp-coloured: the fill beneath already carries the value,
+       so tinted text on the same tint would vanish */
     s+=`<text class="sbasin-lab" x="${x}" y="${y}" text-anchor="middle" pointer-events="none">${bb.n.toUpperCase()}</text>`;
-    s+=`<text class="sbasin-pct" x="${x}" y="${(+y+13)}" text-anchor="middle" fill="${ramp(pct)}" pointer-events="none">${pct}%</text>`;
+    s+=`<text class="sbasin-pct" x="${x}" y="${(+y+13)}" text-anchor="middle" pointer-events="none">${pct}%</text>`;
   });
-  return s+'</svg>';
+  return s+'</svg>'+basinLegend();
+}
+/* scale for the choropleth above — 100% is a normal year, not "full" */
+function basinLegend(){
+  const stops=[55,70,85,100,112];
+  return `<div class="bx-legend"><span class="bxl-cap">storage vs normal</span>`
+    +stops.map(v=>`<span class="bxl-sw" style="background:${ramp(v)}"></span>`).join('')
+    +`<span class="bxl-ends"><b>drier</b> ← 100% = a normal year → <b>wetter</b></span></div>`;
 }
 function basinSummaryHTML(bid,home){
   const b=BASINS.find(x=>x.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
@@ -162,7 +175,7 @@ function secBasin(tap){
     : `<h3 class="lr-h3">No tunnel feeds this one</h3>
        <p class="lr-p">${W(`Your basin lives on its own snowmelt — nothing crosses the {{Continental Divide}} to top it up. What falls here is what you get, which makes the size of the winter snowpack everything.`)}</p>`;
   return sec('basin','Colorado runs on seven basins',`Your basin: the ${b.n}`,
-    `<p class="lr-p">${W(`Colorado divides into seven river basins — four west of the {{Continental Divide}}, three east. Yours is the <b>${b.n}</b>. Each is shaded by how its storage is holding up against its own normal right now; tap any basin to compare.`)}</p>
+    `<p class="lr-p">${W(`Colorado divides into seven river basins — four west of the {{Continental Divide}}, three east. Yours is the <b>${b.n}</b>, outlined in white below. Each basin is coloured by how much water it is holding against its <i>own</i> normal for late July, so they can be read side by side; tap any one for its details.`)}</p>
      <div class="basinmap-wrap" id="basin-explorer">${basinMapSVG(hb,hb)}
        <div class="bx-panel" id="basin-sel">${basinSummaryHTML(hb,hb)}</div></div>
      <p class="lr-p lr-cap">Boundaries from the public-domain USGS Watershed Boundary Dataset. To go reservoir by reservoir, open the <a class="wikilink" href="map.html">detailed map →</a> (best on a big screen).</p>

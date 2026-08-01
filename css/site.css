@@ -392,13 +392,23 @@ body.fs-on{overflow:hidden}
 /* interactive seven-basin map */
 .basinmap-wrap{margin:18px 0}
 .basinmap{display:block;width:100%;height:auto;border:1px solid var(--silt);background:#08131B}
-.sbasin{fill-opacity:.15;stroke-width:.8;stroke-opacity:.7;cursor:pointer;transition:fill-opacity .15s}
-.sbasin:hover{fill-opacity:.32}
-.sbasin:focus-visible{outline:none;fill-opacity:.32}
-.sbasin.home{fill-opacity:.3;stroke-width:1.4;stroke-opacity:1}
-.sbasin.sel{fill-opacity:.48;stroke-width:1.9;stroke-opacity:1}
-.sbasin-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;fill:#EDE6D6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
-.sbasin-pct{font-family:var(--mono);font-size:11px;font-weight:500;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+/* fill = storage vs normal, and it must stay CONSTANT: if selection changed
+   fill-opacity, a selected basin would read as a different storage value.
+   Hover/home/selected are therefore carried entirely by the stroke. */
+.sbasin{fill-opacity:.62;stroke:#08131B;stroke-width:.8;stroke-opacity:.9;cursor:pointer;
+  transition:stroke-width .15s,stroke .15s}
+.sbasin:hover,.sbasin:focus-visible{outline:none;stroke:#EDE6D6;stroke-width:1.8}
+.sbasin.home{stroke:#EDE6D6;stroke-width:1.5}
+.sbasin.sel{stroke:#EDE6D6;stroke-width:2.4}
+
+.bx-legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  border:1px solid var(--silt);border-top:0;background:var(--basin);padding:8px 12px}
+.bxl-cap{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+.bxl-sw{width:26px;height:10px;display:inline-block}
+.bxl-ends{font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-left:4px}
+.bxl-ends b{color:var(--dust);font-weight:500}
+.sbasin-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;fill:#F2ECE0;paint-order:stroke;stroke:#08131B;stroke-width:3.5px}
+.sbasin-pct{font-family:var(--mono);font-size:12px;font-weight:500;fill:#F2ECE0;paint-order:stroke;stroke:#08131B;stroke-width:3.5px}
 .bx-panel{border:1px solid var(--silt);border-top:0;background:var(--basin);padding:14px 16px}
 .bx-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
 .bx-name{font-family:var(--display);font-size:20px;color:var(--bone)}
