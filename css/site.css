@@ -296,9 +296,17 @@ body.fs-on{overflow:hidden}
 .zipmsg{min-height:18px;margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--dust)}
 .orpick{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:14px 0 10px}
 .citychips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:44ch;margin:0 auto}
+/* two-line chip: the city, and the basin it drinks from (with the basin's hue)
+   so the picker doubles as a reminder that all seven basins are represented */
 .citychip{appearance:none;cursor:pointer;background:transparent;color:var(--dust);border:1px solid var(--silt-2);
-  padding:8px 13px;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;transition:border-color .18s,color .18s}
-.citychip:hover{border-color:var(--aqua);color:var(--bone)}
+  padding:7px 12px;font-family:var(--mono);letter-spacing:.04em;text-align:left;
+  display:flex;flex-direction:column;gap:3px;transition:border-color .18s,color .18s}
+.citychip .cc-city{font-size:11.5px;color:var(--dust)}
+.citychip .cc-basin{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim)}
+.citychip .cc-basin i{width:6px;height:6px;flex:0 0 6px;display:inline-block}
+.citychip:hover{border-color:var(--aqua)}
+.citychip:hover .cc-city{color:var(--bone)}
 .skiplink{display:inline-block;margin-top:26px;color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-decoration:none}
 .skiplink:hover{color:var(--aqua)}
 
@@ -465,6 +473,13 @@ body.fs-on{overflow:hidden}
 .bm-riv{font-family:var(--display);font-style:italic;font-size:11px;fill:#8FB2C4;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bm-q{font-family:var(--mono);font-size:8.5px;fill:#00D6E6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bm-tun{font-family:var(--mono);font-size:8.5px;fill:#A9BCC7;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+
+/* basin flow diagram — the step-down */
+.basinflow{display:block;width:100%;height:auto;background:#08131B}
+.bf-lab{font-family:var(--mono);font-size:9px;fill:#C7D4DA;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bf-lab.mine{fill:#F2ECE0;font-weight:500}
+.bf-out{font-family:var(--mono);font-size:8.5px;fill:#8DA4B0;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bf-cap{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;fill:#5C7484}
 
 /* the one place the dense statewide map is offered */
 .explore-block{border:1px solid var(--silt-2);background:var(--basin);padding:22px 24px;margin:26px 0 8px}

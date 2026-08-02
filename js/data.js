@@ -621,15 +621,22 @@ const BASININFO={
  arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it — Fry-Ark tunnel imports from the West Slope ride it downstream to Pueblo and the plains.',
  platte:'The South Platte drains the Front Range, where most of Colorado lives — and most of its water is imported. Denver, Boulder, and the northern cities pull nearly half their supply across the Divide through tunnels.'
 };
+/* Example places for the picker. Ordered by basin, and EVERY basin carries at
+   least one — otherwise a reader in the Gunnison, Yampa or Rio Grande sees no
+   way in and the seven-basin framing looks like six. `b` is the home basin so
+   the chip can show which basin the city drinks from. */
 const STORY_CITIES=[
- {label:'Denver',tap:'denver',zip:'80202'},
- {label:'Colorado Springs',tap:'springs',zip:'80903'},
- {label:'Boulder',tap:'boulder',zip:'80302'},
- {label:'Fort Collins',tap:'fortcollins',zip:'80521'},
- {label:'Grand Junction',tap:'grandjunction',zip:'81501'},
- {label:'Pueblo',tap:'pueblo',zip:'81003'},
- {label:'Durango',tap:'durango',zip:'81301'},
- {label:'Vail',tap:'vail',zip:'81657'}
+ {label:'Grand Junction',tap:'grandjunction',zip:'81501',b:'colorado'},
+ {label:'Vail',tap:'vail',zip:'81657',b:'colorado'},
+ {label:'Gunnison',tap:'gunnisontown',zip:'81230',b:'gunnison'},
+ {label:'Steamboat Springs',tap:'steamboat',zip:'80487',b:'yampa'},
+ {label:'Durango',tap:'durango',zip:'81301',b:'sw'},
+ {label:'Alamosa',tap:'slv',zip:'81101',b:'rio'},
+ {label:'Colorado Springs',tap:'springs',zip:'80903',b:'arkansas'},
+ {label:'Pueblo',tap:'pueblo',zip:'81003',b:'arkansas'},
+ {label:'Denver',tap:'denver',zip:'80202',b:'platte'},
+ {label:'Boulder',tap:'boulder',zip:'80302',b:'platte'},
+ {label:'Fort Collins',tap:'fortcollins',zip:'80521',b:'platte'}
 ];
 
 /* =====================================================================

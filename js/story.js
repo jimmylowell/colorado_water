@@ -193,6 +193,7 @@ function secMyBasin(tap){
   const cap=inb.reduce((s,r)=>s+r.cap,0);
   const below=inb.filter(r=>pmAt(r,NOW)<95).length;
   const map=window.CW_BASINMAP?CW_BASINMAP.render(hb,tap):'';
+  const flowSVG=window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(hb,tap):'';
   const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[hb];
   const chart=window.CW_HISTORY?CW_HISTORY.snowStoreChart(hb):'';
   const snowLine=hasSnow?(()=>{
@@ -224,6 +225,9 @@ function secMyBasin(tap){
          <div class="bp-lab">of them sitting<br>below normal</div></div>
      </div>
      ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">The ${b.n} basin — reservoirs drawn as glasses (size = capacity, fill = storage, colour = against normal), rivers in their headwater colours, ◆ streamgages showing live flow${tuns.length?', dashed where a tunnel crosses the basin line':''}.</div></div>`:''}
+     ${flowSVG?`<h3 class="lr-h3">How the water steps down</h3>
+       <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the left, passes through each reservoir and gage in turn, and leaves the basin on the right — every drop routed through the same handful of structures.`)}</p>
+       <div class="lr-chart">${flowSVG}<div class="lr-chart-cap">Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings where available. A schematic of the order things happen in, not a channel map.</div></div>`:''}
      <h3 class="lr-h3">Snow in, water out</h3>
      ${snowLine}
      ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · snowpack as snow-water equivalent over its long-record SNOTEL sites; storage as a share of its telemetered capacity. Solid = this water year, dashed = the 1991–present normal.</div></div>`:''}
@@ -343,8 +347,13 @@ document.getElementById('zipgo').addEventListener('click',submitZip);
 document.getElementById('zip').addEventListener('keydown',e=>{if(e.key==='Enter')submitZip();});
 
 const cc=document.getElementById('citychips');
-cc.innerHTML=STORY_CITIES.map(c=>
-  `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}">${c.label}</button>`).join('');
+cc.innerHTML=STORY_CITIES.map(c=>{
+  const bn=(BASINS.find(x=>x.id===c.b)||{}).n||'';
+  const hue=(typeof BASIN_HUE!=='undefined'&&BASIN_HUE[c.b])||'#8FA6B2';
+  return `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}" title="${c.label} — ${bn} basin">`
+    +`<span class="cc-city">${c.label}</span>`
+    +`<span class="cc-basin"><i style="background:${hue}"></i>${bn}</span></button>`;
+}).join('');
 cc.querySelectorAll('.citychip').forEach(b=>b.addEventListener('click',()=>{
   const t=TAPS.find(x=>x.id===b.dataset.tap);
   if(t){document.getElementById('zip').value=b.dataset.zip;msg('');choosePlace(t,b.dataset.zip);}

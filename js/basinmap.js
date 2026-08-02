@@ -143,5 +143,121 @@ function render(bid,tap){
   return s+'</svg>';
 }
 
-window.CW_BASINMAP={render};
+/* =====================================================================
+   FLOW — the same basin as a step-down: headwaters on the left, then every
+   reservoir, gage and confluence the water passes through, to where it
+   leaves the basin. Ribbon width tracks how much water each reach carries.
+   Laid out from the flow graph in data.js by longest-path rank.
+   ===================================================================== */
+function flow(bid,tap){
+  if(typeof G==='undefined')return '';
+  const inB=G.nodes.filter(n=>n.sys===bid);
+  if(inB.length<2)return '';
+  const has={}; inB.forEach(n=>has[n.id]=n);
+  const internal=G.edges.filter(e=>has[e.f]&&has[e.t]);
+  const exports_=G.edges.filter(e=>has[e.f]&&!has[e.t]);
+
+  /* longest-path rank so every node sits downstream of its inputs */
+  const rank={}; inB.forEach(n=>rank[n.id]=0);
+  for(let pass=0;pass<inB.length;pass++){
+    let moved=false;
+    internal.forEach(e=>{ if(rank[e.t]<rank[e.f]+1){rank[e.t]=rank[e.f]+1;moved=true;} });
+    if(!moved)break;
+  }
+  const maxR=Math.max(...inB.map(n=>rank[n.id]));
+  const cols={}; inB.forEach(n=>(cols[rank[n.id]]=cols[rank[n.id]]||[]).push(n));
+  Object.values(cols).forEach(c=>c.sort((a,b)=>a.y-b.y));
+  const rows=Math.max(...Object.values(cols).map(c=>c.length));
+
+  const W=700, padL=42, padR=104, padT=46, padB=42;
+  const H=Math.max(210,padT+padB+rows*78);
+  const X=r=>maxR?padL+r/maxR*(W-padL-padR):padL;
+  const pos={};
+  Object.keys(cols).forEach(r=>{
+    const c=cols[r], span=H-padT-padB;
+    c.forEach((n,i)=>{pos[n.id]={x:X(+r), y:padT+span*((i+0.5)/c.length)};});
+  });
+
+  const maxQ=Math.max(1,...internal.concat(exports_).map(e=>e.q||0));
+  const wOf=q=>1.6+Math.sqrt((q||0)/maxQ)*13;
+  const hueOf=n=>n.hue||HUE_OF[n.id]||'#3E7C93';
+  let s=`<svg class="basinflow" viewBox="0 0 ${W} ${H}" role="img"
+    aria-label="How water steps down through the ${esc(BASINS.find(x=>x.id===bid).n)} basin, from headwaters to where it leaves.">`;
+
+  /* ribbons first, so nodes sit on top */
+  internal.forEach(e=>{
+    const a=pos[e.f],b=pos[e.t]; if(!a||!b)return;
+    const mx=(a.x+b.x)/2;
+    s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} C${mx.toFixed(1)},${a.y.toFixed(1)} ${mx.toFixed(1)},${b.y.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}"`
+      +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
+      +` stroke-linecap="round" opacity="0.55"><title>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)} · ${(e.q||0).toLocaleString('en-US')} cfs</title></path>`;
+  });
+  /* water leaving the basin */
+  exports_.forEach(e=>{
+    const a=pos[e.f]; if(!a)return;
+    const x2=W-padR+34;
+    s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${x2.toFixed(1)},${a.y.toFixed(1)}"`
+      +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
+      +` stroke-linecap="round" opacity="0.4" stroke-dasharray="${e.dash?'5 4':'none'}"/>`
+      +`<text class="bf-out" x="${(x2+5).toFixed(1)}" y="${(a.y-7).toFixed(1)}">`
+      +`${e.tun?esc(e.tun):'leaves the'}</text>`
+      +`<text class="bf-out" x="${(x2+5).toFixed(1)}" y="${(a.y+5).toFixed(1)}">`
+      +`${e.tun?'(tunnel)':'basin →'}</text>`;
+  });
+
+  const liveQ=window.CW_LIVEQ||{};
+  const mine=new Set([].concat(tap&&tap.res||[]));
+  const labels=[];
+  inB.forEach(n=>{
+    const p=pos[n.id]; if(!p)return;
+    const g=`translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`;
+    let glyph='', lab=n.l||'';
+    if(n.k==='res'){
+      const r=RESBY[n.res];
+      const col=r?(r.fc?'#8DA4B0':ramp(pmAt(r,NOW))):'#8DA4B0';
+      const frac=r?Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap)):0.5;
+      const w=13,h=17,top=-h/2,bot=h/2,rimw=w/2,basew=w/2*0.55;
+      const path=`M${-rimw},${top} L${-basew},${bot} L${basew},${bot} L${rimw},${top} Z`;
+      const cid='bf'+n.id;
+      glyph=`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
+        +`<path d="${path}" fill="#0A1620" stroke="#8fb0c4" stroke-width="1"/>`
+        +`<rect x="${-rimw}" y="${(bot-h*frac).toFixed(1)}" width="${w}" height="${h}" fill="${col}" clip-path="url(#${cid})"/>`
+        +`<path d="${path}" fill="none" stroke="${mine.has(n.res)?'#EDE6D6':'#8fb0c4'}" stroke-width="${mine.has(n.res)?1.6:1}"/>`;
+      if(r&&!r.fc)lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'')+' · '+pmAt(r,NOW)+'%';
+      else lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'');
+    }else if(n.k==='gage'){
+      const q=liveQ[n.gage];
+      glyph=`<path d="M0,-6 L6,0 L0,6 L-6,0 Z" fill="${q!=null?'#00D6E6':'#0A1620'}" stroke="#0A1620" stroke-width="1"/>`;
+      lab=(n.l||'').replace(/^.*? (nr|at|near) /i,'@ ');
+      if(q!=null)lab+=' · '+Math.round(q).toLocaleString('en-US')+' cfs';
+    }else if(n.k==='src'){
+      glyph=`<circle r="5" fill="${hueOf(n)}"/>`;
+      lab=(n.l||'').replace(/ headwaters$/,'');
+    }else{
+      glyph=`<circle r="3" fill="#5C7484"/>`;
+      lab='';
+    }
+    s+=`<g transform="${g}"><title>${esc(n.l||n.id)}</title>${glyph}</g>`;
+    if(lab)labels.push({
+      pri:(n.k==='res'?3e6+(RESBY[n.res]?RESBY[n.res].cap:0):(n.k==='gage'?2e6:1e6)),
+      x:p.x, y:p.y+(rank[n.id]%2===0?-13:21), t:lab,
+      cls:'bf-lab'+(n.k==='res'&&mine.has(n.res)?' mine':'')});
+  });
+  /* neighbouring ranks sit closer than the labels are wide, so place by
+     priority with a collision test and clamp everything inside the frame */
+  const placed=[];
+  labels.sort((a,b)=>b.pri-a.pri).forEach(L=>{
+    const half=L.t.length*2.75;
+    const x=Math.max(half+3,Math.min(W-half-3,L.x));
+    const box=[x-half,L.y-8,x+half,L.y+3];
+    if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1]))return;
+    placed.push(box);
+    s+=`<text class="${L.cls}" x="${x.toFixed(1)}" y="${L.y.toFixed(1)}" text-anchor="middle">${esc(L.t)}</text>`;
+  });
+  s+=`<text class="bf-cap" x="6" y="16">HEADWATERS</text>`
+    +`<text class="bf-cap" x="${W-6}" y="16" text-anchor="end">DOWNSTREAM →</text>`;
+  return s+'</svg>';
+}
+
+window.CW_BASINMAP={render,flow};
 })();
