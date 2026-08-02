@@ -328,16 +328,39 @@ body.fs-on{overflow:hidden}
 .bp-spark .sparksvg{height:34px}
 @media (max-width:620px){.basin-panel{grid-template-columns:1fr;gap:1px}}
 
-/* source strip */
+/* Source strip. Reservoirs are ROWS, not bare cups: a lone glass told the
+   reader nothing, so each row carries its share of the provider's supply, the
+   volume in it today, and the shape of a normal year at that reservoir. */
 .src-slope{margin:22px 0 0}
 .src-slope-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);
-  border-bottom:1px solid var(--silt);padding-bottom:7px;margin-bottom:14px}
-.src-glasses{display:flex;flex-wrap:wrap;gap:16px 18px}
-.gcard{display:flex;flex-direction:column;align-items:center;width:66px;text-decoration:none;text-align:center}
+  border-bottom:1px solid var(--silt);padding-bottom:7px;margin-bottom:4px;
+  display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between}
+.src-slope-n{letter-spacing:.06em;text-transform:none;color:var(--dust)}
 .gmini{display:block}
-.gc-name{font-family:var(--mono);font-size:9.5px;color:var(--dust);margin-top:5px;line-height:1.25}
-.gc-pct{font-family:var(--mono);font-size:10px;font-weight:500;margin-top:2px}
-.gcard:hover .gc-name{color:var(--bone)}
+.rrows{display:flex;flex-direction:column}
+.rrow{display:grid;grid-template-columns:38px minmax(0,1fr) 108px 132px;gap:14px;align-items:center;
+  padding:13px 2px;border-bottom:1px solid var(--silt)}
+.rrow:last-child{border-bottom:0}
+.rr-glass{display:flex;justify-content:center}
+.rr-name{font-size:14px;color:var(--bone);line-height:1.3}
+.rr-live{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--aqua);border:1px solid rgba(0,214,230,.4);padding:1px 4px;margin-left:7px;vertical-align:2px}
+.rr-sub{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px;line-height:1.5}
+.rr-sub b{color:var(--dust);font-weight:500}
+.rr-share{height:3px;background:var(--silt);margin-top:7px;max-width:260px}
+.rr-share i{display:block;height:3px;background:var(--silt-2)}
+.rr-spark{display:flex;flex-direction:column;gap:3px}
+.resspark{display:block;width:104px;height:26px}
+.rr-sparklab{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;color:var(--dim)}
+.rr-val{text-align:right}
+.rr-pct{font-family:var(--mono);font-size:17px;font-weight:500;line-height:1.1}
+.rr-of{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--dim);margin-top:2px}
+.rr-af{font-family:var(--mono);font-size:10px;color:var(--dust);margin-top:5px;white-space:nowrap}
+@media (max-width:700px){
+  .rrow{grid-template-columns:34px minmax(0,1fr) auto;gap:10px}
+  .rr-spark{display:none}
+  .rr-val{grid-column:3}
+}
 
 /* CTA button */
 .story-cta{display:inline-block;appearance:none;cursor:pointer;margin-top:28px;text-decoration:none;
@@ -411,12 +434,20 @@ body.fs-on{overflow:hidden}
 .sbasin.home{stroke:#EDE6D6;stroke-width:1.5}
 .sbasin.sel{stroke:#EDE6D6;stroke-width:2.4}
 
-.bx-legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-  border:1px solid var(--silt);border-top:0;background:var(--basin);padding:8px 12px}
-.bxl-cap{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-right:2px}
-.bxl-sw{width:26px;height:10px;display:inline-block}
-.bxl-ends{font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-left:4px}
-.bxl-ends b{color:var(--dust);font-weight:500}
+/* Basin-map legend: a continuous scale whose stops sit at their true values
+   (built from RAMPS in data.js), with labelled ticks — so the legend and the
+   choropleth are demonstrably the same scale. */
+.bx-legend{border:1px solid var(--silt);border-top:0;background:var(--basin);padding:10px 14px 12px}
+.bxl-cap{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.bxl-scale{position:relative;margin:9px 0 0;max-width:520px}
+.bxl-bar{height:11px;width:100%}
+.bxl-ticks{position:relative;height:22px}
+.bxl-tick{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.bxl-tick i{display:block;width:1px;height:4px;background:var(--silt-2)}
+.bxl-tick b{font-family:var(--mono);font-size:9.5px;font-weight:400;color:var(--dim);margin-top:2px;white-space:nowrap}
+.bxl-tick.is-norm i{width:2px;background:var(--bone)}
+.bxl-tick.is-norm b{color:var(--bone)}
+.bxl-note{font-size:12px;line-height:1.6;color:var(--dim);margin:6px 0 0;max-width:66ch}
 .sbasin-lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;fill:#F2ECE0;paint-order:stroke;stroke:#08131B;stroke-width:3.5px}
 .sbasin-pct{font-family:var(--mono);font-size:12px;font-weight:500;fill:#F2ECE0;paint-order:stroke;stroke:#08131B;stroke-width:3.5px}
 .bx-panel{border:1px solid var(--silt);border-top:0;background:var(--basin);padding:14px 16px}
@@ -434,7 +465,33 @@ body.fs-on{overflow:hidden}
 .lr-chart{margin:18px 0;border:1px solid var(--silt);background:var(--basin);padding:14px 14px 8px}
 .histchart{display:block;width:100%;height:auto}
 .hc-ax{font-family:var(--mono);font-size:9px;fill:var(--dim)}
+.hc-lgd{font-family:var(--mono);font-size:9.5px;fill:var(--dust)}
+.hc-lbl{font-family:var(--mono);font-size:9.5px;font-weight:500}
+.hc-ptitle{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;fill:var(--dust)}
+.hc-thr{font-family:var(--mono);font-size:9px;letter-spacing:.06em}
+/* value sitting inside a bar: the fills are all light steps, so it takes the
+   chart surface as ink rather than a colour of its own */
+.hc-barval{font-family:var(--mono);font-size:11px;font-weight:600;fill:#08131B}
+.hc-evt{font-family:var(--mono);font-size:9px;letter-spacing:.04em;fill:var(--dust)}
 .lr-chart-cap{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--dim);margin-top:8px;line-height:1.5}
+
+/* Table view — every charted value is also reachable as text, so nothing in a
+   plot depends on telling two colours apart. */
+.lr-table{margin:10px 0 2px;border-top:1px solid var(--silt);padding-top:8px}
+.lr-table summary{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;padding:3px 0}
+.lr-table summary:hover{color:var(--bone)}
+.lr-table summary:focus-visible{outline:2px solid var(--aqua);outline-offset:3px}
+.dtab{border-collapse:collapse;margin:10px 0 4px;font-family:var(--mono);font-size:11px;width:100%;max-width:520px}
+.dtab caption{text-align:left;color:var(--dim);font-size:10px;line-height:1.6;margin-bottom:8px;max-width:64ch}
+.dtab th,.dtab td{text-align:right;padding:5px 10px 5px 0;border-bottom:1px solid var(--silt);
+  font-weight:400;font-variant-numeric:tabular-nums}
+.dtab thead th{color:var(--dim);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+.dtab tbody th{text-align:left;color:var(--bone)}
+.dtab td{color:var(--dust)}
+.dt-sub{color:var(--dim)}
+.dt-note{font-size:12px;line-height:1.6;color:var(--dim);margin:8px 0 4px;max-width:64ch}
+.dt-note b{color:var(--dust);font-weight:500}
 
 /* tunnel history list */
 .tunlist{list-style:none;padding:0;margin:10px 0 15px}
@@ -517,7 +574,6 @@ body.fs-on{overflow:hidden}
 .xb-alt{color:var(--dust);font-size:13px;text-decoration:none;border-bottom:1px dotted var(--dim)}
 .xb-alt:hover{color:var(--bone);border-bottom-color:var(--aqua)}
 
-/* water-calendar labels */
-.wc-band{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em}
-.wc-cap{font-family:var(--mono);font-size:9px;letter-spacing:.18em;fill:var(--dim)}
+/* water-year season labels, now drawn as the snowpack chart's background */
+.wc-band{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;fill:var(--dim)}
 .wc-now{font-family:var(--mono);font-size:9px;letter-spacing:.1em;fill:#EDE6D6}

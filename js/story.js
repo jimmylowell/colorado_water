@@ -53,41 +53,112 @@ function glassMini(r){
     +`<rect x="0" y="${fillTop}" width="${WD}" height="39" fill="${col}" opacity="0.95" clip-path="url(#${cid})"/>`
     +`<path d="${path}" fill="none" stroke="#54798C" stroke-width="1.1"/></svg>`;
 }
-function glassCard(r){
-  const pm=pmAt(r,NOW);
-  return `<div class="gcard">${glassMini(r)}<div class="gc-name">${cleanName(r.n)}</div>`
-    +`<div class="gc-pct" style="color:${r.fc?'#8DA4B0':ramp(pm)}">${r.fc?'flood':pm+'%'}</div></div>`;
+/* A reservoir's normal year as a 52-week silhouette, with a dot where the
+   reservoir actually sits this week. One glance answers the question the bare
+   glass could not: is this level normal for AUGUST, or is it genuinely low? */
+function resYearSpark(r){
+  const nrm=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+  if(!nrm||!r.cap)return '';
+  const w=104,h=26,wi=Math.min(51,weekIdx());
+  /* Scale to the curve itself, NOT to capacity: against a full-pool top, a
+     reservoir that swings between 40% and 70% draws as a flat line and the
+     seasonal shape — the whole point of this mark — disappears. */
+  const top=Math.max(...nrm,stoAt(r,NOW))*1.08;
+  const X=i=>i/51*w, Y=v=>h-1-(v/top)*(h-2);
+  const d='M'+nrm.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join('L');
+  const now=stoAt(r,NOW), col=r.fc?'#8DA4B0':ramp(pmAt(r,NOW));
+  return `<svg class="resspark" viewBox="0 0 ${w} ${h}" role="img"
+      aria-label="A normal year at ${cleanName(r.n)} peaks in early summer; today's level is marked.">
+    <path d="${d} L${w},${h} L0,${h} Z" fill="#8FA6B2" opacity="0.10"/>
+    <path d="${d}" fill="none" stroke="#7C93A1" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <line x1="${X(wi).toFixed(1)}" y1="0" x2="${X(wi).toFixed(1)}" y2="${h}" stroke="#54798C" stroke-width="0.8"/>
+    <circle cx="${X(wi).toFixed(1)}" cy="${Y(Math.min(now,top)).toFixed(1)}" r="2.6" fill="${col}"/></svg>`;
 }
-function glassGroup(title,arr){
+/* One reservoir, as a row of facts rather than a cup on its own. `share` is
+   this reservoir's slice of everything the provider stores, which is the piece
+   that makes a single-reservoir group meaningful. */
+function resRow(r,share){
+  const pm=pmAt(r,NOW), col=r.fc?'#8DA4B0':ramp(pm);
+  const live=LIVE_STO[r.id];
+  const now=stoAt(r,NOW);
+  return `<div class="rrow">
+    <div class="rr-glass">${glassMini(r)}</div>
+    <div class="rr-main">
+      <div class="rr-name">${proseName(cleanName(r.n))}${live?'<span class="rr-live">live</span>':''}</div>
+      <div class="rr-sub">${r.r||''}${r.r?' · ':''}${kaf(r.cap)} KAF when full${
+        share!=null?` · <b>${share}%</b> of what your provider stores`:''}</div>
+      ${share!=null?`<div class="rr-share"><i style="width:${Math.max(2,share)}%"></i></div>`:''}
+    </div>
+    <div class="rr-spark">${resYearSpark(r)}<span class="rr-sparklab">a normal year</span></div>
+    <div class="rr-val">
+      <div class="rr-pct" style="color:${col}">${r.fc?'flood':pm+'%'}</div>
+      <div class="rr-of">${r.fc?'control pool':'of normal'}</div>
+      <div class="rr-af">${r.fc?'':`${af(now)} AF today`}</div>
+    </div>
+  </div>`;
+}
+function glassGroup(title,arr,totCap){
   if(!arr.length)return'';
-  return `<div class="src-slope"><div class="src-slope-h">${title}</div>`
-    +`<div class="src-glasses">${arr.slice().sort((a,b)=>b.cap-a.cap).map(glassCard).join('')}</div></div>`;
+  const cap=arr.reduce((s,r)=>s+r.cap,0);
+  const sorted=arr.slice().sort((a,b)=>b.cap-a.cap);
+  const groupShare=totCap?Math.round(cap/totCap*100):null;
+  return `<div class="src-slope"><div class="src-slope-h">${title}`
+    +`<span class="src-slope-n">${arr.length} reservoir${arr.length>1?'s':''} · ${kaf(cap)} KAF`
+    +`${groupShare!=null?` · ${groupShare}% of your stored supply`:''}</span></div>`
+    +`<div class="rrows">${sorted.map(r=>resRow(r,totCap?Math.round(r.cap/totCap*100):null)).join('')}</div></div>`;
 }
 
 /* =====================================================================
    ACT 1 — COLORADO
    ===================================================================== */
 
-/* §1 snowpack */
+/* §1 snowpack + the water year.
+   These used to be two sections, and the calendar had a band chart of its own
+   that did nothing but restate its own labels. The seasons are now the
+   BACKGROUND of the snowpack chart, where the snow curve visibly does what
+   they claim — so the calendar earns its place instead of occupying a figure. */
+const LATE_MAY_WK=33;    /* water-year week index covering ~20–26 May */
+function decadeLine(){
+  const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
+  if(!D||!D.dec)return '';
+  const keys=Object.keys(D.dec).sort();
+  const a=D.dec[keys[0]], z=D.dec[keys[keys.length-1]];
+  if(!a||!z||!a.peak)return '';
+  const drop=Math.round((1-z.peak/a.peak)*100);
+  /* the late-spring gap: where the decades pull apart fastest */
+  const wk=LATE_MAY_WK, ga=a.wk[wk], gz=z.wk[wk];
+  const springDrop=(ga>0&&gz!=null)?Math.round((1-gz/ga)*100):null;
+  const cur=D.curStats;
+  return `<p class="lr-p">${W(`Stack the decades on one chart and the trend is not subtle. Across a
+     <b>fixed</b> panel of ${D.n} long-record {{SNOTEL}} sites — the same stations in every decade, so the
+     comparison isn’t an artefact of which gauges happened to be running — the median peak snowpack has
+     fallen from <b>${a.peak}″</b> in the ${keys[0]} to <b>${z.peak}″</b> in the ${keys[keys.length-1]},
+     a drop of about <b>${drop}%</b>.`)}</p>
+     ${springDrop!=null?`<p class="lr-p">${W(`And the loss is worst exactly where it hurts most. The
+       decades barely separate in midwinter; they fan apart through <b>spring</b>, and by late May the
+       ${keys[keys.length-1]} hold roughly <b>${springDrop}% less</b> water than the ${keys[0]} did. It
+       isn’t only that less snow falls — what does fall leaves sooner, ahead of the summer that needs
+       it.`)}</p>`:''}
+     ${cur?`<p class="lr-p">${W(`Against that, this water year barely registers: a peak of
+       <b>${cur.peak}″</b>${cur.apr1!=null?`, and just <b>${cur.apr1}″</b> left on April 1`:''} — well under
+       half a normal year, and the lowest line on the chart by a wide margin.`)}</p>`:''}`;
+}
 function secSnow(){
   const facts=COLORADO_FACTS.map(f=>
     `<div class="fact"><div class="fact-stat">${f.stat}</div>`
     +`<div class="fact-lab">${W(f.lab)} ${cite(f.cite)}</div></div>`).join('');
   const chart=window.CW_HISTORY?CW_HISTORY.snowStateChart():'';
+  const bars=window.CW_HISTORY&&CW_HISTORY.snowDecadeBars?CW_HISTORY.snowDecadeBars():'';
+  const table=window.CW_HISTORY&&CW_HISTORY.snowDecadeTable?CW_HISTORY.snowDecadeTable():'';
   return sec('snow','Where it begins','Colorado’s water starts as snow',
     `<p class="lr-p">${W(`Nearly every drop Colorado uses falls first as snow. Winter storms stack {{snowpack|snow}} on the high country, and that frozen reservoir — measured all season as {{snow water equivalent|snow-water equivalent}}, the depth of water it would melt into — is the state’s real storage. The lakes below are just where it goes afterwards.`)}</p>
      <div class="fact-grid">${facts}</div>
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">Statewide snowpack across the water year, averaged over the seven basins’ long-record SNOTEL sites · NRCS</div></div>`:''}
-     <p class="lr-p">${W(`Because the snow <i>is</i> the storage, a warm early spring can undo a decent winter: the mountains can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026 — by the first of June, most of the state’s SNOTEL sites were already bare.`)}</p>`);
-}
-
-/* §2 the water year */
-function secCalendar(){
-  const cal=window.CW_HISTORY?CW_HISTORY.waterCalendar():'';
-  return sec('calendar','The clock','A year that begins in October',
-    `<p class="lr-p">${W(`Hydrology doesn’t use the calendar year. The {{water year}} starts on <b>October 1</b>, because that is when the snow that will feed next summer begins to fall. Everything downstream runs on that cycle.`)}</p>
-     ${cal?`<div class="lr-chart">${cal}<div class="lr-chart-cap">Accumulation, melt and draw-down — the rhythm every reservoir in the state follows</div></div>`:''}
-     <p class="lr-p">${W(`Snow piles up from October to about April. It melts through spring, and that {{snowmelt}} is what fills the reservoirs — most of a year’s inflow arrives in a few weeks. Then from summer into fall the valves open and the level falls, until the first snows start the whole thing again.`)}</p>`);
+     <h3 class="lr-h3">A year that begins in October</h3>
+     <p class="lr-p">${W(`Hydrology doesn’t use the calendar year. The {{water year}} starts on <b>October 1</b>, because that is when the snow that will feed next summer begins to fall — so that is how the chart below reads, left to right. Snow piles up until about April. It melts through spring, and that {{snowmelt}} is what fills the reservoirs, most of a year’s inflow arriving in a few weeks. Then from summer into fall the valves open and the levels fall, until the first snows start the whole thing again.`)}</p>
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">A 1980s snow season against a 2020s one, with this year on top · statewide snow-water equivalent from a fixed panel of NRCS SNOTEL sites, median across each decade’s water years. The shaded season is when the melt reaches the reservoirs.</div></div>`:''}
+     ${decadeLine()}
+     ${bars?`<div class="lr-chart">${bars}<div class="lr-chart-cap">Median peak snowpack, decade by decade — the same fixed panel of sites. No decade has peaked higher than the one before it, and the 2000s and 2010s tied. The dashed rule carries the 1980s level across for comparison.</div>${table}</div>`:''}
+     <p class="lr-p">${W(`Because the snow <i>is</i> the storage, a warm early spring can undo a decent winter: the mountains can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026 — by the last week of May, the long-record SNOTEL sites were already bare.`)}</p>`);
 }
 
 /* §3 what reservoirs actually do (education) */
@@ -139,11 +210,28 @@ function stateBasinsSVG(home,sel){
   });
   return s+'</svg>'+basinLegend();
 }
+/* The old legend showed five evenly-spaced swatches sampled at 55/70/85/100/112%
+   — but `ramp()` is a piecewise scale with UNEVEN stops, so a swatch's position
+   in that row said nothing about the value it stood for, and the row carried no
+   numbers at all. This builds the bar straight from RAMPS: every stop sits at its
+   true position on a 0–120% scale, so the legend and the map are the same scale.
+   Ticks are labelled, and 100% is called out as the thing being compared to. */
+const BXL_MAX=120;
 function basinLegend(){
-  const stops=[55,70,85,100,112];
-  return `<div class="bx-legend"><span class="bxl-cap">storage vs normal</span>`
-    +stops.map(v=>`<span class="bxl-sw" style="background:${ramp(v)}"></span>`).join('')
-    +`<span class="bxl-ends"><b>drier</b> ← 100% = a normal year → <b>wetter</b></span></div>`;
+  const grad=RAMPS.map(([v,c])=>`${c} ${(Math.min(v,BXL_MAX)/BXL_MAX*100).toFixed(1)}%`).join(',');
+  const ticks=[0,25,50,75,100,BXL_MAX];
+  return `<div class="bx-legend">
+    <div class="bxl-cap">Storage vs this basin’s own normal</div>
+    <div class="bxl-scale">
+      <div class="bxl-bar" style="background:linear-gradient(90deg,${grad})"></div>
+      <div class="bxl-ticks">${ticks.map(v=>
+        `<span class="bxl-tick${v===100?' is-norm':''}" style="left:${(v/BXL_MAX*100).toFixed(1)}%">`
+        +`<i></i><b>${v}%</b></span>`).join('')}</div>
+    </div>
+    <p class="bxl-note">100% is normal — the median storage for this week of the year across the
+      record, not “full”. Below 100% the basin is holding less than it usually does now; above,
+      more. Basins are shaded against their <i>own</i> normal, so they can be read side by side.</p>
+  </div>`;
 }
 function basinSummaryHTML(bid,home){
   const b=BASINS.find(x=>x.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
@@ -289,7 +377,7 @@ function secMyBasin(tap){
      <h3 class="lr-h3">Snow in, water out</h3>
      ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
      ${snowLine}
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · snowpack as snow-water equivalent over its long-record SNOTEL sites; storage as a share of its telemetered capacity. Solid = this water year, dashed = the 1991–present normal.</div></div>`:''}
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two scales, two panels — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, storage as a share of its telemetered capacity. They share the water year on the x-axis so you can compare timing and shape; they are deliberately <i>not</i> stacked on one axis, which would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div></div>`:''}
      ${plumbing}`);
 }
 
@@ -301,6 +389,8 @@ function secTap(tap){
   const across=[], same=[];
   (tap.res||[]).forEach(id=>{const r=RESBY[id]; if(!r)return; (slopeOf(r.b)!==home?across:same).push(r);});
   const acrossBasins=[...new Set(across.map(r=>BASINS.find(b=>b.id===r.b).n))];
+  /* supply reservoirs only — flood-control pools are not part of the share */
+  const totCap=across.concat(same).filter(r=>!r.fc).reduce((s,r)=>s+r.cap,0);
   const reveal=(across.length&&tap.tun&&tap.tun.length)
     ? `<p class="reveal">${W(`Much of your water is born <b>across the {{Continental Divide}}</b>, in the ${acrossBasins.join(' and ')} — and crosses beneath the mountains through the <b>${tap.tun.join('</b> and <b>')}</b>.`)}</p>`
     : '';
@@ -319,8 +409,16 @@ function secTap(tap){
      </div>
      <p class="lr-p">${tap.desc}</p>
      ${reveal}
-     ${glassGroup('Across the Divide — West Slope',across)}
-     ${glassGroup(home==='w'?'From your own basin':'From your side of the mountains',same)}
+     ${totCap?`<p class="lr-p">${W(`Between them, the reservoirs below hold <b>${kaf(totCap)} thousand acre-feet</b>
+        when full. Each row shows how big a share of your provider’s stored supply it is, how much is in it
+        today, and — the part a single number can’t tell you — where that sits against the <i>shape</i> of a
+        normal year at that reservoir. Storage is meant to fall through the summer; what matters is whether
+        it is falling faster than usual.`)}</p>`:''}
+     ${glassGroup('Across the Divide — West Slope',across,totCap)}
+     ${glassGroup(home==='w'?'From your own basin':'From your side of the mountains',same,totCap)}
+     ${same.length===1&&across.length?`<p class="lr-p lr-aside">${W(`That single reservoir is the whole of your
+        near-side storage — which is exactly why the tunnel matters. Most of what you drink is banked on the
+        other side of the mountains, and this one lake is the local buffer between it and your tap.`)}</p>`:''}
      ${fc}`);
 }
 
@@ -361,7 +459,7 @@ function renderState(){
        <h1 class="lr-title">The water year</h1>
        <p class="lr-servedby">Where Colorado’s water comes from, where it is stored, and how much of it there is right now</p>
        <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins holding what’s left. Then find your own. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
-    +secSnow()+secCalendar()+secReservoirs()+secBasinsState(home)+secLongView();
+    +secSnow()+secReservoirs()+secBasinsState(home)+secLongView();
   wireBasinExplorer(home);
 }
 function wireBasinExplorer(home){

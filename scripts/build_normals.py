@@ -301,6 +301,133 @@ try:
 except Exception as e:
     print('  snow: skipped (', e, ')')
 
+# ---- 3b. snowpack BY DECADE — the climate signal ----
+# A decade-over-decade comparison is only honest if the station panel is held
+# FIXED: if stations join or drop out, the "trend" is partly a change in who is
+# measuring. So we take only SNOTEL sites installed by 1980 that have a
+# near-complete record in EVERY water year since, and average that same panel
+# across all decades. Indexed on the WATER year (days since Oct 1) rather than
+# the calendar year, so the curve reads left-to-right as one season.
+WY_NOW = TODAY.year + 1 if TODAY.month >= 10 else TODAY.year
+DEC_FROM = 1981                       # first full water year after the 1978-80 build-out
+
+
+def water_year(d):
+    return d.year + 1 if d.month >= 10 else d.year
+
+
+def wy_week(d):
+    """0..51, weeks since Oct 1 of that date's water year."""
+    start = datetime.date(d.year if d.month >= 10 else d.year - 1, 10, 1)
+    return min(51, max(0, (d - start).days // 7))
+
+
+SNOW_DECADES = {}
+try:
+    stations = json.loads(fetch(
+        'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations'
+        '?stationTriplets=*:CO:SNTL&returnStationElements=false', 'nrcs_stations.json'))
+    cand = [s for s in stations if (s.get('beginDate') or '2100')[:4] <= '1980']
+    print(f'  decades: {len(cand)} candidate stations installed by 1980')
+    swe = {}                                   # station -> {date: SWE}
+    for s in cand:
+        trip = s['stationTriplet']
+        j = try_fetch_json(
+            'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data'
+            f'?stationTriplets={urllib.parse.quote(trip)}&elements=WTEQ&duration=DAILY'
+            f'&beginDate=1978-10-01&endDate={TODAY.isoformat()}',
+            f'sweL_{trip.split(":")[0]}.json')
+        if not j:
+            continue
+        vals = {}
+        for row in j[0]['data'][0]['values']:
+            v = row.get('value')
+            if isinstance(v, (int, float)):
+                vals[datetime.date.fromisoformat(row['date'][:10])] = float(v)
+        if vals:
+            swe[trip] = vals
+
+    # the fixed panel: complete every water year of the comparison period
+    panel = []
+    for trip, vals in swe.items():
+        per_wy = {}
+        for d in vals:
+            per_wy[water_year(d)] = per_wy.get(water_year(d), 0) + 1
+        if (all(per_wy.get(y, 0) >= 300 for y in range(DEC_FROM, WY_NOW))
+                and per_wy.get(WY_NOW, 0) >= 250):
+            panel.append(trip)
+    elevs = [s['elevation'] for s in cand if s['stationTriplet'] in panel and s.get('elevation')]
+
+    # panel daily mean, then decade = median across that decade's water years
+    daily = {}
+    for trip in panel:
+        for d, v in swe[trip].items():
+            daily.setdefault((water_year(d), d), []).append(v)
+    # require most of the panel reporting, so a sensor outage can't move the mean
+    pmean = {k: sum(v) / len(v) for k, v in daily.items() if len(v) >= 0.85 * len(panel)}
+
+    by_wy_wk = {}      # (water year, week) -> [daily panel means]
+    by_wy = {}         # water year -> [(date, panel mean)]
+    for (yy, d), v in pmean.items():
+        by_wy_wk.setdefault((yy, wy_week(d)), []).append(v)
+        by_wy.setdefault(yy, []).append((d, v))
+    for y in by_wy:
+        by_wy[y].sort()
+
+    def wy_weekly(years):
+        """median-across-years of the panel's weekly mean SWE, 52 water-year weeks."""
+        out = []
+        for w in range(52):
+            per_year = [sum(vs) / len(vs) for y in years
+                        for vs in [by_wy_wk.get((y, w))] if vs]
+            out.append(round(statistics.median(per_year), 2) if per_year else None)
+        return out
+
+    def season_stats(years):
+        """median peak SWE, its water-year week, and April 1 SWE across the years."""
+        peaks, pweeks, apr1 = [], [], []
+        for y in years:
+            days = by_wy.get(y, [])
+            if len(days) < 300:
+                continue
+            pd, pv = max(days, key=lambda t: t[1])
+            peaks.append(pv)
+            pweeks.append(wy_week(pd))
+            a = [v for d, v in days if (d.month, d.day) == (4, 1)]
+            if a:
+                apr1.append(a[0])
+        if not peaks:
+            return None
+        return {'peak': round(statistics.median(peaks), 1),
+                'peakWk': int(statistics.median(pweeks)),
+                'apr1': round(statistics.median(apr1), 1) if apr1 else None,
+                'n': len(peaks)}
+
+    decades = {}
+    for d0 in range(1980, WY_NOW, 10):
+        years = [y for y in range(max(d0 + 1, DEC_FROM), min(d0 + 11, WY_NOW))]
+        if not years:
+            continue
+        st = season_stats(years)
+        if not st:
+            continue
+        decades[f'{d0}s'] = {'wk': wy_weekly(years), **st,
+                             'y0': years[0], 'y1': years[-1]}
+    if decades:
+        SNOW_DECADES = {
+            'n': len(panel),
+            'elev': [int(min(elevs)), int(max(elevs))] if elevs else None,
+            'dec': decades,
+            'cur': wy_weekly([WY_NOW]),
+            'curWY': WY_NOW,
+            'curStats': season_stats([WY_NOW]),
+        }
+        head = sorted(decades)
+        print(f'  decades: panel of {len(panel)} stations, '
+              f'{", ".join(f"{k} {decades[k]["peak"]}in" for k in head)}')
+except Exception as e:
+    print('  decades: skipped (', e, ')')
+
 # ---- 4. Lake Powell annual end-of-water-year storage (USBR UC, 1963+) ----
 POWELL_ANNUAL = []
 try:
@@ -332,6 +459,9 @@ prov = {
         'streamflow': 'USGS NWIS daily values (waterservices.usgs.gov), record from 1991',
         'reservoir': 'Colorado DWR CDSS telemetry (dwr.state.co.us), daily from 2005',
         'snowpack': 'NRCS AWDB SNOTEL SWE (wcc.sc.egov.usda.gov), long-record stations',
+        'snowDecades': ('NRCS AWDB SNOTEL SWE, a FIXED panel of stations installed by 1980 '
+                        'with a near-complete record in every water year since 1981, so a '
+                        'decade-to-decade comparison is not confounded by the station set changing'),
         'powell': 'USBR Upper Colorado hydrodata (usbr.gov/uc), Lake Powell daily storage from 1963'
     },
     'method': 'weekly day-of-year medians; runtime % of normal = current / median-for-this-week'
@@ -356,6 +486,7 @@ with open(OUT, 'w') as f:
     f.write(js('BASIN_TCAP', BASIN_TCAP))    # basin -> telemetered capacity (AF)
     f.write(js('SNOW_NORMALS', SNOW_NORMALS))
     f.write(js('SNOW_BASIN', SNOW_BASIN))    # basin -> {cur, nrm} monthly SWE, Oct..Jul
+    f.write(js('SNOW_DECADES', SNOW_DECADES))  # fixed-panel SWE by decade, water-year weeks
     f.write(js('PMH_DERIVED', PMH))        # data.js builds runtime PMH, filling dark basins (yampa)
     f.write(js('POWELL_ANNUAL', POWELL_ANNUAL))
 print(f'\nwrote {os.path.relpath(OUT, ROOT)}  '
