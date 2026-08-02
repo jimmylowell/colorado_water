@@ -383,7 +383,9 @@ body.fs-on{overflow:hidden}
 .lr-cite{display:inline;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);white-space:nowrap}
 
 /* fact grid (§ snow) */
-.fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;
+/* 240px floor so the four facts land as a clean 2x2 in the 640px column
+   rather than 3-up with an empty cell */
+.fact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;
   background:var(--silt);border:1px solid var(--silt);margin:20px 0}
 .fact{background:var(--basin);padding:16px 16px 15px}
 .fact-stat{font-family:var(--display);font-weight:400;font-size:26px;color:var(--bone);line-height:1;letter-spacing:-.01em}
@@ -440,3 +442,40 @@ body.fs-on{overflow:hidden}
 .bignum-lab{color:var(--dust);font-size:13.5px;line-height:1.55}
 
 .lr-footcta{text-align:center;padding:36px 0 8px}
+
+/* the mid-story ZIP gate (between Act 1 and Act 2) */
+.zip-gate{max-width:640px;margin:8px auto 0;text-align:center;padding:40px 22px 44px;
+  border:1px solid var(--silt-2);background:linear-gradient(180deg,rgba(0,214,230,.05),transparent 70%)}
+.zg-kicker{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--aqua);margin:0 0 8px}
+.zg-h2{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.6vw,34px);line-height:1.1;
+  color:var(--bone);margin:0 0 10px}
+.zg-h2 em{font-style:italic;color:var(--aqua)}
+.zg-sub{color:var(--dust);font-size:14.5px;line-height:1.6;margin:0 auto 20px;max-width:46ch}
+.zip-gate .zip-entry{justify-content:center}
+.zip-gate .citychips{margin-top:4px}
+
+/* second hero, opening Act 2 */
+.lr-hero2{border-top:1px solid var(--silt);padding-top:26px;margin-top:8px}
+
+/* basin-focused map */
+.basinmap-detail{display:block;width:100%;height:auto;background:#08131B}
+.bm-res{cursor:default}
+.bm-lab{font-family:var(--mono);font-size:9.5px;fill:#C7D4DA;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bm-lab.mine{fill:#F2ECE0;font-weight:500}
+.bm-riv{font-family:var(--display);font-style:italic;font-size:11px;fill:#8FB2C4;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bm-q{font-family:var(--mono);font-size:8.5px;fill:#00D6E6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+.bm-tun{font-family:var(--mono);font-size:8.5px;fill:#A9BCC7;paint-order:stroke;stroke:#08131B;stroke-width:3px}
+
+/* the one place the dense statewide map is offered */
+.explore-block{border:1px solid var(--silt-2);background:var(--basin);padding:22px 24px;margin:26px 0 8px}
+.xb-h{font-family:var(--display);font-size:20px;color:var(--bone);margin:0 0 6px}
+.xb-sub{color:var(--dust);font-size:13.5px;line-height:1.6;margin:0 0 16px;max-width:56ch}
+.xb-links{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px}
+.xb-links .story-cta{margin-top:0}
+.xb-alt{color:var(--dust);font-size:13px;text-decoration:none;border-bottom:1px dotted var(--dim)}
+.xb-alt:hover{color:var(--bone);border-bottom-color:var(--aqua)}
+
+/* water-calendar labels */
+.wc-band{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em}
+.wc-cap{font-family:var(--mono);font-size:9px;letter-spacing:.18em;fill:var(--dim)}
+.wc-now{font-family:var(--mono);font-size:9px;letter-spacing:.1em;fill:#EDE6D6}

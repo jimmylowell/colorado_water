@@ -152,5 +152,80 @@ function snowStoreChart(basinId){
     +`<text x="182" y="0" fill="#5C7484">solid = this year · dashed = normal</text></g>`;
   return s+'</svg>';
 }
-window.CW_HISTORY={powellChart,wyChart,basinChart,snowStoreChart};
+/* Statewide snowpack across the water year — this year against the normal,
+   averaged over the seven basins' long-record SNOTEL sites. Snow only: the
+   snow-to-storage relationship is made later, for the reader's own basin. */
+function snowStateChart(){
+  if(typeof SNOW_BASIN==='undefined')return '';
+  const ids=Object.keys(SNOW_BASIN); if(!ids.length)return '';
+  const mean=(key,i)=>{let s=0,n=0;ids.forEach(b=>{const v=SNOW_BASIN[b][key][i];
+    if(v!=null){s+=v;n++;}});return n?s/n:null;};
+  const cur=[],nrm=[];
+  for(let i=0;i<10;i++){cur.push(mean('cur',i));nrm.push(mean('nrm',i));}
+  const W=680,H=250,padL=40,padR=16,padT=30,padB=34, iw=W-padL-padR, ih=H-padT-padB;
+  const base=padT+ih, X=i=>padL+i/9*iw;
+  const mx=Math.max(1,...cur.concat(nrm).filter(v=>v!=null))*1.12;
+  const Y=v=>base-(v==null?0:v)/mx*ih;
+  const SNOW='#7FD8E6';
+  const pts=a=>a.map((v,i)=>v==null?null:X(i).toFixed(1)+','+Y(v).toFixed(1)).filter(Boolean);
+  const cp=pts(cur), np=pts(nrm);
+  const gy=[0,0.5,1].map(f=>{const v=mx*f;
+    return `<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="#1b2b36"/>`
+      +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">${v.toFixed(0)}″</text>`;}).join('');
+  const labs=['Oct','Dec','Feb','Apr','Jun','Jul'],idx=[0,2,4,6,8,9];
+  const xt=idx.map((i,k)=>`<text x="${X(i).toFixed(1)}" y="${H-8}" text-anchor="middle" class="hc-ax">${labs[k]}</text>`).join('');
+  const pk=cur.reduce((b,v,i)=>(v!=null&&(cur[b]==null||v>cur[b]))?i:b,0);
+  const pkn=nrm.reduce((b,v,i)=>(v!=null&&(nrm[b]==null||v>nrm[b]))?i:b,0);
+  return `<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
+     aria-label="Statewide snowpack across the water year, this year against the normal.">
+    ${gy}${xt}
+    <path d="M${X(0).toFixed(1)},${base} L${cp.join('L')} L${X(9).toFixed(1)},${base} Z" fill="${SNOW}" opacity="0.15"/>
+    <path d="M${np.join('L')}" fill="none" stroke="${SNOW}" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85"/>
+    <path d="M${cp.join('L')}" fill="none" stroke="${SNOW}" stroke-width="2.4" vector-effect="non-scaling-stroke"/>
+    <circle cx="${X(pk).toFixed(1)}" cy="${Y(cur[pk]).toFixed(1)}" r="3.6" fill="${SNOW}"/>
+    <g transform="translate(${padL},15)" font-family="var(--mono)" font-size="9">
+      <line x1="0" y1="-3" x2="16" y2="-3" stroke="${SNOW}" stroke-width="2.4"/><text x="20" y="0" fill="#8DA4B0">this year</text>
+      <line x1="86" y1="-3" x2="102" y2="-3" stroke="${SNOW}" stroke-width="1.2" stroke-dasharray="4 3"/><text x="106" y="0" fill="#8DA4B0">normal</text>
+      <text x="168" y="0" fill="#5C7484">peak ${MONTHS[pk].split(' ')[0]} vs normally ${MONTHS[pkn].split(' ')[0]}</text>
+    </g>
+  </svg>`;
+}
+
+/* The water year as a calendar band: Oct 1 starts the clock, snow piles up
+   through winter, melts into the reservoirs in spring, and is drawn down all
+   summer. A marker shows where in that cycle we are today. */
+function waterCalendar(){
+  const W=680,H=118,padL=14,padR=14,padT=30,padB=26, iw=W-padL-padR;
+  const MON=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+  const seg=iw/12, X=i=>padL+i*seg;
+  /* labels kept short so they sit inside their band instead of running
+     edge-to-edge into the neighbouring one */
+  const bands=[
+    {a:0,b:6,c:'#7FD8E6',t:'Snow accumulates'},
+    {a:6,b:9,c:'#4FD6A0',t:'Melt → fill'},
+    {a:9,b:12,c:'#F09248',t:'Draw-down'}
+  ];
+  const now=new Date(), m=now.getMonth();          /* 0=Jan */
+  const wyPos=((m-9)+12)%12 + (now.getDate()/31);  /* Oct=0 … Sep=11 */
+  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
+    aria-label="The water year runs October to September: snow accumulates, melts into the reservoirs, then is drawn down through summer.">`;
+  bands.forEach(bd=>{
+    s+=`<rect x="${X(bd.a).toFixed(1)}" y="${padT}" width="${(seg*(bd.b-bd.a)).toFixed(1)}" height="${H-padT-padB}"`
+      +` fill="${bd.c}" opacity="0.2"/>`
+      +`<text x="${(X(bd.a)+seg*(bd.b-bd.a)/2).toFixed(1)}" y="${(padT+26).toFixed(1)}" text-anchor="middle"`
+      +` class="wc-band" fill="${bd.c}">${bd.t}</text>`;
+  });
+  MON.forEach((mn,i)=>{
+    s+=`<line x1="${X(i).toFixed(1)}" y1="${padT}" x2="${X(i).toFixed(1)}" y2="${H-padB}" stroke="#0B1922" stroke-width="1"/>`
+      +`<text x="${(X(i)+seg/2).toFixed(1)}" y="${(H-padB+13).toFixed(1)}" text-anchor="middle" class="hc-ax">${mn}</text>`;
+  });
+  s+=`<text x="${padL}" y="${(padT-10).toFixed(1)}" class="wc-cap">THE WATER YEAR — BEGINS OCT 1</text>`;
+  const nx=X(wyPos);
+  s+=`<line x1="${nx.toFixed(1)}" y1="${(padT-4).toFixed(1)}" x2="${nx.toFixed(1)}" y2="${(H-padB).toFixed(1)}" stroke="#EDE6D6" stroke-width="1.5"/>`
+    +`<circle cx="${nx.toFixed(1)}" cy="${(padT-4).toFixed(1)}" r="3" fill="#EDE6D6"/>`
+    +`<text x="${nx.toFixed(1)}" y="${(padT-11).toFixed(1)}" text-anchor="${wyPos>9?'end':'middle'}" class="wc-now">you are here</text>`;
+  return s+'</svg>';
+}
+
+window.CW_HISTORY={powellChart,wyChart,basinChart,snowStoreChart,snowStateChart,waterCalendar};
 })();

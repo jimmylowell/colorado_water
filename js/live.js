@@ -145,5 +145,8 @@ async function refresh(){
 const btn=document.getElementById('live');
 if(btn)btn.addEventListener('click',refresh);
 window.CW_LIVE={refresh,USGS_URL,CDSS_URL,GAGES};
+/* live gage discharge by USGS site id — the story page has no `state`, so
+   expose the same object it would have read from viz.js */
+window.CW_LIVEQ=S.live;
 refresh();
 })();

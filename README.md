@@ -7,10 +7,22 @@ area so the level is honest), rivers as source-coloured ribbons, and the
 transmountain tunnels that move West Slope water to the Front Range as dashed
 crossings of the Continental Divide.
 
-The front door is a clean, click-through **story** (`index.html`): enter your
-ZIP (or pick a city) → a blurb on the basin you live in → where your water
-actually comes from, with the transmountain reveal → **Explore** into the live
-map. Provider/basin data is `TAPS` (+ `hb` home basin) and `BASININFO` in
+The front door (`index.html`) is one scrolling **story in three acts**, widening
+then narrowing:
+
+1. **Colorado** — snowpack, the water year that begins Oct 1, what a reservoir
+   is actually for, the seven basins shaded by how each stands against its own
+   normal, and the long view (Lake Powell, aridification). No ZIP required.
+2. *— the ZIP/city gate sits here, once the reader knows what they're looking
+   at and has a reason to want their own —*
+3. **Your basin** — basin stats and a basin-focused map: its real boundary,
+   rivers, reservoirs as glasses, and live gage flows (`js/basinmap.js`).
+4. **Your tap** — the utility, its reservoirs, current restrictions, and what
+   you can do.
+
+The dense statewide reservoir-by-reservoir map is deliberately *not* used in
+the story — it is offered once, at the very end, as a detail view for large
+screens. Provider/basin data is `TAPS` (+ `hb` home basin) and `BASININFO` in
 `js/data.js`. A shareable `/#80302` opens the story on that ZIP.
 
 Navigable map state lives in the URL hash (`#r=<reservoir>`, `#n=<gage/node>`,
@@ -20,9 +32,10 @@ the root auto-redirect from the story to `map.html`.
 
 **Pages**
 
-- `index.html` — the story front door (ZIP/city → basin → source → Explore)
-- `map.html` — the interactive map and flow-and-mixing diagram, with sparkline
-  headline stats
+- `index.html` — the story front door (Colorado → your basin → your tap)
+- `map.html` — the detailed statewide map and flow-and-mixing diagram; linked
+  from the end of the story rather than the site nav, since it is dense and
+  wants a large screen
 - `timeline.html` — scrub/play water year 2026 and watch the drawdown
 - `data.html` — the full dataset as downloadable CSVs, with sources
 - `about.html` — the story and the methods
