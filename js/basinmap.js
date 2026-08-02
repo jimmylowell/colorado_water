@@ -10,8 +10,18 @@
 (function(){
 
 /* source-node hue lookup, rebuilt from the flow graph (NODE lives in viz.js) */
-const HUE_OF={};
-if(typeof G!=='undefined')G.nodes.forEach(n=>{if(n.hue)HUE_OF[n.id]=n.hue;});
+const HUE_OF={}, NODE_ALL={};
+if(typeof G!=='undefined')G.nodes.forEach(n=>{if(n.hue)HUE_OF[n.id]=n.hue; NODE_ALL[n.id]=n;});
+/* Which side of the Divide a node sits on. Because a west-draining basin is
+   mirrored, LEFT is west and RIGHT is east in every one of these diagrams —
+   so water entering or leaving can be routed by compass alone. */
+const sideOf=id=>{const n=NODE_ALL[id]; return n&&n.side?n.side:null;};
+/* basin name trimmed to fit a margin label */
+function shortBasin(id){
+  const b=(typeof BASINS!=='undefined')&&BASINS.find(x=>x.id===id);
+  return b?b.n.replace(' headwaters','').replace(' & White','').replace(' & Dolores',''):'';
+}
+const basinOf=id=>{const n=NODE_ALL[id]; return n?shortBasin(n.sys):'';};
 
 function bboxOf(rings){
   let x0=180,y0=90,x1=-180,y1=-90;
@@ -177,6 +187,9 @@ function flow(bid,tap){
   const has={}; inB.forEach(n=>has[n.id]=n);
   const internal=G.edges.filter(e=>has[e.f]&&has[e.t]);
   const exports_=G.edges.filter(e=>has[e.f]&&!has[e.t]);
+  /* Water ARRIVING from another basin — the transmountain tunnels. Without
+     these the South Platte's biggest reservoirs appear to fill from nothing. */
+  const imports_=G.edges.filter(e=>!has[e.f]&&has[e.t]&&e.tun);
 
   /* longest-path rank so every node sits downstream of its inputs */
   const rank={}; inB.forEach(n=>rank[n.id]=0);
@@ -242,8 +255,19 @@ function flow(bid,tap){
      reading it backwards against the map beside it. `side` comes from the flow
      graph in data.js. */
   const flowsWest=inB.filter(n=>n.side==='w').length>inB.length/2;
-  const W=700, padHead=52, padTail=104, padT=52, padB=44;
-  const xHead=flowsWest?W-padHead:padHead, xTail=flowsWest?padTail:W-padTail;
+  const mySide=flowsWest?'w':'e';
+  /* An export leaves toward its destination's side, an import arrives from its
+     origin's side — so a tunnel out of the Colorado headwaters runs RIGHT, east
+     under the Divide, while the river itself carries on LEFT toward Utah. Both
+     used to be drawn off the downstream edge, which pointed the tunnels feeding
+     Denver back at Utah. */
+  const outSideOf=e=>sideOf(e.t)||mySide;
+  const inSideOf=e=>sideOf(e.f)||(flowsWest?'e':'w');
+  const usesLeft=exports_.some(e=>outSideOf(e)==='w')||imports_.some(e=>inSideOf(e)==='w');
+  const usesRight=exports_.some(e=>outSideOf(e)==='e')||imports_.some(e=>inSideOf(e)==='e');
+  const W=700, padT=52, padB=44;
+  const padLeft=usesLeft?104:52, padRight=usesRight?104:52;
+  const xHead=flowsWest?W-padRight:padLeft, xTail=flowsWest?padLeft:W-padRight;
   const X=r=>xHead+(maxR?r/maxR:0)*(xTail-xHead);
   const pos={};
   let H, order=null;
@@ -282,20 +306,35 @@ function flow(bid,tap){
       +` stroke-linecap="round" opacity="0.55"><title>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)} · ${(e.q||0).toLocaleString('en-US')} cfs</title></path>`;
   });
   /* water leaving the basin */
-  /* Water leaving the basin, off the downstream edge — whichever edge that is.
-     The label hugs the frame: run from the ribbon end instead and the longer
+  /* Water leaving the basin, off whichever edge its destination lies on. The
+     label hugs the frame: run it from the ribbon end instead and the longer
      tunnel names overflow. */
+  const edgeGeom=west=>west
+    ? {x2:padLeft-22, tx:4, anc:'start'}
+    : {x2:W-padRight+22, tx:W-4, anc:'end'};
   exports_.forEach(e=>{
     const a=pos[e.f]; if(!a)return;
-    const x2=flowsWest?padTail-22:W-padTail+22;
-    const tx=flowsWest?4:W-4, anc=flowsWest?'start':'end';
-    s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${x2.toFixed(1)},${a.y.toFixed(1)}"`
+    const west=outSideOf(e)==='w', g=edgeGeom(west);
+    s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${g.x2.toFixed(1)},${a.y.toFixed(1)}"`
       +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
       +` stroke-linecap="round" opacity="0.4" stroke-dasharray="${e.dash?'5 4':'none'}"/>`
-      +`<text class="bf-out" text-anchor="${anc}" x="${tx}" y="${(a.y-7).toFixed(1)}">`
+      +`<text class="bf-out" text-anchor="${g.anc}" x="${g.tx}" y="${(a.y-7).toFixed(1)}">`
       +`${e.tun?esc(e.tun):'leaves the'}</text>`
-      +`<text class="bf-out" text-anchor="${anc}" x="${tx}" y="${(a.y+5).toFixed(1)}">`
-      +`${e.tun?'(tunnel)':(flowsWest?'← basin':'basin →')}</text>`;
+      +`<text class="bf-out" text-anchor="${g.anc}" x="${g.tx}" y="${(a.y+5).toFixed(1)}">`
+      /* naming the destination beats repeating "under the Divide" six times */
+      +`${e.tun?(west?'← '+esc(basinOf(e.t)):esc(basinOf(e.t))+' →'):(west?'← basin':'basin →')}</text>`;
+  });
+  /* Water arriving from the other side of the Divide. */
+  imports_.forEach(e=>{
+    const b=pos[e.t]; if(!b)return;
+    const west=inSideOf(e)==='w', g=edgeGeom(west);
+    s+=`<path d="M${g.x2.toFixed(1)},${b.y.toFixed(1)} L${b.x.toFixed(1)},${b.y.toFixed(1)}"`
+      +` fill="none" stroke="${hueOf(has[e.t])}" stroke-width="${wOf(e.q).toFixed(1)}"`
+      +` stroke-linecap="round" opacity="0.45" stroke-dasharray="5 4"/>`
+      +`<text class="bf-out" text-anchor="${g.anc}" x="${g.tx}" y="${(b.y-7).toFixed(1)}">`
+      +`${esc(e.tun)}</text>`
+      +`<text class="bf-out" text-anchor="${g.anc}" x="${g.tx}" y="${(b.y+5).toFixed(1)}">`
+      +`${west?esc(basinOf(e.f))+' →':'← '+esc(basinOf(e.f))}</text>`;
   });
 
   const liveQ=window.CW_LIVEQ||{};
@@ -370,22 +409,16 @@ function flow(bid,tap){
   s+=flowsWest
     ? `<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">HEADWATERS</text>`
       +`<text class="bf-cap" x="6" y="18">← DOWNSTREAM</text>`
-    : `<text class="bf-cap" x="${padHead-14}" y="18">HEADWATERS</text>`
+    : `<text class="bf-cap" x="${padLeft-14}" y="18">HEADWATERS</text>`
       +`<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">DOWNSTREAM →</text>`;
   if(useElev){
-    /* The vertical axis is ORDER, not scale, so it gets an arrow and a word —
-       never ticks, which would promise a linear height it does not have. The
-       label runs along the rule so it costs no horizontal room, and sits on
-       the headwater side, clear of the exit ribbons. */
-    const yTop=padT-14, yBot=H-padB+14, ax=flowsWest?W-15:15;
-    /* Always rotate -90 so the label reads bottom-to-top like any y-axis; only
-       the offset flips, since rotated glyphs grow away from the baseline. The
-       triangle carries the "up" — an arrow inside the text would rotate with
-       it and end up pointing sideways. */
-    s+=`<g class="bf-axis"><line x1="${ax}" y1="${yTop}" x2="${ax}" y2="${yBot}" stroke="#2A4150"/>`
-      +`<path d="M${ax},${(yTop-1).toFixed(1)} l-3.5,7 l7,0 Z" fill="#5C7484"/>`
-      +`<text class="bf-cap" transform="translate(${flowsWest?ax+12:ax-3},${((yTop+yBot)/2).toFixed(1)}) rotate(-90)"`
-      +` text-anchor="middle">HIGHER ELEVATION (ORDER, NOT TO SCALE)</text></g>`;
+    /* This used to be a full-height rotated axis down one margin. Once tunnels
+       started leaving on the side opposite the river, BOTH margins carry exit
+       labels and there was nowhere for it to stand without overlapping them —
+       so the note moved into the caption row instead. No ticks either way: a
+       tick would promise a linear height this axis does not have. */
+    s+=`<text class="bf-cap" x="${(W/2).toFixed(0)}" y="18" text-anchor="middle">`
+      +`↑ HIGHER · ORDER, NOT TO SCALE</text>`;
   }
   return s+'</svg>';
 }

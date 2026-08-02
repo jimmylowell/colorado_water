@@ -357,7 +357,9 @@ function flowBlock(bid,bo,svg,opts){
        where it clearly resolves the lake); the reservoirs without one are placed by their position on the river
        instead, and deliberately carry no number. <a href="data.html#elevation">How that is worked out →</a>
        Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings
-       where available. A schematic of the order things happen in, not a channel map.</div></div>`;
+       where available. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water actually
+       reaches — so on the West Slope the river leaves to the left, toward Utah, while the tunnels break away to
+       the right, east under the Divide. A schematic of the order things happen in, not a channel map.</div></div>`;
 }
 function secMyBasin(tap){
   const hb=tap.hb;
