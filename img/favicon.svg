@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="A glass of water, partly full">
+  <rect width="256" height="256" rx="46" fill="#0B1922"/>
+  <!-- the site's glyph: a tapered glass, wide at the rim, narrow at the base,
+       filled to about 58% — the drought is the gap above the waterline -->
+  <path d="M51.2,51.2 L88.3,209.9 L167.7,209.9 L204.8,51.2 Z" fill="#0A1620"/>
+  <path d="M66.8,117.9 L88.3,209.9 L167.7,209.9 L189.2,117.9 Z" fill="#00D6E6"/>
+  <path d="M51.2,51.2 L88.3,209.9 L167.7,209.9 L204.8,51.2 Z"
+        fill="none" stroke="#8FB0C4" stroke-width="9" stroke-linejoin="round"/>
+</svg>
