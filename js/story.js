@@ -185,19 +185,70 @@ function secLongView(){
 
 /* =====================================================================
    ACT 2 — YOUR BASIN
+
+   A hierarchy implies containment, but Colorado's water isn't contained:
+   for most of the Front Range the majority of stored supply sits in a
+   different basin, across the Divide. So this act is about the basin the
+   water COMES FROM, and shows the basin you LIVE IN alongside whenever
+   those differ — otherwise the "your basin" map would omit the reader's
+   own largest reservoirs (Denver's Dillon and Williams Fork, 56% of its
+   storage, are in the Colorado headwaters, not the South Platte).
    ===================================================================== */
-function secMyBasin(tap){
-  const hb=tap.hb, b=BASINS.find(x=>x.id===hb);
-  const pct=Math.round(PMH[hb][NOW]);
-  const inb=RES.filter(r=>r.b===hb&&!r.fc);
+/* stored capacity of this tap's supply, split by the basin it sits in */
+function supplySplit(tap){
+  const byB={};
+  (tap.res||[]).forEach(id=>{const r=RESBY[id]; if(!r||r.fc)return;
+    byB[r.b]=(byB[r.b]||0)+r.cap;});
+  const ranked=Object.keys(byB).map(k=>[k,byB[k]]).sort((a,b)=>b[1]-a[1]);
+  const tot=ranked.reduce((s,e)=>s+e[1],0);
+  return {ranked,tot};
+}
+function splitBar(sp,hb){
+  if(!sp.tot)return '';
+  const seg=sp.ranked.map(([bid,c])=>{
+    const bn=BASINS.find(x=>x.id===bid).n, pctv=Math.round(c/sp.tot*100);
+    return `<span class="sb-seg" style="width:${(c/sp.tot*100).toFixed(1)}%;background:${BASIN_HUE[bid]||'#8FA6B2'}"`
+      +` title="${bn}: ${pctv}% of your stored water"></span>`;
+  }).join('');
+  const key=sp.ranked.map(([bid,c])=>{
+    const bn=BASINS.find(x=>x.id===bid).n;
+    return `<span class="sb-key"><i style="background:${BASIN_HUE[bid]||'#8FA6B2'}"></i>`
+      +`${bn}${bid===hb?' (where you live)':''} · <b>${Math.round(c/sp.tot*100)}%</b></span>`;
+  }).join('');
+  return `<div class="splitbar"><div class="sb-track">${seg}</div><div class="sb-keys">${key}</div></div>`;
+}
+function basinStatPanel(bid){
+  const pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+  const inb=RES.filter(r=>r.b===bid&&!r.fc);
   const cap=inb.reduce((s,r)=>s+r.cap,0);
   const below=inb.filter(r=>pmAt(r,NOW)<95).length;
-  const map=window.CW_BASINMAP?CW_BASINMAP.render(hb,tap):'';
-  const flowSVG=window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(hb,tap):'';
-  const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[hb];
-  const chart=window.CW_HISTORY?CW_HISTORY.snowStoreChart(hb):'';
+  return `<div class="basin-panel">
+       <div class="bp-cell"><div class="bp-num" style="color:${ramp(pct)}">${pct}%</div>
+         <div class="bp-lab">of normal storage<br>right now</div></div>
+       <div class="bp-cell"><div class="bp-num">${inb.length}</div>
+         <div class="bp-lab">reservoirs here holding<br>${kaf(cap)} KAF when full</div></div>
+       <div class="bp-cell"><div class="bp-num" style="color:${below?'#EF9A1B':'#2FD94F'}">${below}</div>
+         <div class="bp-lab">of them sitting<br>below normal</div></div>
+     </div>`;
+}
+function secMyBasin(tap){
+  const hb=tap.hb;
+  const sp=supplySplit(tap);
+  /* the act's subject is where the water is stored, not where the reader
+     stands — they are the same basin for most of the state, and different
+     for most of the population */
+  const sb=sp.ranked.length?sp.ranked[0][0]:hb;
+  const cross=sb!==hb;
+  const b=BASINS.find(x=>x.id===sb), homeB=BASINS.find(x=>x.id===hb);
+  const shareOut=cross?Math.round(sp.ranked[0][1]/sp.tot*100):0;
+  const homeShare=cross?Math.round((sp.ranked.filter(e=>e[0]===hb)[0]||[0,0])[1]/sp.tot*100):100;
+  const map=window.CW_BASINMAP?CW_BASINMAP.render(sb,tap):'';
+  const homeMap=cross&&window.CW_BASINMAP?CW_BASINMAP.render(hb,tap):'';
+  const flowSVG=window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(sb,tap):'';
+  const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[sb];
+  const chart=window.CW_HISTORY?CW_HISTORY.snowStoreChart(sb):'';
   const snowLine=hasSnow?(()=>{
-    const sn=SNOW_BASIN[hb];
+    const sn=SNOW_BASIN[sb];
     const iMax=a=>a.reduce((bi,v,i)=>(v!=null&&(a[bi]==null||v>a[bi]))?i:bi,0);
     const ic=iMax(sn.cur), inr=iMax(sn.nrm);
     const pkc=sn.cur[ic], pkn=sn.nrm[inr];
@@ -214,21 +265,29 @@ function secMyBasin(tap){
       +`</ul>`
     : `<h3 class="lr-h3">No tunnel feeds this one</h3>
        <p class="lr-p">${W(`Your basin lives on its own snowmelt — nothing crosses the {{Continental Divide}} to top it up. What falls here is what you get, which makes the size of the winter snowpack everything.`)}</p>`;
-  return sec('mybasin','Act two · your basin',`The ${b.n}`,
-    `<p class="lr-p">${BASININFO[hb]||''}</p>
-     <div class="basin-panel">
-       <div class="bp-cell"><div class="bp-num" style="color:${ramp(pct)}">${pct}%</div>
-         <div class="bp-lab">of normal storage<br>right now</div></div>
-       <div class="bp-cell"><div class="bp-num">${inb.length}</div>
-         <div class="bp-lab">reservoirs here holding<br>${kaf(cap)} KAF when full</div></div>
-       <div class="bp-cell"><div class="bp-num" style="color:${below?'#EF9A1B':'#2FD94F'}">${below}</div>
-         <div class="bp-lab">of them sitting<br>below normal</div></div>
-     </div>
-     ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">The ${b.n} basin — reservoirs drawn as glasses (size = capacity, fill = storage, colour = against normal), rivers in their headwater colours, ◆ streamgages showing live flow${tuns.length?', dashed where a tunnel crosses the basin line':''}.</div></div>`:''}
-     ${flowSVG?`<h3 class="lr-h3">How the water steps down</h3>
-       <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the left, passes through each reservoir and gage in turn, and leaves the basin on the right — every drop routed through the same handful of structures.`)}</p>
-       <div class="lr-chart">${flowSVG}<div class="lr-chart-cap">Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings where available. A schematic of the order things happen in, not a channel map.</div></div>`:''}
+  const capCommon=`reservoirs drawn as glasses (size = capacity, fill = storage, colour = against normal), rivers in their headwater colours, ◆ streamgages showing live flow. <b>Your own reservoirs are outlined in white.</b>`;
+  return sec('mybasin','Act two · your basin',
+    cross?'Two basins, one tap':`The ${b.n}`,
+    (cross
+      ? `<p class="lr-p">${W(`Here is the part that surprises people. You live in the <b>${homeB.n}</b> — but only about <b>${homeShare}%</b> of the water your utility stores is actually kept there. The larger share, <b>${shareOut}%</b>, sits in the <b>${b.n}</b>, on the far side of the {{Continental Divide}}, and is carried to you through a tunnel. A basin map of where you <i>stand</i> would leave out your biggest reservoirs entirely, so here are both.`)}</p>
+         ${splitBar(sp,hb)}
+         <h3 class="lr-h3">Where your water is stored — the ${b.n}</h3>
+         <p class="lr-p">${BASININFO[sb]||''}</p>
+         ${basinStatPanel(sb)}
+         ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water — ${capCommon}`)}</div></div>`:''}
+         <div class="crossnote">${W(`↓ crosses the {{Continental Divide}}${tap.tun&&tap.tun.length?` through the <b>${tap.tun.join('</b> and <b>')}</b>`:''} ↓`)}</div>
+         <h3 class="lr-h3">Where you live — the ${homeB.n}</h3>
+         <p class="lr-p">${BASININFO[hb]||''}</p>
+         ${homeMap?`<div class="lr-chart">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored — ${capCommon}`)}</div></div>`:''}`
+      : `<p class="lr-p">${BASININFO[sb]||''}</p>
+         ${basinStatPanel(sb)}
+         ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin — ${capCommon}`)}</div></div>`:''}`)
+    +`
+     ${flowSVG?`<h3 class="lr-h3">How the water steps down${cross?' in the '+b.n:''}</h3>
+       <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the left, passes through each reservoir and gage in turn, and leaves the basin on the right${cross?` — including, for you, through a tunnel under the Divide`:''} — every drop routed through the same handful of structures.`)}</p>
+       <div class="lr-chart">${flowSVG}<div class="lr-chart-cap">${b.n} basin · ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings where available. A schematic of the order things happen in, not a channel map.</div></div>`:''}
      <h3 class="lr-h3">Snow in, water out</h3>
+     ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
      ${snowLine}
      ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · snowpack as snow-water equivalent over its long-record SNOTEL sites; storage as a share of its telemetered capacity. Solid = this water year, dashed = the 1991–present normal.</div></div>`:''}
      ${plumbing}`);

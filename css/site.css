@@ -474,6 +474,22 @@ body.fs-on{overflow:hidden}
 .bm-q{font-family:var(--mono);font-size:8.5px;fill:#00D6E6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bm-tun{font-family:var(--mono);font-size:8.5px;fill:#A9BCC7;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 
+/* where a tap's stored water actually sits, split by basin */
+.splitbar{margin:16px 0 20px}
+.sb-track{display:flex;height:16px;border:1px solid var(--silt);background:var(--basin);overflow:hidden}
+.sb-seg{display:block;height:100%}
+.sb-keys{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:9px;
+  font-family:var(--mono);font-size:10.5px;color:var(--dust)}
+.sb-key{display:flex;align-items:center;gap:6px}
+.sb-key i{width:9px;height:9px;flex:0 0 9px;display:inline-block}
+.sb-key b{color:var(--bone);font-weight:500}
+
+/* the hand-off between the two basin maps */
+.crossnote{text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  color:var(--aqua);border-left:1px dashed var(--silt-2);border-right:1px dashed var(--silt-2);
+  padding:14px 12px;margin:4px auto 18px;max-width:80%}
+.crossnote b{color:var(--bone);font-weight:500}
+
 /* basin flow diagram — the step-down */
 .basinflow{display:block;width:100%;height:auto;background:#08131B}
 .bf-lab{font-family:var(--mono);font-size:9px;fill:#C7D4DA;paint-order:stroke;stroke:#08131B;stroke-width:3px}

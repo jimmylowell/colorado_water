@@ -82,18 +82,18 @@ function render(bid,tap){
     inB.push({rv,pts});
   });
 
-  /* tunnels that cross this basin's line — water arriving or leaving */
+  /* tunnels that cross this basin's line — water arriving or leaving. Their
+     labels join the same collision pass as everything else (below). */
+  const tunLabels=[];
   if(typeof MAP_TUNNELS!=='undefined')MAP_TUNNELS.forEach(tn=>{
     if(tn.fb!==bid&&tn.tb!==bid)return;
     const pt=q=>Array.isArray(q)?[P.x(q[1]),P.y(q[0])]:(RESBY[q]?[P.x(RESBY[q].lon),P.y(RESBY[q].lat)]:null);
     const a=pt(tn.f),c=pt(tn.t); if(!a||!c)return;
     const leaving=tn.fb===bid;
     s+=`<path d="M${a[0].toFixed(1)},${a[1].toFixed(1)} L${c[0].toFixed(1)},${c[1].toFixed(1)}"`
-      +` fill="none" stroke="${tn.hue}" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.9"/>`
-      +`<title>${esc(tn.n)}</title>`;
-    const mx=(a[0]+c[0])/2, my=(a[1]+c[1])/2;
-    s+=`<text class="bm-tun" x="${mx.toFixed(1)}" y="${(my-5).toFixed(1)}" text-anchor="middle">`
-      +`${esc(tn.n)} ${leaving?'↗ out':'↘ in'}</text>`;
+      +` fill="none" stroke="${tn.hue}" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.9"><title>${esc(tn.n)}</title></path>`;
+    tunLabels.push({x:(a[0]+c[0])/2, y:(a[1]+c[1])/2-5,
+      t:tn.n+(leaving?' ↗ out':' ↘ in'), cls:'bm-tun', cw:5.0, pri:-500});
   });
 
   /* gages — what the river is actually doing today */
@@ -129,6 +129,7 @@ function render(bid,tap){
     const mid=pts[Math.floor(pts.length/2)].split(',');
     cand.push({pri:-1000+rv.w, x:+mid[0], y:+mid[1]-6, t:rv.n, cls:'bm-riv', cw:5.6});
   });
+  tunLabels.forEach(t=>cand.push(t));
   const placed=[];
   cand.sort((a,c)=>c.pri-a.pri).forEach(L=>{
     const half=L.t.length*L.cw/2;
