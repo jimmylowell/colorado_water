@@ -312,6 +312,11 @@ function secTap(tap){
     : '';
   return sec('tap','Act three · your tap',tap.prov,
     approx+`<p class="lr-p">${W(`Your tap is only as specific as your provider. <b>${tap.prov}</b> holds particular water rights and particular plumbing — which is why a neighbour two towns over, on a different utility, may drink an entirely different river. Under Colorado’s {{prior appropriation}} system, who got there first decides who gets water in a dry year.`)}</p>
+     <div class="callout">
+       <p class="co-h">A note on the words</p>
+       <p class="co-p">We say <b>provider</b> — the city department, special district or company that delivers your water. That is deliberately not the same as a <b>Public Water System</b>, the unit the federal Safe Drinking Water Act actually regulates (one provider can operate several), and not the same as a water <b>right</b>, which Colorado administers on a separate track. Some entries here also cover a cluster of small neighbouring providers rather than one.</p>
+       <p class="co-p">ZIP codes are postal routes, not service-area boundaries, so treat this as a regional picture. <a href="data.html#providers">How we model providers, and where to get the authoritative answer →</a></p>
+     </div>
      <p class="lr-p">${tap.desc}</p>
      ${reveal}
      ${glassGroup('Across the Divide — West Slope',across)}

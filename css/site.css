@@ -474,6 +474,17 @@ body.fs-on{overflow:hidden}
 .bm-q{font-family:var(--mono);font-size:8.5px;fill:#00D6E6;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bm-tun{font-family:var(--mono);font-size:8.5px;fill:#A9BCC7;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 
+/* an aside that qualifies terminology without alarming the reader */
+.callout{border:1px solid var(--silt-2);border-left:3px solid var(--aqua);
+  background:rgba(0,214,230,.04);padding:14px 18px;margin:18px 0}
+.co-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--aqua);margin:0 0 8px}
+.co-p{color:var(--dust);font-size:13.5px;line-height:1.62;margin:0 0 8px;max-width:62ch}
+.co-p:last-child{margin-bottom:0}
+.co-p b{color:var(--bone);font-weight:600}
+.co-p a{color:var(--aqua);text-decoration:none;border-bottom:1px dotted var(--dim)}
+.co-p a:hover{border-bottom-color:var(--aqua)}
+
 /* where a tap's stored water actually sits, split by basin */
 .splitbar{margin:16px 0 20px}
 .sb-track{display:flex;height:16px;border:1px solid var(--silt);background:var(--basin);overflow:hidden}

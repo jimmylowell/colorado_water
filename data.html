@@ -84,6 +84,16 @@
       <li><b>dwr_telemetry_abbrev</b> — Colorado DWR station code, usable directly against the <a href="https://dwr.state.co.us/Tools/Stations" rel="noopener">CDSS station tools</a> and REST API.</li>
     </ul>
 
+    <h2 id="providers">Providers, systems and rights — what this does and doesn’t model</h2>
+    <p>Three different things get called “your water,” and they are administered by three different bodies. This project models only the first, and loosely:</p>
+    <ul>
+      <li><b>Who delivers it — the provider (or utility).</b> A city department (Denver Water, Aurora Water), a special district (Parker Water &amp; Sanitation), or a private company. This is the everyday sense and the one the story uses.</li>
+      <li><b>Who regulates its safety — the Public Water System (PWS).</b> The unit defined by the federal <a href="https://www.epa.gov/sdwa" rel="noopener">Safe Drinking Water Act</a>; each carries a <b>PWSID</b>, and in Colorado they are overseen by <a href="https://cdphe.colorado.gov/drinking-water" rel="noopener">CDPHE</a>. A provider is an <i>organisation</i>; a PWS is a <i>regulated system</i>, and one provider can operate more than one — so the two are not interchangeable.</li>
+      <li><b>Who is entitled to it — the water right.</b> Administered separately by the <a href="https://dwr.colorado.gov/" rel="noopener">Colorado Division of Water Resources</a> under prior appropriation, across the seven water divisions that this site’s basins follow. A right governs diversion, not delivery or treatment.</li>
+    </ul>
+    <p class="aside"><b>The honest limits.</b> Places here are grouped by provider and matched by <b>ZIP prefix</b> — and ZIP codes are postal routes, not service-area boundaries. One ZIP can span several providers, a provider spans many ZIPs, and about a third of our entries deliberately cover a cluster of small neighbouring systems under one label. We do <b>not</b> use PWSIDs or published service-area boundaries, so nothing here is authoritative for “who serves this address.”</p>
+    <p>For the authoritative answer, in order of usefulness: your utility bill; your provider’s own website; the <a href="https://sdwis.epa.gov/ords/sfdw_pub/r/sfdw/sdwis_fed_reports_public/" rel="noopener">EPA SDWIS federal reporting search</a> (look up a system by state and name); and <a href="https://www.epa.gov/dwreginfo/information-about-public-water-systems" rel="noopener">EPA’s explainer on public water systems</a>. For plain-language background on Colorado water generally, <a href="https://www.watereducationcolorado.org/" rel="noopener">Water Education Colorado</a> is the standard reference.</p>
+
     <h2>The source ledger</h2>
     <p>Everything traces to a keyless, CORS-open, public-domain endpoint. Histories are pulled once and reduced to weekly day-of-year medians by <span style="font-family:var(--mono)">scripts/build_normals.py</span>, which writes <span style="font-family:var(--mono)">js/normals.js</span>; the browser then fetches only current values and derives the percentages live.</p>
     <div class="tablewrap"><table class="dtable">
