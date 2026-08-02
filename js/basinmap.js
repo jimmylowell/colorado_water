@@ -235,8 +235,16 @@ function flow(bid,tap){
     else if(n.k==='exit')est[n.id]-=250;
   });
 
-  const W=700, padL=52, padR=104, padT=52, padB=44;
-  const X=r=>maxR?padL+r/maxR*(W-padL-padR):padL;
+  /* A West Slope basin drains toward Utah, so its diagram runs RIGHT to LEFT —
+     headwaters on the right, the state line on the left — matching both the
+     compass and the statewide flow view, where west-slope exits already sit at
+     the left edge. Reading a Yampa or Gunnison step-down left-to-right meant
+     reading it backwards against the map beside it. `side` comes from the flow
+     graph in data.js. */
+  const flowsWest=inB.filter(n=>n.side==='w').length>inB.length/2;
+  const W=700, padHead=52, padTail=104, padT=52, padB=44;
+  const xHead=flowsWest?W-padHead:padHead, xTail=flowsWest?padTail:W-padTail;
+  const X=r=>xHead+(maxR?r/maxR:0)*(xTail-xHead);
   const pos={};
   let H, order=null;
   if(useElev){
@@ -274,18 +282,20 @@ function flow(bid,tap){
       +` stroke-linecap="round" opacity="0.55"><title>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)} · ${(e.q||0).toLocaleString('en-US')} cfs</title></path>`;
   });
   /* water leaving the basin */
-  /* Water leaving the basin. The label is right-aligned to the frame edge —
-     left-aligned from the ribbon end, the longer tunnel names ran off it. */
+  /* Water leaving the basin, off the downstream edge — whichever edge that is.
+     The label hugs the frame: run from the ribbon end instead and the longer
+     tunnel names overflow. */
   exports_.forEach(e=>{
     const a=pos[e.f]; if(!a)return;
-    const x2=W-padR+22, tx=W-4;
+    const x2=flowsWest?padTail-22:W-padTail+22;
+    const tx=flowsWest?4:W-4, anc=flowsWest?'start':'end';
     s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${x2.toFixed(1)},${a.y.toFixed(1)}"`
       +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
       +` stroke-linecap="round" opacity="0.4" stroke-dasharray="${e.dash?'5 4':'none'}"/>`
-      +`<text class="bf-out" text-anchor="end" x="${tx}" y="${(a.y-7).toFixed(1)}">`
+      +`<text class="bf-out" text-anchor="${anc}" x="${tx}" y="${(a.y-7).toFixed(1)}">`
       +`${e.tun?esc(e.tun):'leaves the'}</text>`
-      +`<text class="bf-out" text-anchor="end" x="${tx}" y="${(a.y+5).toFixed(1)}">`
-      +`${e.tun?'(tunnel)':'basin →'}</text>`;
+      +`<text class="bf-out" text-anchor="${anc}" x="${tx}" y="${(a.y+5).toFixed(1)}">`
+      +`${e.tun?'(tunnel)':(flowsWest?'← basin':'basin →')}</text>`;
   });
 
   const liveQ=window.CW_LIVEQ||{};
@@ -325,9 +335,11 @@ function flow(bid,tap){
     if(!lab)return;
     /* In the staircase each node owns its own row, so labels sit BESIDE the
        glyph rather than above/below it — stacking them vertically would run a
-       two-line label straight into the row above. The last column reads
-       leftwards so it doesn't collide with the "leaves the basin" arrows. */
-    const toLeft=useElev&&rank[n.id]===maxR;
+       two-line label straight into the row above. Labels lean away from the
+       downstream edge so they never collide with the "leaves the basin"
+       arrows; on a west-flowing basin that edge is the left one. */
+    const atTail=rank[n.id]===maxR;
+    const toLeft=useElev&&(flowsWest?!atTail:atTail);
     labels.push({
       pri:(n.k==='res'?3e6+(RESBY[n.res]?RESBY[n.res].cap:0):(n.k==='gage'?2e6:1e6)),
       x:useElev?p.x+(toLeft?-11:11):p.x,
@@ -355,18 +367,25 @@ function flow(bid,tap){
       +(L.sub?`<tspan class="bf-elev" x="${x.toFixed(1)}" dy="10">${esc(L.sub)}</tspan>`:'')
       +`</text>`;
   });
-  s+=`<text class="bf-cap" x="${padL-14}" y="18">HEADWATERS</text>`
-    +`<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">DOWNSTREAM →</text>`;
+  s+=flowsWest
+    ? `<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">HEADWATERS</text>`
+      +`<text class="bf-cap" x="6" y="18">← DOWNSTREAM</text>`
+    : `<text class="bf-cap" x="${padHead-14}" y="18">HEADWATERS</text>`
+      +`<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">DOWNSTREAM →</text>`;
   if(useElev){
     /* The vertical axis is ORDER, not scale, so it gets an arrow and a word —
        never ticks, which would promise a linear height it does not have. The
-       label runs along the rule so it costs no horizontal room: the first
-       column of nodes starts only a few pixels to its right. */
-    const yTop=padT-14, yBot=H-padB+14;
-    s+=`<g class="bf-axis"><line x1="15" y1="${yTop}" x2="15" y2="${yBot}" stroke="#2A4150"/>`
-      +`<path d="M15,${(yTop-1).toFixed(1)} l-3.5,7 l7,0 Z" fill="#5C7484"/>`
-      +`<text class="bf-cap" transform="translate(12,${((yTop+yBot)/2).toFixed(1)}) rotate(-90)"`
-      +` text-anchor="middle">HIGHER ELEVATION ↑ (ORDER, NOT TO SCALE)</text></g>`;
+       label runs along the rule so it costs no horizontal room, and sits on
+       the headwater side, clear of the exit ribbons. */
+    const yTop=padT-14, yBot=H-padB+14, ax=flowsWest?W-15:15;
+    /* Always rotate -90 so the label reads bottom-to-top like any y-axis; only
+       the offset flips, since rotated glyphs grow away from the baseline. The
+       triangle carries the "up" — an arrow inside the text would rotate with
+       it and end up pointing sideways. */
+    s+=`<g class="bf-axis"><line x1="${ax}" y1="${yTop}" x2="${ax}" y2="${yBot}" stroke="#2A4150"/>`
+      +`<path d="M${ax},${(yTop-1).toFixed(1)} l-3.5,7 l7,0 Z" fill="#5C7484"/>`
+      +`<text class="bf-cap" transform="translate(${flowsWest?ax+12:ax-3},${((yTop+yBot)/2).toFixed(1)}) rotate(-90)"`
+      +` text-anchor="middle">HIGHER ELEVATION (ORDER, NOT TO SCALE)</text></g>`;
   }
   return s+'</svg>';
 }

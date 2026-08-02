@@ -334,6 +334,31 @@ function dropLine(sb,b){
     and every {{transmountain diversion|tunnel under the Divide}} carries water <i>sideways</i>, across
     a watershed boundary it would never have crossed on its own.`)}</p>`;
 }
+/* One basin's step-down: heading, the reading instructions (which depend on
+   which way the basin drains), the drop, and the diagram. */
+function flowBlock(bid,bo,svg,opts){
+  if(!svg)return '';
+  opts=opts||{};
+  const west=WEST.includes(bid);
+  const inSide=west?'right':'left', outSide=west?'left':'right';
+  return `<h3 class="lr-h3">How the water steps down${opts.suffix||''}</h3>
+     ${opts.intro?`<p class="lr-p">${W(opts.intro)}</p>`:''}
+     <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the <b>${inSide}</b>,
+       passes through each reservoir and gage in turn, and leaves the basin on the
+       <b>${outSide}</b>${opts.tunnel?` — including, for you, through a tunnel under the Divide`:''} —
+       every drop routed through the same handful of structures.`)}</p>
+     ${dropLine(bid,bo)}
+     <div class="lr-chart">${svg}<div class="lr-chart-cap">${bo.n} basin · ${west
+       ? `<b>this basin drains west</b>, toward Utah, so the diagram reads <b>right to left</b> — the direction the water really goes on a map. `
+       : `<b>this basin rises east of the Divide</b> and leaves the state that way, so the diagram reads left to right. `}<b>Height runs down the page</b>,
+       so it falls the way the water does. The spacing is <i>not</i> to scale — a true linear axis would crush the
+       lower half of the basin into a stripe — but the order is. A height is printed only where we have a
+       <b>measured</b> water surface (live DWR gauge readings, USGS gage datums, or the national elevation model
+       where it clearly resolves the lake); the reservoirs without one are placed by their position on the river
+       instead, and deliberately carry no number. <a href="data.html#elevation">How that is worked out →</a>
+       Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings
+       where available. A schematic of the order things happen in, not a channel map.</div></div>`;
+}
 function secMyBasin(tap){
   const hb=tap.hb;
   const sp=supplySplit(tap);
@@ -348,6 +373,11 @@ function secMyBasin(tap){
   const map=window.CW_BASINMAP?CW_BASINMAP.render(sb,tap):'';
   const homeMap=cross&&window.CW_BASINMAP?CW_BASINMAP.render(hb,tap):'';
   const flowSVG=window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(sb,tap):'';
+  /* When the supply basin isn't the one you live in, the home basin needs its
+     own step-down too. Denver's supply basin is the Colorado, so showing only
+     that left a Denver reader with no South Platte at all — the river running
+     through their own city was missing from the page. */
+  const homeFlow=cross&&window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(hb,tap):'';
   const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[sb];
   const chart=window.CW_HISTORY?CW_HISTORY.snowStoreChart(sb):'';
   const snowLine=hasSnow?(()=>{
@@ -386,10 +416,10 @@ function secMyBasin(tap){
          ${basinStatPanel(sb)}
          ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin — ${capCommon}`)}</div></div>`:''}`)
     +`
-     ${flowSVG?`<h3 class="lr-h3">How the water steps down${cross?' in the '+b.n:''}</h3>
-       <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the left, passes through each reservoir and gage in turn, and leaves the basin on the right${cross?` — including, for you, through a tunnel under the Divide`:''} — every drop routed through the same handful of structures.`)}</p>
-       ${dropLine(sb,b)}
-       <div class="lr-chart">${flowSVG}<div class="lr-chart-cap">${b.n} basin · <b>height runs down the page</b>, so the diagram falls the way the water does. The spacing is <i>not</i> to scale — a true linear axis would crush the lower half of the basin into a stripe — but the order is. A height is printed only where we have a <b>measured</b> water surface (live DWR gauge readings, USGS gage datums, or the national elevation model where it clearly resolves the lake); the reservoirs without one are placed by their position on the river instead, and deliberately carry no number. <a href="data.html#elevation">How that is worked out →</a> Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings where available. A schematic of the order things happen in, not a channel map.</div></div>`:''}
+     ${flowBlock(sb,b,flowSVG,{suffix:cross?' in the '+b.n:'',tunnel:cross})}
+     ${flowBlock(hb,homeB,homeFlow,{suffix:' in the '+homeB.n,
+       intro:`And the river you actually live on. The ${homeB.n} runs its own staircase, fed by
+         its own snow — plus, near the top, whatever arrives through the tunnel.`})}
      <h3 class="lr-h3">Snow in, water out</h3>
      ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
      ${snowLine}
