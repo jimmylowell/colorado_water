@@ -564,6 +564,10 @@ body.fs-on{overflow:hidden}
 .bf-lab.mine{fill:#F2ECE0;font-weight:500}
 .bf-out{font-family:var(--mono);font-size:8.5px;fill:#8DA4B0;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bf-cap{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;fill:#5C7484}
+/* the height on the second line of a step-down label — recessive, so the name
+   and the percentage still read first */
+.bf-elev{font-size:8px;fill:#7C93A1;letter-spacing:.04em}
+.bf-lab.mine .bf-elev{fill:#A9BAC4}
 
 /* the one place the dense statewide map is offered */
 .explore-block{border:1px solid var(--silt-2);background:var(--basin);padding:22px 24px;margin:26px 0 8px}

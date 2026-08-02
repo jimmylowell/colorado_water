@@ -668,7 +668,10 @@ const WIKI={
  'Rocky Mountains':'Rocky_Mountains',
  'Colorado–Big Thompson Project':'Colorado-Big_Thompson_Project',
  'Fryingpan–Arkansas Project':'Fryingpan-Arkansas_Project',
- 'Continental Divide Snowpack':'Snowpack'
+ 'Continental Divide Snowpack':'Snowpack',
+ 'Lake Nighthorse':'Lake_Nighthorse',
+ 'Animas River':'Animas_River',
+ 'SNOTEL':'SNOTEL'
 };
 function wikiURL(term){const s=WIKI[term]||term.replace(/ /g,'_');return 'https://en.wikipedia.org/wiki/'+s;}
 function wikify(html){

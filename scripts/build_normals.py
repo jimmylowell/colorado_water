@@ -79,9 +79,11 @@ SRC = open(DATA_JS, encoding='utf-8').read()
 GAGE_BASIN = {}
 for m in re.finditer(r"gage:'(\d+)'[^}]*?sys:'(\w+)'", SRC):
     GAGE_BASIN.setdefault(m.group(1), m.group(2))
-RES_META = {}  # id -> {dwr, b, cap}
-for m in re.finditer(r"\{id:'(\w+)',(?:dwr:'(\w+)',)?(?:fc:\d+,)?n:'[^']*',lat:[-\d.]+,lon:[-\d.]+,cap:(\d+),[^}]*b:'(\w+)'", SRC):
-    RES_META[m.group(1)] = {'dwr': m.group(2), 'cap': int(m.group(3)), 'b': m.group(4)}
+RES_META = {}  # id -> {dwr, lat, lon, cap, b}
+for m in re.finditer(r"\{id:'(\w+)',(?:dwr:'(\w+)',)?(?:fc:\d+,)?n:'[^']*',lat:([-\d.]+),lon:([-\d.]+),cap:(\d+),[^}]*b:'(\w+)'", SRC):
+    RES_META[m.group(1)] = {'dwr': m.group(2), 'lat': float(m.group(3)),
+                            'lon': float(m.group(4)), 'cap': int(m.group(5)),
+                            'b': m.group(6)}
 print(f'parsed {len(GAGE_BASIN)} gages, {len(RES_META)} reservoirs from data.js')
 
 
@@ -93,8 +95,15 @@ def get_gage_sites():
     for line in rdb.splitlines():
         if line.startswith('USGS\t'):
             p = line.split('\t')
-            out[p[1]] = {'name': p[2].title().replace(' Co.', ', CO'),
-                         'lat': round(float(p[4]), 4), 'lon': round(float(p[5]), 4)}
+            rec = {'name': p[2].title().replace(' Co.', ', CO'),
+                   'lat': round(float(p[4]), 4), 'lon': round(float(p[5]), 4)}
+            # alt_va: the surveyed altitude of the gage datum, in feet. This is
+            # what puts a gage at its true height in the basin step-down.
+            try:
+                rec['elev'] = round(float(p[8]))
+            except (ValueError, IndexError):
+                pass
+            out[p[1]] = rec
     return out
 
 
@@ -136,7 +145,10 @@ for gid in sorted(GAGE_BASIN):
     s = sites.get(gid)
     if not s:
         continue
-    GAGES[gid] = {'name': s['name'], 'lat': s['lat'], 'lon': s['lon'], 'basin': GAGE_BASIN[gid]}
+    GAGES[gid] = {'name': s['name'], 'lat': s['lat'], 'lon': s['lon'],
+                  'basin': GAGE_BASIN[gid]}
+    if s.get('elev') is not None:
+        GAGES[gid]['elev'] = s['elev']
     hist = usgs_dv(gid)
     if len(hist) > 365:
         GAGE_NORMALS[gid] = weekly_median(hist)
@@ -452,6 +464,93 @@ try:
 except Exception as e:
     print('  Powell: skipped (', e, ')')
 
+# ---- 5. reservoir elevations: the physical step-down ----
+# The basin flow diagram stacks nodes by how high they actually sit, so every
+# reservoir needs a water-surface elevation.
+#   - CDSS `stage` where a reservoir is telemetered: the live pool elevation,
+#     measured, from the same endpoint the storage comes from.
+#   - otherwise the USGS 3DEP DEM sampled over the reservoir. A reservoir
+#     surface is the FLAT, LOW part of its neighbourhood, so widen the sample
+#     box until some 10-ft bin holds >=12% of the samples, then take the LOWEST
+#     such plateau — a mesa above the lake is flat too; the water is the one at
+#     the bottom of the valley. Checked against the CDSS stages that do exist,
+#     this lands within 60 ft on 12 of 13.
+RES_ELEV = {}
+
+
+def dem_samples(lat, lon, step, n, key):
+    pts = [[lon + dx * step, lat + dy * step]
+           for dx in range(-n, n + 1) for dy in range(-n, n + 1)]
+    q = {'geometry': json.dumps({'points': pts, 'spatialReference': {'wkid': 4326}}),
+         'geometryType': 'esriGeometryMultipoint', 'returnFirstValueOnly': 'true',
+         'f': 'json', 'sampleCount': str(len(pts))}
+    j = try_fetch_json('https://elevation.nationalmap.gov/arcgis/rest/services/'
+                       '3DEPElevation/ImageServer/getSamples?' + urllib.parse.urlencode(q), key)
+    return [float(s['value']) * 3.28084 for s in (j or {}).get('samples', [])
+            if s.get('value') not in (None, 'NoData')]
+
+
+DEM_GRIDS = ((0.0012, 4), (0.0025, 4), (0.0045, 4))
+
+
+def _plateau(vals, frac):
+    """the lowest 10-ft band holding at least `frac` of the samples"""
+    bins = {}
+    for v in vals:
+        bins[round(v / 10) * 10] = bins.get(round(v / 10) * 10, 0) + 1
+    flat = sorted(b for b, c in bins.items() if c >= len(vals) * frac)
+    if not flat:
+        return None
+    inb = [v for v in vals if round(v / 10) * 10 == flat[0]]
+    return sum(inb) / len(inb)
+
+
+def dem_water_surface(rid, lat, lon):
+    """Only returns a value when the samples show a DOMINANT flat surface —
+    i.e. we really are looking at a lake. A weak plateau means the coordinate
+    sits on a hillside instead (Homestake's does, and a permissive threshold
+    put it 1,160 ft too low), and a wrong height would mis-order the step-down
+    while looking perfectly authoritative. Better to return nothing and let the
+    diagram place the node by its neighbours, with no elevation printed."""
+    for i, (step, n) in enumerate(DEM_GRIDS):
+        vals = dem_samples(lat, lon, step, n, f'dem_{rid}_{i}.json')
+        if not vals:
+            continue
+        got = _plateau(vals, 0.30)
+        if got is not None:
+            return got
+    return None
+
+
+try:
+    stage = {}
+    abbrevs = [m['dwr'] for m in RES_META.values() if m['dwr']]
+    if abbrevs:
+        j = try_fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/'
+                           'telemetrystation/?format=json&abbrev=' + ','.join(abbrevs),
+                           'cdss_stage.json')
+        for r in (j or {}).get('ResultList', []):
+            v = r.get('stage')
+            # >1000 ft rules out a station reporting gage height above a local
+            # datum rather than a true elevation; keep the max per duplicate row
+            if isinstance(v, (int, float)) and v > 1000:
+                stage[r['abbrev']] = max(stage.get(r['abbrev'], 0), v)
+    for rid, meta in sorted(RES_META.items()):
+        ft = stage.get(meta['dwr']) if meta['dwr'] else None
+        src = 'cdss'
+        if ft is None:
+            ft = dem_water_surface(rid, meta['lat'], meta['lon'])
+            src = 'dem'
+        if ft is not None:
+            RES_ELEV[rid] = {'ft': round(ft), 'src': src}
+    n_cdss = sum(1 for v in RES_ELEV.values() if v['src'] == 'cdss')
+    missing = [r for r in RES_META if r not in RES_ELEV]
+    print(f'  elevations: {len(RES_ELEV)}/{len(RES_META)} reservoirs '
+          f'({n_cdss} cdss stage + {len(RES_ELEV) - n_cdss} dem)'
+          + (f'; none for: {", ".join(missing)}' if missing else ''))
+except Exception as e:
+    print('  elevations: skipped (', e, ')')
+
 # ---- write js/normals.js ----
 prov = {
     'built': TODAY.isoformat(),
@@ -462,7 +561,10 @@ prov = {
         'snowDecades': ('NRCS AWDB SNOTEL SWE, a FIXED panel of stations installed by 1980 '
                         'with a near-complete record in every water year since 1981, so a '
                         'decade-to-decade comparison is not confounded by the station set changing'),
-        'powell': 'USBR Upper Colorado hydrodata (usbr.gov/uc), Lake Powell daily storage from 1963'
+        'powell': 'USBR Upper Colorado hydrodata (usbr.gov/uc), Lake Powell daily storage from 1963',
+        'elevation': ('reservoir water-surface elevation from Colorado DWR CDSS telemetry `stage` '
+                      'where telemetered, else the USGS 3DEP DEM (elevation.nationalmap.gov) '
+                      'sampled over the reservoir; USGS NWIS `alt_va` for gage datums')
     },
     'method': 'weekly day-of-year medians; runtime % of normal = current / median-for-this-week'
 }
@@ -488,6 +590,7 @@ with open(OUT, 'w') as f:
     f.write(js('SNOW_BASIN', SNOW_BASIN))    # basin -> {cur, nrm} monthly SWE, Oct..Jul
     f.write(js('SNOW_DECADES', SNOW_DECADES))  # fixed-panel SWE by decade, water-year weeks
     f.write(js('PMH_DERIVED', PMH))        # data.js builds runtime PMH, filling dark basins (yampa)
+    f.write(js('RES_ELEV', RES_ELEV))      # id -> {ft, src} water-surface elevation
     f.write(js('POWELL_ANNUAL', POWELL_ANNUAL))
 print(f'\nwrote {os.path.relpath(OUT, ROOT)}  '
       f'({len(GAGES)} gages, {len(RES_NORMALS)} res normals, '

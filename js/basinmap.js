@@ -148,8 +148,28 @@ function render(bid,tap){
    FLOW — the same basin as a step-down: headwaters on the left, then every
    reservoir, gage and confluence the water passes through, to where it
    leaves the basin. Ribbon width tracks how much water each reach carries.
-   Laid out from the flow graph in data.js by longest-path rank.
+   x = longest-path rank from the flow graph in data.js.
+   y = ELEVATION ORDER — see below.
    ===================================================================== */
+/* Vertical position is the real physical staircase: every node is placed in
+   order of how high it actually sits, so the diagram falls the way the water
+   does. The spacing is deliberately NOT to scale — an honest linear axis would
+   crush a basin's dozen lower reservoirs into a stripe while one headwater sat
+   alone at the top — so the ORDER is exact and the gaps are not. Elevations
+   come from js/normals.js: RES_ELEV (CDSS live pool elevation where a
+   reservoir is telemetered, else the 3DEP water surface) and GAGE_META.elev
+   (the surveyed USGS gage datum). */
+function elevOf(n){
+  if(n.k==='res'&&typeof RES_ELEV!=='undefined'&&RES_ELEV[n.res]!=null){
+    const v=RES_ELEV[n.res];
+    return typeof v==='number'?v:(v.ft!=null?v.ft:null);
+  }
+  if(n.k==='gage'&&typeof GAGE_META!=='undefined'&&GAGE_META[n.gage]&&GAGE_META[n.gage].elev!=null)
+    return GAGE_META[n.gage].elev;
+  return null;
+}
+const ftLab=v=>Math.round(v).toLocaleString('en-US')+' ft';
+
 function flow(bid,tap){
   if(typeof G==='undefined')return '';
   const inB=G.nodes.filter(n=>n.sys===bid);
@@ -166,18 +186,78 @@ function flow(bid,tap){
     if(!moved)break;
   }
   const maxR=Math.max(...inB.map(n=>rank[n.id]));
-  const cols={}; inB.forEach(n=>(cols[rank[n.id]]=cols[rank[n.id]]||[]).push(n));
-  Object.values(cols).forEach(c=>c.sort((a,b)=>a.y-b.y));
-  const rows=Math.max(...Object.values(cols).map(c=>c.length));
 
-  const W=700, padL=42, padR=104, padT=46, padB=42;
-  const H=Math.max(210,padT+padB+rows*78);
+  /* --- place EVERY node on the staircase ---
+     Reservoirs and gages carry a measured surface elevation. Confluences,
+     river points and headwater markers do not, and neither do the reservoirs
+     whose height we could not verify — so they are inferred from the one
+     physical fact the river guarantees: water only runs downhill, so a node
+     sits BELOW everything upstream of it and ABOVE everything downstream.
+     Bracket it between the nearest measured ancestor and descendant. (An
+     earlier version averaged immediate neighbours instead, which collapsed on
+     a headwater reservoir with nothing measured on either side and dropped
+     Homestake — the highest reservoir in its basin — into the middle.)
+     Nothing here is ever LABELLED: an inferred node shows no number. */
+  const est={}, measured={};
+  inB.forEach(n=>{const e=elevOf(n); if(e!=null){est[n.id]=e; measured[n.id]=1;}});
+  const nMeasured=Object.keys(measured).length;
+  const useElev=nMeasured>=3;
+  const up={}, down={};
+  inB.forEach(n=>{up[n.id]=[]; down[n.id]=[];});
+  internal.forEach(e=>{down[e.f].push(e.t); up[e.t].push(e.f);});
+  const nearestMeasured=(startId,adj,pick)=>{
+    const seen={}, q=adj[startId].slice(); let best=null;
+    while(q.length){
+      const id=q.shift(); if(seen[id])continue; seen[id]=1;
+      if(measured[id]){best=best==null?est[id]:pick(best,est[id]); continue;}
+      (adj[id]||[]).forEach(x=>{if(!seen[x])q.push(x);});
+    }
+    return best;
+  };
+  const mv=Object.keys(measured).map(k=>est[k]);
+  const hi=mv.length?Math.max(...mv):1, lo=mv.length?Math.min(...mv):0;
+  inB.forEach(n=>{
+    if(measured[n.id])return;
+    const a=nearestMeasured(n.id,up,Math.min);     /* lowest thing above it */
+    const b=nearestMeasured(n.id,down,Math.max);   /* highest thing below it */
+    /* Start from where the node sits along the river — headwaters high, exit
+       low — then CLAMP that guess into the bracket the graph proves. A bare
+       bracket is too weak on its own: Homestake's only measured relation is a
+       gage 4,000 ft below it, so "somewhere above 6,122 ft" would have parked
+       the basin's highest reservoir just above that gage. */
+    let v=hi-(hi-lo)*(maxR?rank[n.id]/maxR:0.5);
+    if(a!=null)v=Math.min(v,a-40);
+    if(b!=null)v=Math.max(v,b+40);
+    if(a!=null&&b!=null&&a-40<b+40)v=(a+b)/2;      /* bracket too tight to split */
+    est[n.id]=v;
+    /* a source is above what it feeds; an exit below what feeds it */
+    if(n.k==='src')est[n.id]+=250;
+    else if(n.k==='exit')est[n.id]-=250;
+  });
+
+  const W=700, padL=52, padR=104, padT=52, padB=44;
   const X=r=>maxR?padL+r/maxR*(W-padL-padR):padL;
   const pos={};
-  Object.keys(cols).forEach(r=>{
-    const c=cols[r], span=H-padT-padB;
-    c.forEach((n,i)=>{pos[n.id]={x:X(+r), y:padT+span*((i+0.5)/c.length)};});
-  });
+  let H, order=null;
+  if(useElev){
+    /* one slot per node, highest first; ties broken by flow order */
+    order=inB.slice().sort((a,b)=>(est[b.id]-est[a.id])||(rank[a.id]-rank[b.id]));
+    const span=Math.min(760,Math.max(150,(order.length-1)*31));
+    H=padT+padB+span;
+    order.forEach((n,i)=>{
+      pos[n.id]={x:X(rank[n.id]), y:padT+(order.length>1?span*i/(order.length-1):span/2)};
+    });
+  }else{
+    /* no elevations baked yet — the original rank-column layout */
+    const cols={}; inB.forEach(n=>(cols[rank[n.id]]=cols[rank[n.id]]||[]).push(n));
+    Object.values(cols).forEach(c=>c.sort((a,b)=>a.y-b.y));
+    const rows=Math.max(...Object.values(cols).map(c=>c.length));
+    H=Math.max(210,padT+padB+rows*78);
+    Object.keys(cols).forEach(r=>{
+      const c=cols[r], sp=H-padT-padB;
+      c.forEach((n,i)=>{pos[n.id]={x:X(+r), y:padT+sp*((i+0.5)/c.length)};});
+    });
+  }
 
   const maxQ=Math.max(1,...internal.concat(exports_).map(e=>e.q||0));
   const wOf=q=>1.6+Math.sqrt((q||0)/maxQ)*13;
@@ -194,15 +274,17 @@ function flow(bid,tap){
       +` stroke-linecap="round" opacity="0.55"><title>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)} · ${(e.q||0).toLocaleString('en-US')} cfs</title></path>`;
   });
   /* water leaving the basin */
+  /* Water leaving the basin. The label is right-aligned to the frame edge —
+     left-aligned from the ribbon end, the longer tunnel names ran off it. */
   exports_.forEach(e=>{
     const a=pos[e.f]; if(!a)return;
-    const x2=W-padR+34;
+    const x2=W-padR+22, tx=W-4;
     s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${x2.toFixed(1)},${a.y.toFixed(1)}"`
       +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
       +` stroke-linecap="round" opacity="0.4" stroke-dasharray="${e.dash?'5 4':'none'}"/>`
-      +`<text class="bf-out" x="${(x2+5).toFixed(1)}" y="${(a.y-7).toFixed(1)}">`
+      +`<text class="bf-out" text-anchor="end" x="${tx}" y="${(a.y-7).toFixed(1)}">`
       +`${e.tun?esc(e.tun):'leaves the'}</text>`
-      +`<text class="bf-out" x="${(x2+5).toFixed(1)}" y="${(a.y+5).toFixed(1)}">`
+      +`<text class="bf-out" text-anchor="end" x="${tx}" y="${(a.y+5).toFixed(1)}">`
       +`${e.tun?'(tunnel)':'basin →'}</text>`;
   });
 
@@ -238,27 +320,71 @@ function flow(bid,tap){
       glyph=`<circle r="3" fill="#5C7484"/>`;
       lab='';
     }
-    s+=`<g transform="${g}"><title>${esc(n.l||n.id)}</title>${glyph}</g>`;
-    if(lab)labels.push({
+    const mEl=measured[n.id]?est[n.id]:null;
+    s+=`<g transform="${g}"><title>${esc(n.l||n.id)}${mEl!=null?' — '+ftLab(mEl):''}</title>${glyph}</g>`;
+    if(!lab)return;
+    /* In the staircase each node owns its own row, so labels sit BESIDE the
+       glyph rather than above/below it — stacking them vertically would run a
+       two-line label straight into the row above. The last column reads
+       leftwards so it doesn't collide with the "leaves the basin" arrows. */
+    const toLeft=useElev&&rank[n.id]===maxR;
+    labels.push({
       pri:(n.k==='res'?3e6+(RESBY[n.res]?RESBY[n.res].cap:0):(n.k==='gage'?2e6:1e6)),
-      x:p.x, y:p.y+(rank[n.id]%2===0?-13:21), t:lab,
+      x:useElev?p.x+(toLeft?-11:11):p.x,
+      y:useElev?p.y-1:p.y+(rank[n.id]%2===0?-13:21),
+      anchor:useElev?(toLeft?'end':'start'):'middle',
+      t:lab,
+      /* the height goes on a second line — the whole point of the layout, but
+         not worth doubling the label's width for */
+      sub:(useElev&&mEl!=null)?ftLab(mEl):'',
       cls:'bf-lab'+(n.k==='res'&&mine.has(n.res)?' mine':'')});
   });
   /* neighbouring ranks sit closer than the labels are wide, so place by
      priority with a collision test and clamp everything inside the frame */
   const placed=[];
   labels.sort((a,b)=>b.pri-a.pri).forEach(L=>{
-    const half=L.t.length*2.75;
-    const x=Math.max(half+3,Math.min(W-half-3,L.x));
-    const box=[x-half,L.y-8,x+half,L.y+3];
+    const wid=Math.max(L.t.length,L.sub.length)*5.5;
+    let x=L.x, x0, x1;
+    if(L.anchor==='middle'){x=Math.max(wid/2+3,Math.min(W-wid/2-3,x)); x0=x-wid/2; x1=x+wid/2;}
+    else if(L.anchor==='end'){x=Math.max(wid+3,x); x0=x-wid; x1=x;}
+    else {x=Math.min(W-wid-3,x); x0=x; x1=x+wid;}
+    const box=[x0,L.y-8,x1,L.y+(L.sub?13:3)];
     if(placed.some(b=>box[0]<b[2]&&box[2]>b[0]&&box[1]<b[3]&&box[3]>b[1]))return;
     placed.push(box);
-    s+=`<text class="${L.cls}" x="${x.toFixed(1)}" y="${L.y.toFixed(1)}" text-anchor="middle">${esc(L.t)}</text>`;
+    s+=`<text class="${L.cls}" x="${x.toFixed(1)}" y="${L.y.toFixed(1)}" text-anchor="${L.anchor}">${esc(L.t)}`
+      +(L.sub?`<tspan class="bf-elev" x="${x.toFixed(1)}" dy="10">${esc(L.sub)}</tspan>`:'')
+      +`</text>`;
   });
-  s+=`<text class="bf-cap" x="6" y="16">HEADWATERS</text>`
-    +`<text class="bf-cap" x="${W-6}" y="16" text-anchor="end">DOWNSTREAM →</text>`;
+  s+=`<text class="bf-cap" x="${padL-14}" y="18">HEADWATERS</text>`
+    +`<text class="bf-cap" x="${W-6}" y="18" text-anchor="end">DOWNSTREAM →</text>`;
+  if(useElev){
+    /* The vertical axis is ORDER, not scale, so it gets an arrow and a word —
+       never ticks, which would promise a linear height it does not have. The
+       label runs along the rule so it costs no horizontal room: the first
+       column of nodes starts only a few pixels to its right. */
+    const yTop=padT-14, yBot=H-padB+14;
+    s+=`<g class="bf-axis"><line x1="15" y1="${yTop}" x2="15" y2="${yBot}" stroke="#2A4150"/>`
+      +`<path d="M15,${(yTop-1).toFixed(1)} l-3.5,7 l7,0 Z" fill="#5C7484"/>`
+      +`<text class="bf-cap" transform="translate(12,${((yTop+yBot)/2).toFixed(1)}) rotate(-90)"`
+      +` text-anchor="middle">HIGHER ELEVATION ↑ (ORDER, NOT TO SCALE)</text></g>`;
+  }
   return s+'</svg>';
 }
 
-window.CW_BASINMAP={render,flow};
+/* How far the water actually falls crossing this basin — the highest and
+   lowest MEASURED points in its flow graph. Used by the story's prose so the
+   number beside the step-down comes from the same data the diagram is drawn
+   from. Returns null if too little of the basin is measured to be meaningful. */
+function drop(bid){
+  if(typeof G==='undefined')return null;
+  const pts=G.nodes.filter(n=>n.sys===bid)
+    .map(n=>({n,e:elevOf(n)})).filter(o=>o.e!=null);
+  if(pts.length<2)return null;
+  const hi=pts.reduce((a,b)=>b.e>a.e?b:a), lo=pts.reduce((a,b)=>b.e<a.e?b:a);
+  if(hi.e-lo.e<200)return null;
+  const nm=o=>(o.n.l||'').replace(/ (Res\.|Reservoir)$/,'').replace(/^.*? (nr|at|near) /i,'');
+  return {hi:hi.e,lo:lo.e,drop:hi.e-lo.e,hiName:nm(hi),loName:nm(lo)};
+}
+
+window.CW_BASINMAP={render,flow,drop};
 })();
