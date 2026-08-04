@@ -340,7 +340,7 @@ function flowBlock(bid,bo,svg,opts){
        <b>${outSide}</b>${opts.tunnel?` — including, for you, through a tunnel under the Divide`:''} —
        every drop routed through the same handful of structures.`)}</p>
      ${dropLine(bid,bo)}
-     <div class="lr-chart">${svg}<div class="lr-chart-cap">${bo.n} basin · ${west
+     <div class="lr-chart cw-hover">${svg}<div class="lr-chart-cap">${bo.n} basin · ${west
        ? `<b>this basin drains west</b>, toward Utah, so the diagram reads <b>right to left</b> — the direction the water really goes on a map. `
        : `<b>this basin rises east of the Divide</b> and leaves the state that way, so the diagram reads left to right. `}<b>Height runs down the page</b>,
        so it falls the way the water does. The spacing is <i>not</i> to scale — a true linear axis would crush the
@@ -351,7 +351,8 @@ function flowBlock(bid,bo,svg,opts){
        Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings
        where available. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water actually
        reaches — so on the West Slope the river leaves to the left, toward Utah, while the tunnels break away to
-       the right, east under the Divide. A schematic of the order things happen in, not a channel map.</div></div>`;
+       the right, east under the Divide. A schematic of the order things happen in, not a channel map.</div>${
+         window.CW_BASINMAP&&CW_BASINMAP.flowTable?CW_BASINMAP.flowTable(bid):''}</div>`;
 }
 function secMyBasin(tap){
   const hb=tap.hb;
@@ -403,14 +404,14 @@ function secMyBasin(tap){
          <h3 class="lr-h3">Where your water is stored — the ${b.n}</h3>
          <p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water — ${capCommon}`)}</div></div>`:''}
+         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
          <div class="crossnote">${W(`↓ crosses the {{Continental Divide}}${tap.tun&&tap.tun.length?` through the <b>${tap.tun.join('</b> and <b>')}</b>`:''} ↓`)}</div>
          <h3 class="lr-h3">Where you live — the ${homeB.n}</h3>
          <p class="lr-p">${BASININFO[hb]||''}</p>
-         ${homeMap?`<div class="lr-chart">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored — ${capCommon}`)}</div></div>`:''}`
+         ${homeMap?`<div class="lr-chart cw-hover">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
       : `<p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin — ${capCommon}`)}</div></div>`:''}`)
+         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
     +`
      ${flowBlock(sb,b,flowSVG,{suffix:cross?' in the '+b.n:'',tunnel:cross})}
      ${flowBlock(hb,homeB,homeFlow,{suffix:' in the '+homeB.n,
@@ -525,6 +526,12 @@ function renderLocal(tap,zip){
        <p class="lr-servedby">${tap._approx?'Nearest mapped system: ':'Served by '}<b>${tap.prov}</b> · ${b.n} basin</p></header>`
     +secMyBasin(tap)+secTap(tap)+secAction(tap,zip);
   if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
+  /* the basin maps and step-downs are string-built; their tooltips attach
+     to the inserted DOM via the shared delegated hover */
+  el.querySelectorAll('.cw-hover').forEach(box=>{
+    const svg=box.querySelector('svg');
+    if(svg)window.CW_CHARTS.markHover(svg,{container:box});
+  });
 }
 
 /* ---------- entry wiring ---------- */

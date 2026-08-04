@@ -87,6 +87,16 @@ noNaN(local,'Acts 2–3');
 ok(local.querySelectorAll('svg.basinmap-detail').length>=1,'basin map rendered');
 ok(local.querySelectorAll('svg.basinflow').length>=1,'step-down diagram rendered');
 ok(local.querySelectorAll('.rrow').length>=1,'reservoir rows rendered');
+ok(local.querySelectorAll('.lr-table').length>=3,
+  `table views in Acts 2–3 (${local.querySelectorAll('.lr-table').length})`);
+const mark=local.querySelector('.bm-res[data-tip]');
+if(mark){
+  mark.dispatchEvent(new window.FocusEvent('focusin',{bubbles:true}));
+  const box=mark.closest('.cw-hover');
+  const mtip=box&&box.querySelector('.cw-tip');
+  ok(mtip&&mtip.style.display!=='none'&&mtip.innerHTML.length>0,
+    'focusing a reservoir glass populates the tooltip');
+}else ok(false,'a focusable reservoir glass with data-tip exists');
 ok(pageErrors.length===0,'still no script errors'
   +(pageErrors.length?'\n    '+pageErrors.join('\n    '):''));
 

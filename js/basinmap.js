@@ -45,7 +45,7 @@ function project(bid,W,H,pad){
   return {x:lon=>fx(lon)*s+ox, y:lat=>fy(lat)*s+oy, s};
 }
 const esc=window.CW_CHARTS.esc;
-const {glassGlyph,PAL}=window.CW_CHARTS;
+const {glassGlyph,PAL,kaf,af,dataTable}=window.CW_CHARTS;
 
 /* a glass glyph whose area tracks capacity and whose fill level is storage —
    rendered by the shared geometry core, so the fill is solved by AREA like
@@ -55,10 +55,16 @@ function glass(P,r,scale){
   const h=Math.max(11,Math.min(34,Math.sqrt(r.cap)/scale));
   const frac=Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap));
   const col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
-  return {cx,cy,h,svg:`<g class="bm-res" data-res="${r.id}" tabindex="0" role="button"`
-      +` aria-label="${esc(r.n)}, ${r.fc?'flood control':pmAt(r,NOW)+'% of normal'}"`
+  /* role="img", not "button": there is no action here — focusing it reads
+     the tooltip (markHover listens on focusin), and that is the whole deal.
+     The old role="button" + no handler was a focus trap. */
+  const state=r.fc?'flood control pool':pmAt(r,NOW)+'% of normal';
+  return {cx,cy,h,svg:`<g class="bm-res" data-res="${r.id}" tabindex="0" role="img"`
+      +` aria-label="${esc(r.n)}, ${state}, ${kaf(r.cap)} thousand acre-feet when full"`
+      +` data-tip="<div class=&quot;tt-h&quot;>${esc(r.n)}</div><div class=&quot;tt-d&quot;>${state}`
+      +`${r.fc?'':` · <b>${af(stoAt(r,NOW))} AF</b> today`}<br>${kaf(r.cap)} KAF when full`
+      +`${LIVE_STO[r.id]?' · live':''}</div>"`
       +` transform="translate(${cx.toFixed(1)},${(cy+h/2).toFixed(1)})">`
-      +`<title>${esc(r.n)} — ${r.fc?'flood control pool':pmAt(r,NOW)+'% of normal'}</title>`
       +glassGlyph({h,a:h*0.40,b:h*0.21,frac,col,id:'bg'+r.id,stroke:'#6d8ea3',strokeHi:PAL.GLASS.strokeHi})
       +`</g>`};
 }
@@ -96,7 +102,8 @@ function render(bid,tap){
     const a=pt(tn.f),c=pt(tn.t); if(!a||!c)return;
     const leaving=tn.fb===bid;
     s+=`<path d="M${a[0].toFixed(1)},${a[1].toFixed(1)} L${c[0].toFixed(1)},${c[1].toFixed(1)}"`
-      +` fill="none" stroke="${tn.hue}" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.9"><title>${esc(tn.n)}</title></path>`;
+      +` fill="none" stroke="${tn.hue}" stroke-width="1.8" stroke-dasharray="5 4" opacity="0.9"`
+      +` data-tip="<div class=&quot;tt-h&quot;>${esc(tn.n)}</div><div class=&quot;tt-d&quot;>tunnel · ${leaving?'carries water out of':'brings water into'} this basin</div>"/>`;
     tunLabels.push({x:(a[0]+c[0])/2, y:(a[1]+c[1])/2-5,
       t:tn.n+(leaving?' ↗ out':' ↘ in'), cls:'bm-tun', cw:5.0, pri:-500});
   });
@@ -107,7 +114,9 @@ function render(bid,tap){
     Object.keys(GAGE_META).forEach(site=>{
       const m=GAGE_META[site]; if(m.basin!==bid)return;
       const gx=P.x(m.lon),gy=P.y(m.lat), q=liveQ[site];
-      s+=`<g class="bm-gage"><title>${esc(m.name)} — ${q!=null?Math.round(q)+' cfs now':'USGS '+site}</title>`
+      const gState=q!=null?Math.round(q).toLocaleString('en-US')+' cfs now (live)':'USGS '+site;
+      s+=`<g class="bm-gage" tabindex="0" role="img" aria-label="${esc(m.name)}, ${gState}"`
+        +` data-tip="<div class=&quot;tt-h&quot;>${esc(m.name)}</div><div class=&quot;tt-d&quot;>streamgage · ${gState}</div>">`
         +`<path d="M${gx.toFixed(1)},${(gy-5).toFixed(1)} L${(gx+5).toFixed(1)},${gy.toFixed(1)} `
         +`L${gx.toFixed(1)},${(gy+5).toFixed(1)} L${(gx-5).toFixed(1)},${gy.toFixed(1)} Z"`
         +` fill="${q!=null?'#00D6E6':'#0A1620'}" stroke="#0A1620" stroke-width="1"/>`;
@@ -175,10 +184,12 @@ function elevOf(n){
 }
 const ftLab=v=>Math.round(v).toLocaleString('en-US')+' ft';
 
-function flow(bid,tap){
-  if(typeof G==='undefined')return '';
+/* the shared computation behind both the diagram and its table view:
+   membership, edges, longest-path rank, and the elevation model */
+function flowModel(bid){
+  if(typeof G==='undefined')return null;
   const inB=G.nodes.filter(n=>n.sys===bid);
-  if(inB.length<2)return '';
+  if(inB.length<2)return null;
   const has={}; inB.forEach(n=>has[n.id]=n);
   const internal=G.edges.filter(e=>has[e.f]&&has[e.t]);
   const exports_=G.edges.filter(e=>has[e.f]&&!has[e.t]);
@@ -242,6 +253,13 @@ function flow(bid,tap){
     if(n.k==='src')est[n.id]+=250;
     else if(n.k==='exit')est[n.id]-=250;
   });
+  return {inB,has,internal,exports_,imports_,rank,maxR,est,measured,useElev};
+}
+
+function flow(bid,tap){
+  const model=flowModel(bid);
+  if(!model)return '';
+  const {inB,has,internal,exports_,imports_,rank,maxR,est,measured,useElev}=model;
 
   /* A West Slope basin drains toward Utah, so its diagram runs RIGHT to LEFT —
      headwaters on the right, the state line on the left — matching both the
@@ -298,7 +316,9 @@ function flow(bid,tap){
     const mx=(a.x+b.x)/2;
     s+=`<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} C${mx.toFixed(1)},${a.y.toFixed(1)} ${mx.toFixed(1)},${b.y.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}"`
       +` fill="none" stroke="${hueOf(has[e.f])}" stroke-width="${wOf(e.q).toFixed(1)}"`
-      +` stroke-linecap="round" opacity="0.55"><title>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)} · ${(e.q||0).toLocaleString('en-US')} cfs</title></path>`;
+      +` stroke-linecap="round" opacity="0.55"`
+      +` data-tip="<div class=&quot;tt-h&quot;>${esc(has[e.f].l||e.f)} → ${esc(has[e.t].l||e.t)}</div>`
+      +`<div class=&quot;tt-d&quot;>carries about <b>${(e.q||0).toLocaleString('en-US')} cfs</b> (typical late July)</div>"/>`;
   });
   /* water leaving the basin */
   /* Water leaving the basin, off whichever edge its destination lies on. The
@@ -364,7 +384,8 @@ function flow(bid,tap){
       lab='';
     }
     const mEl=measured[n.id]?est[n.id]:null;
-    s+=`<g transform="${g}"><title>${esc(n.l||n.id)}${mEl!=null?' — '+ftLab(mEl):''}</title>${glyph}</g>`;
+    s+=`<g transform="${g}" data-tip="<div class=&quot;tt-h&quot;>${esc(n.l||n.id)}</div>`
+      +`<div class=&quot;tt-d&quot;>${mEl!=null?ftLab(mEl)+', measured':'placed by river order — height not measured'}</div>">${glyph}</g>`;
     if(!lab)return;
     /* In the staircase each node owns its own row, so labels sit BESIDE the
        glyph rather than above/below it — stacking them vertically would run a
@@ -432,5 +453,50 @@ function drop(bid){
   return {hi:hi.e,lo:lo.e,drop:hi.e-lo.e,hiName:nm(hi),loName:nm(lo)};
 }
 
-window.CW_BASINMAP={render,flow,drop};
+/* table views — every mark on the map and the step-down, reachable as text */
+function resTable(bid){
+  const rows=RES.filter(r=>r.b===bid).sort((a,b)=>b.cap-a.cap).map(r=>[
+    esc(r.n), esc(r.r||''), kaf(r.cap),
+    r.fc?'—':af(stoAt(r,NOW)),
+    r.fc?'flood control':pmAt(r,NOW)+'%',
+    LIVE_STO[r.id]?'live':(r.c==='obs'?'measured':'estimate')]);
+  if(!rows.length)return '';
+  return dataTable({id:'tbl-bmres-'+bid,
+    summary:'The reservoirs on this map, as numbers',
+    head:['Reservoir','River','Capacity (KAF)','Today (AF)','vs normal','Reading'],
+    rows});
+}
+function flowTable(bid){
+  const model=flowModel(bid);
+  if(!model)return '';
+  const {inB,rank,est,measured,useElev}=model;
+  const order=inB.slice().sort((a,b)=>useElev
+    ?((est[b.id]-est[a.id])||(rank[a.id]-rank[b.id]))
+    :(rank[a.id]-rank[b.id]));
+  const liveQ=window.CW_LIVEQ||{};
+  const kind=n=>n.k==='res'?'reservoir':n.k==='gage'?'streamgage'
+    :n.k==='src'?'headwaters':n.k==='exit'?'leaves the basin':'confluence';
+  const rows=order.map(n=>{
+    let today='—';
+    if(n.k==='res'){
+      const r=RESBY[n.res];
+      if(r)today=r.fc?'flood control':pmAt(r,NOW)+'% of normal · '+af(stoAt(r,NOW))+' AF';
+    }else if(n.k==='gage'){
+      const q=liveQ[n.gage];
+      today=q!=null?Math.round(q).toLocaleString('en-US')+' cfs (live)':'USGS '+n.gage;
+    }
+    /* unmeasured heights stay blank — same doctrine as the diagram */
+    return [esc(n.l||n.id),kind(n),measured[n.id]?ftLab(est[n.id]):'—',today];
+  });
+  return dataTable({id:'tbl-flow-'+bid,
+    summary:'The step-down as a list, highest to lowest',
+    caption:'Order matches the diagram. An elevation is printed only where a water '
+      +'surface is measured (DWR pool elevation, USGS gage datum, or the national '
+      +'elevation model); everything else is placed by its position on the river '
+      +'and deliberately carries no number.',
+    head:['Structure','Kind','Elevation','Today'],
+    rows});
+}
+
+window.CW_BASINMAP={render,flow,drop,resTable,flowTable};
 })();
