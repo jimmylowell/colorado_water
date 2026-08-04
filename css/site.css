@@ -357,8 +357,11 @@ body.fs-on{overflow:hidden}
 .rr-of{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--dim);margin-top:2px}
 .rr-af{font-family:var(--mono);font-size:10px;color:var(--dust);margin-top:5px;white-space:nowrap}
 @media (max-width:700px){
-  .rrow{grid-template-columns:34px minmax(0,1fr) auto;gap:10px}
-  .rr-spark{display:none}
+  .rrow{grid-template-columns:34px minmax(0,1fr) auto;gap:8px 10px}
+  /* the spark answers "is this level normal for NOW?" — that matters most on
+     a phone, so it reflows to its own row instead of disappearing */
+  .rr-spark{grid-column:1 / -1;flex-direction:row;align-items:center;gap:10px}
+  .resspark{width:150px;height:26px}
   .rr-val{grid-column:3}
 }
 

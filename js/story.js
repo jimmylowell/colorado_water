@@ -30,6 +30,7 @@ const FULLMON={Oct:'October',Nov:'November',Dec:'December',Jan:'January',Feb:'Fe
 const monthName=mi=>FULLMON[MONTHS[mi].split(' ')[0]]||MONTHS[mi];
 const W=n=>wikify(n);
 let curTap=null, curZip=null;
+let curSel=null;   /* the basin picked in the explorer — survives re-renders */
 
 /* ---------- shared pieces ---------- */
 function sec(id,kicker,title,body){
@@ -190,11 +191,14 @@ function stateBasinsSVG(home,sel){
   let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage against each basin's own normal">`;
   s+=`<image href="img/co-relief.webp" x="0" y="0" width="${BMW}" height="${BMH}" preserveAspectRatio="none" opacity="0.3"/>`;
   Object.keys(BASIN_GEO).forEach(bid=>{
-    const pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+    const st=basinStats(bid);
     const bn=BASINS.find(x=>x.id===bid).n;
     s+=`<path class="sbasin${bid===home?' home':''}${bid===sel?' sel':''}" data-basin="${bid}" `
-      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${ramp(pct)}" tabindex="0" role="button" `
-      +`aria-label="${bn} basin, ${pct}% of normal storage"><title>${bn} — ${pct}% of normal</title></path>`;
+      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${ramp(st.pct)}" tabindex="0" role="button" `
+      +`aria-pressed="${bid===sel}" aria-label="${bn} basin, ${st.pct}% of normal storage" `
+      +`data-tip="<div class=&quot;tt-h&quot;>${bn}</div><div class=&quot;tt-d&quot;>`
+      +`<b>${st.pct}%</b> of normal storage<br>${st.count} reservoirs · ${kaf(st.cap)} KAF when full`
+      +`<br>${st.below} below normal</div>"></path>`;
   });
   Object.keys(BASIN_GEO).forEach(bid=>{
     const a=BASIN_LABEL[bid]; if(!a)return;
@@ -241,8 +245,8 @@ function basinSummaryHTML(bid,home){
 function secBasinsState(home){
   return sec('basins','The state right now','Seven basins, seven different years',
     `<p class="lr-p">${W(`Colorado drains into seven river basins — four west of the {{Continental Divide}}, three east. They do not share a fate: each lives on its own snowpack, so in the same year one can be near normal while another is deep in drought. Each is coloured below by how much water it is holding against its <i>own</i> normal, so they can be read side by side. Tap any basin for its details.`)}</p>
-     <div class="basinmap-wrap" id="basin-explorer">${stateBasinsSVG(home,home||'colorado')}
-       <div class="bx-panel" id="basin-sel">${basinSummaryHTML(home||'colorado',home)}</div></div>
+     <div class="basinmap-wrap" id="basin-explorer">${stateBasinsSVG(home,curSel||home||'colorado')}
+       <div class="bx-panel" id="basin-sel">${basinSummaryHTML(curSel||home||'colorado',home)}</div></div>
      <p class="lr-p lr-cap">Boundaries from the public-domain USGS Watershed Boundary Dataset; storage derived from Colorado DWR telemetry against each basin’s own record.</p>`);
 }
 
@@ -288,17 +292,17 @@ function supplySplit(tap){
 }
 function splitBar(sp,hb){
   if(!sp.tot)return '';
-  const seg=sp.ranked.map(([bid,c])=>{
-    const bn=BASINS.find(x=>x.id===bid).n, pctv=Math.round(c/sp.tot*100);
-    return `<span class="sb-seg" style="width:${(c/sp.tot*100).toFixed(1)}%;background:${BASIN_HUE[bid]||'#8FA6B2'}"`
-      +` title="${bn}: ${pctv}% of your stored water"></span>`;
-  }).join('');
+  /* the track is decoration; the key row below carries every basin and its
+     share as text, so that is the accessible representation */
+  const seg=sp.ranked.map(([bid,c])=>
+    `<span class="sb-seg" style="width:${(c/sp.tot*100).toFixed(1)}%;background:${BASIN_HUE[bid]||'#8FA6B2'}"></span>`
+  ).join('');
   const key=sp.ranked.map(([bid,c])=>{
     const bn=BASINS.find(x=>x.id===bid).n;
     return `<span class="sb-key"><i style="background:${BASIN_HUE[bid]||'#8FA6B2'}"></i>`
       +`${bn}${bid===hb?' (where you live)':''} · <b>${Math.round(c/sp.tot*100)}%</b></span>`;
   }).join('');
-  return `<div class="splitbar"><div class="sb-track">${seg}</div><div class="sb-keys">${key}</div></div>`;
+  return `<div class="splitbar"><div class="sb-track" aria-hidden="true">${seg}</div><div class="sb-keys">${key}</div></div>`;
 }
 function basinStatPanel(bid){
   const st=basinStats(bid);
@@ -510,11 +514,18 @@ function wireBasinExplorer(home){
   const bx=document.getElementById('basin-explorer'); if(!bx)return;
   const sel=document.getElementById('basin-sel');
   bx.querySelectorAll('.sbasin').forEach(p=>{
-    const pick=()=>{bx.querySelectorAll('.sbasin').forEach(x=>x.classList.toggle('sel',x===p));
-      if(sel)sel.innerHTML=basinSummaryHTML(p.dataset.basin,home);};
+    const pick=()=>{
+      curSel=p.dataset.basin;
+      bx.querySelectorAll('.sbasin').forEach(x=>{
+        x.classList.toggle('sel',x===p);
+        x.setAttribute('aria-pressed',String(x===p));
+      });
+      if(sel)sel.innerHTML=basinSummaryHTML(curSel,home);};
     p.addEventListener('click',pick);
     p.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick();}});
   });
+  const svg=bx.querySelector('svg.basinmap');
+  if(svg&&window.CW_CHARTS)CW_CHARTS.markHover(svg,{container:bx});
 }
 function renderLocal(tap,zip){
   const b=BASINS.find(x=>x.id===tap.hb);
@@ -587,9 +598,17 @@ function syncFromHash(){
   const el=document.getElementById('local-body'); if(el){el.hidden=true;el.innerHTML='';}
 }
 window.addEventListener('popstate',syncFromHash);
-window.addEventListener('cw-live',()=>{
+window.addEventListener('cw-live',ev=>{
+  /* a refresh that brought nothing new must not repaint the page under the
+     reader — no re-render, no lost place */
+  const d=(ev&&ev.detail)||{};
+  if(!d.gages&&!d.reservoirs)return;
+  /* remember which table views the reader opened, restore them after */
+  const open=[...document.querySelectorAll('details.lr-table[open]')]
+    .map(x=>x.id).filter(Boolean);
   renderState();
   if(curTap)renderLocal(curTap,curZip);
+  open.forEach(id=>{const x=document.getElementById(id);if(x)x.setAttribute('open','');});
 });
 syncFromHash();
 })();
