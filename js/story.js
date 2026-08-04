@@ -141,9 +141,11 @@ function secSnow(){
   const facts=COLORADO_FACTS.map(f=>
     `<div class="fact"><div class="fact-stat">${f.stat}</div>`
     +`<div class="fact-lab">${W(f.lab)} ${cite(f.cite)}</div></div>`).join('');
-  const chart=window.CW_HISTORY?CW_HISTORY.snowStateChart():'';
-  const bars=window.CW_HISTORY&&CW_HISTORY.snowDecadeBars?CW_HISTORY.snowDecadeBars():'';
-  const table=window.CW_HISTORY&&CW_HISTORY.snowDecadeTable?CW_HISTORY.snowDecadeTable():'';
+  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowChart()
+    ?'<div class="cw-mount" data-cw="snowState"></div>':'';
+  const bars=window.CW_HISTORY&&CW_HISTORY.hasDecades()
+    ?'<div class="cw-mount" data-cw="snowBars"></div>':'';
+  const table=window.CW_HISTORY&&CW_HISTORY.hasDecades()?CW_HISTORY.snowDecadeTable():'';
   return sec('snow','Where it begins','Colorado’s water starts as snow',
     `<p class="lr-p">${W(`Nearly every drop Colorado uses falls first as snow. Winter storms stack {{snowpack|snow}} on the high country, and that frozen reservoir — measured all season as {{snow water equivalent|snow-water equivalent}}, the depth of water it would melt into — is the state’s real storage. The lakes below are just where it goes afterwards.`)}</p>
      <div class="fact-grid">${facts}</div>
@@ -249,12 +251,15 @@ function secLongView(){
   const bm=RESBY['bluemesa'];
   const bmLive=bm&&LIVE_STO[bm.id];
   const bmPct=bm?pmAt(bm,NOW):null;
-  const powell=(window.CW_HISTORY?CW_HISTORY.powellChart():'');
+  const powell=window.CW_HISTORY&&CW_HISTORY.hasPowell()
+    ?'<div class="cw-mount" data-cw="powell"></div>':'';
+  const powellTable=window.CW_HISTORY&&CW_HISTORY.hasPowell()&&CW_HISTORY.powellTable
+    ?CW_HISTORY.powellTable():'';
   const pk=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL.reduce((a,b)=>b[1]>a[1]?b:a):null;
   const last=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL[POWELL_ANNUAL.length-1]:null;
   return sec('longview','The long view','A drought, and a drier baseline',
     `<p class="lr-p">${W(`One dry year is weather. A downward-sloping baseline is something else. Since 2000 the Colorado River basin has been living through what scientists call a {{megadrought}} — the driest stretch in twelve centuries — and warming is turning drought into a permanent condition, a shift with its own name: {{aridification}}.`)}</p>
-     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} — annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div></div>`:''}
+     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} — annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}
      <p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s great savings account, tells the story bluntly: full through the 1980s, drawn toward dead pool over two decades. Colorado’s own {{Blue Mesa Reservoir}} — the largest in the state — is the next account upstream, and when the river runs short Blue Mesa is tapped to prop Powell up.`)}</p>
      ${bm?`<div class="bignum"><div class="bignum-v" style="color:${ramp(bmPct)}">${bmPct}%</div>
         <div class="bignum-lab">${W(`of normal — {{Blue Mesa Reservoir}} today${bmLive?`, holding ${af(bmLive.sto)} acre-feet (live, Colorado DWR)`:''}.`)}</div></div>`:''}
@@ -368,7 +373,9 @@ function secMyBasin(tap){
      through their own city was missing from the page. */
   const homeFlow=cross&&window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(hb,tap):'';
   const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[sb];
-  const chart=window.CW_HISTORY?CW_HISTORY.snowStoreChart(sb):'';
+  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowStore(sb)
+    ?`<div class="cw-mount" data-cw="snowStore" data-basin="${sb}"></div>`:'';
+  const chartTable=chart&&CW_HISTORY.snowStoreTable?CW_HISTORY.snowStoreTable(sb):'';
   const snowLine=hasSnow?(()=>{
     const sn=SNOW_BASIN[sb];
     const iMax=a=>a.reduce((bi,v,i)=>(v!=null&&(a[bi]==null||v>a[bi]))?i:bi,0);
@@ -412,7 +419,7 @@ function secMyBasin(tap){
      <h3 class="lr-h3">Snow in, water out</h3>
      ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
      ${snowLine}
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two scales, two panels — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, storage as a share of its telemetered capacity. They share the water year on the x-axis so you can compare timing and shape; they are deliberately <i>not</i> stacked on one axis, which would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div></div>`:''}
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two scales, two panels — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, storage as a share of its telemetered capacity. They share the water year on the x-axis so you can compare timing and shape; they are deliberately <i>not</i> stacked on one axis, which would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div>${chartTable}</div>`:''}
      ${plumbing}`);
 }
 
@@ -495,6 +502,7 @@ function renderState(){
        <p class="lr-servedby">Where Colorado’s water comes from, where it is stored, and how much of it there is right now</p>
        <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins holding what’s left. Then find your own. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
     +secSnow()+secReservoirs()+secBasinsState(home)+secLongView();
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(document.getElementById('state-body'));
   wireBasinExplorer(home);
 }
 function wireBasinExplorer(home){
@@ -516,6 +524,7 @@ function renderLocal(tap,zip){
        <h1 class="lr-title">${tap._approx?'Near '+tap.city:tap.city}</h1>
        <p class="lr-servedby">${tap._approx?'Nearest mapped system: ':'Served by '}<b>${tap.prov}</b> · ${b.n} basin</p></header>`
     +secMyBasin(tap)+secTap(tap)+secAction(tap,zip);
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
 }
 
 /* ---------- entry wiring ---------- */

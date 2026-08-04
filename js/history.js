@@ -1,9 +1,15 @@
 "use strict";
 /* =====================================================================
-   HISTORY CHARTS — self-contained SVG (no d3), so the long-form story on
-   index.html can draw multi-decade series without loading the map engine.
-   Data is baked in js/normals.js (SNOW_DECADES, POWELL_ANNUAL, SNOW_BASIN,
-   BASIN_BANDS), so every chart here also works from file://.
+   HISTORY CHARTS — the story page's chart engine, built on the vendored
+   d3 (scales + selections) with the shared interaction layer from
+   js/charts.js: every chart gets a pointer/keyboard crosshair or
+   per-mark tooltips, and a table view. Data is baked in js/normals.js
+   (SNOW_DECADES, POWELL_ANNUAL, SNOW_BASIN, BASIN_BANDS), so everything
+   here still works from file://; d3 is vendored, never fetched.
+
+   CONTRACT: story.js emits <div class="cw-mount" data-cw="…"> markers
+   inside its innerHTML, then calls CW_HISTORY.mountAll(root). Charts
+   build real DOM in place, which is what lets the listeners survive.
 
    COLOUR RULES (validated, not eyeballed — see the dataviz checks):
    - Decades are an ORDINAL series, so they take one hue on a monotone
@@ -20,26 +26,9 @@
      panels sharing an x-axis — aligning two y-scales invents a correlation.
    ===================================================================== */
 (function(){
-const fmtAF=n=>n<1000?String(Math.round(n)):n>=1e6?(n/1e6).toFixed(1)+'M':Math.round(n/1e3)+'k';
-/* the smallest round axis top that clears `max` and divides into `n` tidy
-   ticks, so an axis never reads 6.25″ / 18.75″ — and never wastes half its
-   height on empty headroom either */
-function niceTop(max,n){
-  const raw=max/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
-  const step=[1,1.5,2,2.5,3,4,5,7.5,10].map(m=>m*mag).find(s=>s>=raw)||10*mag;
-  return step*n;
-}
-
-/* oldest → newest. Single hue, monotone lightness, adjacent ΔL ≥ 0.06,
-   dark end 4.2:1 on the chart surface. */
-const DECRAMP=['#3E8397','#4E9AB0','#61B2C8','#7ACDE0','#A9E8F4'];
-const THENCOL='#4E93A8';   /* the oldest decade, where only two are drawn */
-const NOWDEC='#A9E8F4';    /* the newest decade */
-const NOWCOL='#FF7A45';    /* this water year — the emphasis series */
-const REFCOL='#7C93A1';    /* "normal" reference lines, all charts */
-const SNOWCOL='#6FC9DF';   /* snowpack, wherever it stands alone */
-const STORECOL='#3F7BFF';  /* reservoir storage, wherever it stands alone */
-const GRID='#1b2b36';
+const {PAL,fmtAF,fmtTick,niceTop,crosshair,markHover,dataTable}=window.CW_CHARTS;
+const DECRAMP=PAL.DECRAMP, THENCOL=PAL.THEN, NOWDEC=PAL.NOWDEC, NOWCOL=PAL.NOW,
+      REFCOL=PAL.REF, SNOWCOL=PAL.SNOW, STORECOL=PAL.STORE, GRID=PAL.GRID;
 
 /* ---------- water-year x-axis shared by the seasonal charts ----------
    Weeks since Oct 1, so the chart reads left-to-right as one season. */
@@ -52,6 +41,10 @@ function nowWeek(d){
   const y=d.getMonth()>=9?d.getFullYear():d.getFullYear()-1;
   return Math.max(0,Math.min(WYW,(d-new Date(y,9,1))/6048e5));
 }
+/* a water-year week index as a readable date ("wk of May 3") */
+const wkLabel=i=>'wk of '+new Date(2000,9,4+i*7)
+  .toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const inch=v=>v==null?'—':fmtTick(v)+'″';
 
 /* =====================================================================
    SNOWPACK BY DECADE — the climate signal, with the water-year calendar
@@ -62,43 +55,50 @@ function nowWeek(d){
    visibly does what the labels claim: it climbs through the accumulation
    season, collapses through the melt season, and is gone by draw-down.
    ===================================================================== */
-function snowStateChart(){
+function snowStateChart(el){
   const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
-  if(!D||!D.dec)return snowStateFallback();
+  if(!D||!D.dec){el.innerHTML=snowStateFallback();return;}
   const keys=Object.keys(D.dec).sort();
   const W=680,H=336,padL=40,padR=58,padT=54,padB=46;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
-  const X=w=>padL+w/WYW*iw;
+  const X=d3.scaleLinear().domain([0,WYW]).range([padL,padL+iw]);
   const all=keys.map(k=>D.dec[k].wk).concat([D.cur]).flat().filter(v=>v!=null);
   const top=niceTop(Math.max(...all)*1.02,4);
-  const Y=v=>base-Math.max(0,v)/top*ih;
-  const path=arr=>{                       /* break the line across data gaps */
-    let d='',pen=false;
-    arr.forEach((v,i)=>{ if(v==null){pen=false;return;}
-      d+=(pen?'L':'M')+X(i+0.5).toFixed(1)+','+Y(v).toFixed(1); pen=true; });
-    return d;
-  };
-  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
-     aria-label="Colorado snowpack across the water year, by decade. Median peak snow-water equivalent falls from `
-    +`${D.dec[keys[0]].peak} inches in the ${keys[0]} to ${D.dec[keys[keys.length-1]].peak} inches in the `
-    +`${keys[keys.length-1]}, and this water year peaked at ${D.curStats?D.curStats.peak:'?'} inches.">`;
+  const Y=d3.scaleLinear().domain([0,top]).range([base,padT]);
+  const wkLine=d3.line().defined(v=>v!=null)
+    .x((v,i)=>X(i+0.5)).y(v=>Y(Math.max(0,v)));
+  const oldK=keys[0], newK=keys[keys.length-1];
+  const oldW=D.dec[oldK].wk, newW=D.dec[newK].wk;
+
+  const svg=d3.select(el).html('').append('svg')
+    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
+    .attr('aria-label',`Colorado snowpack across the water year, by decade. Median peak snow-water equivalent falls from `
+      +`${D.dec[oldK].peak} inches in the ${oldK} to ${D.dec[newK].peak} inches in the `
+      +`${newK}, and this water year peaked at ${D.curStats?D.curStats.peak:'?'} inches.`);
 
   /* --- the water year's three seasons, as the plot's own background --- */
   const APR=MONSTART[6], JUL=MONSTART[9];
-  s+=`<rect x="${X(APR).toFixed(1)}" y="${padT}" width="${(X(JUL)-X(APR)).toFixed(1)}" height="${ih}" fill="#8FA6B2" opacity="0.06"/>`;
-  [APR,JUL].forEach(w=>{s+=`<line x1="${X(w).toFixed(1)}" y1="${padT}" x2="${X(w).toFixed(1)}" y2="${base}" stroke="#2A4150"/>`;});
-  [[0,APR,'Snow accumulates'],[APR,JUL,'Melt → reservoirs fill'],[JUL,WYW,'Draw-down']].forEach(([a,b,t])=>{
-    s+=`<text x="${((X(a)+X(b))/2).toFixed(1)}" y="${(padT-9).toFixed(1)}" text-anchor="middle" class="wc-band">${t}</text>`;
-  });
+  svg.append('rect').attr('x',X(APR)).attr('y',padT)
+    .attr('width',X(JUL)-X(APR)).attr('height',ih)
+    .attr('fill',PAL.SEASON.band).attr('opacity',0.06);
+  [APR,JUL].forEach(w=>svg.append('line')
+    .attr('x1',X(w)).attr('x2',X(w)).attr('y1',padT).attr('y2',base)
+    .attr('stroke',PAL.SEASON.rule));
+  [[0,APR,'Snow accumulates'],[APR,JUL,'Melt → reservoirs fill'],[JUL,WYW,'Draw-down']]
+    .forEach(([a,b,t])=>svg.append('text').attr('class','wc-band')
+      .attr('x',(X(a)+X(b))/2).attr('y',padT-9).attr('text-anchor','middle').text(t));
 
   /* --- axes --- */
-  for(let v=0;v<=top;v+=top/4)
-    s+=`<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="${GRID}"/>`
-      +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">${v}″</text>`;
-  MON.forEach((m,i)=>{
-    s+=`<text x="${((X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).toFixed(1)}" y="${(base+15).toFixed(1)}"`
-      +` text-anchor="middle" class="hc-ax">${m}</text>`;
-  });
+  for(let v=0;v<=top;v+=top/4){
+    svg.append('line').attr('x1',padL).attr('x2',W-padR)
+      .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke',GRID);
+    svg.append('text').attr('class','hc-ax').attr('x',padL-6).attr('y',Y(v)+3)
+      .attr('text-anchor','end').text(fmtTick(v)+'″');
+  }
+  MON.forEach((m,i)=>svg.append('text').attr('class','hc-ax')
+    .attr('x',(X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).attr('y',base+15)
+    .attr('text-anchor','middle').text(m));
 
   /* --- then, now, and the gap between ---
      All five decades drawn here tangled into an unreadable braid: they sit
@@ -107,67 +107,90 @@ function snowStateChart(){
      1980s season against a 2020s one — and shades the gap, which is the loss
      itself. The full decade-by-decade progression is the bar chart below,
      where five values do separate cleanly. */
-  const oldK=keys[0], newK=keys[keys.length-1];
-  const oldW=D.dec[oldK].wk, newW=D.dec[newK].wk;
   const both=[];
   for(let i=0;i<52;i++) if(oldW[i]!=null&&newW[i]!=null) both.push(i);
   if(both.length>1){
     const fwd=both.map(i=>X(i+0.5).toFixed(1)+','+Y(oldW[i]).toFixed(1)).join('L');
     const bck=both.slice().reverse().map(i=>X(i+0.5).toFixed(1)+','+Y(newW[i]).toFixed(1)).join('L');
-    s+=`<path d="M${fwd}L${bck}Z" fill="${NOWDEC}" opacity="0.12"/>`;
+    svg.append('path').attr('d',`M${fwd}L${bck}Z`).attr('fill',NOWDEC).attr('opacity',0.12);
   }
   [[oldK,THENCOL],[newK,NOWDEC]].forEach(([k,col])=>{
-    s+=`<path d="${path(D.dec[k].wk)}" fill="none" stroke="${col}" stroke-width="2.1"`
-      +` vector-effect="non-scaling-stroke"><title>${k} — median peak ${D.dec[k].peak}″</title></path>`;
+    svg.append('path').attr('d',wkLine(D.dec[k].wk)).attr('fill','none')
+      .attr('stroke',col).attr('stroke-width',2.1).attr('vector-effect','non-scaling-stroke');
   });
   /* direct-labelled in early May, where the two have pulled furthest apart */
   const LBL=31.5;
-  const lblAt=(k,col,dy,anchor)=>{
-    const a=D.dec[k]; if(!a)return '';
-    const v=a.wk[Math.round(LBL)]; if(v==null)return '';
-    return `<text x="${(X(LBL)+(anchor==='end'?-7:7)).toFixed(1)}" y="${(Y(v)+dy).toFixed(1)}"`
-      +` text-anchor="${anchor}" class="hc-lbl" fill="${col}">${k}</text>`;
-  };
-  s+=lblAt(oldK,THENCOL,-7,'start');
-  s+=lblAt(newK,NOWDEC,15,'end');
+  [[oldK,THENCOL,-7,'start'],[newK,NOWDEC,15,'end']].forEach(([k,col,dy,anchor])=>{
+    const v=D.dec[k]&&D.dec[k].wk[Math.round(LBL)];
+    if(v==null)return;
+    svg.append('text').attr('class','hc-lbl').attr('fill',col)
+      .attr('x',X(LBL)+(anchor==='end'?-7:7)).attr('y',Y(v)+dy)
+      .attr('text-anchor',anchor).text(k);
+  });
 
   /* --- this water year, the emphasis series --- */
   if(D.cur&&D.cur.some(v=>v!=null)){
-    const p=path(D.cur);
-    s+=`<path d="${p}" fill="none" stroke="${NOWCOL}" stroke-width="2.6" vector-effect="non-scaling-stroke"/>`;
+    svg.append('path').attr('d',wkLine(D.cur)).attr('fill','none')
+      .attr('stroke',NOWCOL).attr('stroke-width',2.6).attr('vector-effect','non-scaling-stroke');
     const pk=D.curStats;
     if(pk&&D.cur[pk.peakWk]!=null){
-      s+=`<circle cx="${X(pk.peakWk+0.5).toFixed(1)}" cy="${Y(D.cur[pk.peakWk]).toFixed(1)}" r="3.4" fill="${NOWCOL}"/>`;
+      svg.append('circle').attr('cx',X(pk.peakWk+0.5)).attr('cy',Y(D.cur[pk.peakWk]))
+        .attr('r',3.4).attr('fill',NOWCOL);
       /* The annotation goes in the empty top-left of the plot, not beside the
          point: early winter is the one region no curve occupies, and the ember
          colour ties it to its line without a leader. */
-      s+=`<text x="${X(0.6).toFixed(1)}" y="${(padT+22).toFixed(1)}" class="hc-lbl" fill="${NOWCOL}">`
-        +`WY${D.curWY} — peak ${pk.peak}″${pk.apr1!=null?`, ${pk.apr1}″ left on 1 April`:''}</text>`;
+      svg.append('text').attr('class','hc-lbl').attr('fill',NOWCOL)
+        .attr('x',X(0.6)).attr('y',padT+22)
+        .text(`WY${D.curWY} — peak ${pk.peak}″${pk.apr1!=null?`, ${pk.apr1}″ left on 1 April`:''}`);
     }
   }
 
   /* --- you are here --- */
   const nw=nowWeek();
-  s+=`<line x1="${X(nw).toFixed(1)}" y1="${(padT-2).toFixed(1)}" x2="${X(nw).toFixed(1)}" y2="${base}" stroke="#EDE6D6" stroke-width="1.2" opacity="0.85"/>`
-    +`<circle cx="${X(nw).toFixed(1)}" cy="${(padT-2).toFixed(1)}" r="2.6" fill="#EDE6D6"/>`
-    +`<text x="${(X(nw)+(nw>WYW*0.8?-5:5)).toFixed(1)}" y="${(padT+9).toFixed(1)}"`
-    +` text-anchor="${nw>WYW*0.8?'end':'start'}" class="wc-now">today</text>`;
+  svg.append('line').attr('x1',X(nw)).attr('x2',X(nw)).attr('y1',padT-2).attr('y2',base)
+    .attr('stroke',PAL.BONE).attr('stroke-width',1.2).attr('opacity',0.85);
+  svg.append('circle').attr('cx',X(nw)).attr('cy',padT-2).attr('r',2.6).attr('fill',PAL.BONE);
+  svg.append('text').attr('class','wc-now')
+    .attr('x',X(nw)+(nw>WYW*0.8?-5:5)).attr('y',padT+9)
+    .attr('text-anchor',nw>WYW*0.8?'end':'start').text('today');
 
   /* --- legend --- */
-  const seg=(x,col,w,t)=>`<line x1="${x}" y1="-4" x2="${x+20}" y2="-4" stroke="${col}" stroke-width="${w}"/>`
-    +`<text x="${x+25}" y="0" class="hc-lgd">${t}</text>`;
-  s+=`<g transform="translate(${padL},16)">${seg(0,THENCOL,2.1,`${oldK} median`)}`
-    +`${seg(126,NOWDEC,2.1,`${newK} median`)}${seg(252,NOWCOL,2.6,'this water year')}</g>`;
-  return s+'</svg>';
+  const lg=svg.append('g').attr('transform',`translate(${padL},16)`);
+  [[0,THENCOL,2.1,`${oldK} median`],[126,NOWDEC,2.1,`${newK} median`],
+   [252,NOWCOL,2.6,'this water year']].forEach(([x,col,w,t])=>{
+    lg.append('line').attr('x1',x).attr('x2',x+20).attr('y1',-4).attr('y2',-4)
+      .attr('stroke',col).attr('stroke-width',w);
+    lg.append('text').attr('class','hc-lgd').attr('x',x+25).attr('y',0).text(t);
+  });
+
+  /* --- crosshair: the season, week by week --- */
+  crosshair(svg.node(),{
+    count:52, y0:padT, y1:base,
+    container:el.closest('.lr-chart')||el,
+    indexAt:vx=>{
+      const i=Math.round((vx-padL)/iw*WYW-0.5);
+      return isFinite(i)?Math.max(0,Math.min(51,i)):0;
+    },
+    info:i=>{
+      if(!(i>=0&&i<52))return null;
+      const rows=[
+        `${oldK} median <b>${inch(oldW[i])}</b>`,
+        `${newK} median <b>${inch(newW[i])}</b>`,
+        `WY${D.curWY} <b>${inch(D.cur?D.cur[i]:null)}</b>`];
+      return {x:X(i+0.5),
+        html:`<div class="tt-h">${wkLabel(i)}</div><div class="tt-d">${rows.join('<br>')}</div>`,
+        label:`${wkLabel(i)}: ${oldK} ${inch(oldW[i])}, ${newK} ${inch(newW[i])}, this year ${inch(D.cur?D.cur[i]:null)}`};
+    }
+  });
 }
 
 /* Median peak snowpack, decade by decade — the progression the seasonal chart
    deliberately leaves out. Five values as columns separate cleanly where five
    overlapping curves could not, and an ordinal ramp puts the order in the
    colour as well as the position. */
-function snowDecadeBars(){
+function snowDecadeBars(el){
   const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
-  if(!D||!D.dec)return '';
+  if(!D||!D.dec){el.innerHTML='';return;}
   const keys=Object.keys(D.dec).sort();
   const cur=D.curStats;
   const bars=keys.map((k,i)=>({k,v:D.dec[k].peak,n:D.dec[k].n,
@@ -176,33 +199,61 @@ function snowDecadeBars(){
   const W=680,H=196,padL=40,padR=14,padT=30,padB=40;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
   const top=niceTop(Math.max(...bars.map(b=>b.v))*1.02,4);
-  const Y=v=>base-v/top*ih;
+  const Y=d3.scaleLinear().domain([0,top]).range([base,padT]);
   const slot=iw/bars.length, bw=Math.min(64,slot-16);
-  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
-     aria-label="Median peak snowpack by decade: ${bars.map(b=>b.k+' '+b.v+' inches').join(', ')}.">`;
-  for(let v=0;v<=top;v+=top/4)
-    s+=`<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="${GRID}"/>`
-      +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">${v}″</text>`;
-  /* the 1980s level carried across, so every later bar is read against it */
   const ref=bars[0].v;
-  s+=`<line x1="${padL}" y1="${Y(ref).toFixed(1)}" x2="${W-padR}" y2="${Y(ref).toFixed(1)}" stroke="${THENCOL}" stroke-dasharray="4 3" opacity="0.8"/>`;
-  bars.forEach((b,i)=>{
+
+  const svg=d3.select(el).html('').append('svg')
+    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
+    .attr('aria-label',`Median peak snowpack by decade: ${bars.map(b=>b.k+' '+b.v+' inches').join(', ')}.`);
+
+  for(let v=0;v<=top;v+=top/4){
+    svg.append('line').attr('x1',padL).attr('x2',W-padR)
+      .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke',GRID);
+    svg.append('text').attr('class','hc-ax').attr('x',padL-6).attr('y',Y(v)+3)
+      .attr('text-anchor','end').text(fmtTick(v)+'″');
+  }
+  /* the 1980s level carried across, so every later bar is read against it */
+  svg.append('line').attr('x1',padL).attr('x2',W-padR)
+    .attr('y1',Y(ref)).attr('y2',Y(ref)).attr('stroke',THENCOL)
+    .attr('stroke-dasharray','4 3').attr('opacity',0.8);
+
+  const g=svg.selectAll('g.bar').data(bars).enter().append('g');
+  g.each(function(b,i){
+    const sel=d3.select(this);
     const x=padL+i*slot+(slot-bw)/2, ty=Y(b.v), r=4;
     /* rounded data-end, square to the baseline */
-    s+=`<path d="M${x.toFixed(1)},${base} L${x.toFixed(1)},${(ty+r).toFixed(1)} Q${x.toFixed(1)},${ty.toFixed(1)} ${(x+r).toFixed(1)},${ty.toFixed(1)}`
+    sel.append('path').attr('fill',b.col).attr('d',
+      `M${x.toFixed(1)},${base} L${x.toFixed(1)},${(ty+r).toFixed(1)} Q${x.toFixed(1)},${ty.toFixed(1)} ${(x+r).toFixed(1)},${ty.toFixed(1)}`
       +` L${(x+bw-r).toFixed(1)},${ty.toFixed(1)} Q${(x+bw).toFixed(1)},${ty.toFixed(1)} ${(x+bw).toFixed(1)},${(ty+r).toFixed(1)}`
-      +` L${(x+bw).toFixed(1)},${base} Z" fill="${b.col}"><title>${b.k} — median peak ${b.v}″</title></path>`
-      /* value inside the bar top: above it, the labels collided with the
-         1980s reference rule */
-      +`<text x="${(x+bw/2).toFixed(1)}" y="${(ty+15).toFixed(1)}" text-anchor="middle" class="hc-barval">${b.v}″</text>`
-      +`<text x="${(x+bw/2).toFixed(1)}" y="${(base+15).toFixed(1)}" text-anchor="middle" class="hc-ax">${b.k}</text>`;
-    if(b.n&&b.n<10)
-      s+=`<text x="${(x+bw/2).toFixed(1)}" y="${(base+26).toFixed(1)}" text-anchor="middle" class="hc-ax">${b.n} yrs</text>`;
-    if(b.now)
-      s+=`<text x="${(x+bw/2).toFixed(1)}" y="${(base+26).toFixed(1)}" text-anchor="middle" class="hc-ax">so far</text>`;
+      +` L${(x+bw).toFixed(1)},${base} Z`);
+    /* value inside the bar top: above it, the labels collided with the
+       1980s reference rule */
+    sel.append('text').attr('class','hc-barval').attr('x',x+bw/2).attr('y',ty+15)
+      .attr('text-anchor','middle').text(fmtTick(b.v)+'″');
+    sel.append('text').attr('class','hc-ax').attr('x',x+bw/2).attr('y',base+15)
+      .attr('text-anchor','middle').text(b.k);
+    if(b.n&&b.n<10)sel.append('text').attr('class','hc-ax').attr('x',x+bw/2)
+      .attr('y',base+26).attr('text-anchor','middle').text(b.n+' yrs');
+    if(b.now)sel.append('text').attr('class','hc-ax').attr('x',x+bw/2)
+      .attr('y',base+26).attr('text-anchor','middle').text('so far');
+    /* the hit target is the full slot height, far bigger than the mark */
+    const delta=b.now||i===0?null:Math.round((b.v/ref-1)*100);
+    sel.append('rect').attr('x',padL+i*slot).attr('y',padT)
+      .attr('width',slot).attr('height',ih).attr('fill','transparent')
+      .attr('tabindex',0)
+      .attr('aria-label',`${b.k}: median peak ${b.v} inches`
+        +(delta!=null?`, ${delta}% vs the ${keys[0]}`:''))
+      .attr('data-tip',`<div class="tt-h">${b.k}${b.now?' (so far)':''}</div>`
+        +`<div class="tt-d">median peak <b>${inch(b.v)}</b>`
+        +(b.n?`<br>${b.n} water years`:'')
+        +(delta!=null?`<br>vs ${keys[0]}: <b>${delta>0?'+':''}${delta}%</b>`:'')
+        +`</div>`);
   });
-  s+=`<text x="${W-padR}" y="${(Y(ref)-6).toFixed(1)}" text-anchor="end" class="hc-ax" fill="${THENCOL}">${keys[0]} level</text>`;
-  return s+'</svg>';
+  svg.append('text').attr('class','hc-ax').attr('fill',THENCOL)
+    .attr('x',W-padR).attr('y',Y(ref)-6).attr('text-anchor','end').text(keys[0]+' level');
+  markHover(el,{container:el.closest('.lr-chart')||el});
 }
 
 /* The numbers behind the decade chart — the table view, so no value in that
@@ -213,21 +264,24 @@ function snowDecadeTable(){
   const keys=Object.keys(D.dec).sort();
   const wkDate=w=>{const d=new Date(2001,9,1); d.setDate(d.getDate()+w*7+3);
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
-  const row=(lab,st,sub)=>`<tr><th scope="row">${lab}${sub?` <span class="dt-sub">${sub}</span>`:''}</th>`
-    +`<td>${st.peak}″</td><td>${wkDate(st.peakWk)}</td><td>${st.apr1==null?'—':st.apr1+'″'}</td></tr>`;
+  const row=(lab,st,sub)=>[
+    lab+(sub?` <span class="dt-sub">${sub}</span>`:''),
+    st.peak+'″', wkDate(st.peakWk), st.apr1==null?'—':st.apr1+'″'];
   const first=D.dec[keys[0]], last=D.dec[keys[keys.length-1]];
   const drop=Math.round((1-last.peak/first.peak)*100);
-  return `<details class="lr-table"><summary>The numbers behind this chart</summary>
-    <table class="dtab"><caption>Median across each decade's water years, from one fixed panel of
-      ${D.n} SNOTEL sites (${D.elev?D.elev[0].toLocaleString('en-US')+'–'+D.elev[1].toLocaleString('en-US')+' ft':''})
-      that have reported in every year since ${first.y0}.</caption>
-      <thead><tr><th scope="col">Decade</th><th scope="col">Peak snowpack</th>
-        <th scope="col">Peak date</th><th scope="col">April 1</th></tr></thead>
-      <tbody>${keys.map(k=>row(k,D.dec[k],D.dec[k].n<10?`(${D.dec[k].n} yrs)`:'')).join('')}
-        ${D.curStats?row('WY'+D.curWY,D.curStats,'so far'):''}</tbody></table>
-    <p class="dt-note">Median peak snowpack fell <b>${drop}%</b> from the ${keys[0]} to the
-      ${keys[keys.length-1]} (${first.peak}″ → ${last.peak}″). The ${keys[keys.length-1]} covers
-      ${last.n} water years, so it is the least settled figure here.</p></details>`;
+  const rows=keys.map(k=>row(k,D.dec[k],D.dec[k].n<10?`(${D.dec[k].n} yrs)`:''));
+  if(D.curStats)rows.push(row('WY'+D.curWY,D.curStats,'so far'));
+  return dataTable({
+    id:'tbl-decades',
+    caption:`Median across each decade's water years, from one fixed panel of `
+      +`${D.n} SNOTEL sites (${D.elev?D.elev[0].toLocaleString('en-US')+'–'+D.elev[1].toLocaleString('en-US')+' ft':''}) `
+      +`that have reported in every year since ${first.y0}.`,
+    head:['Decade','Peak snowpack','Peak date','April 1'],
+    rows,
+    note:`Median peak snowpack fell <b>${drop}%</b> from the ${keys[0]} to the `
+      +`${keys[keys.length-1]} (${first.peak}″ → ${last.peak}″). The ${keys[keys.length-1]} covers `
+      +`${last.n} water years, so it is the least settled figure here.`
+  });
 }
 
 /* Pre-SNOW_DECADES fallback: this year against the normal, no decades. */
@@ -417,5 +471,30 @@ function wyChart(series,color){
   </svg>`;
 }
 
-window.CW_HISTORY={powellChart,wyChart,snowStoreChart,snowStateChart,snowDecadeBars,snowDecadeTable};
+/* =====================================================================
+   MOUNTING — story.js writes <div class="cw-mount" data-cw="…"> markers
+   into its innerHTML, then calls mountAll(root); each chart builds real
+   DOM in place so its crosshair/tooltip listeners survive.
+   ===================================================================== */
+function mountAll(root){
+  if(!root)return;
+  root.querySelectorAll('.cw-mount[data-cw]').forEach(el=>{
+    const kind=el.dataset.cw;
+    if(kind==='snowState')snowStateChart(el);
+    else if(kind==='snowBars')snowDecadeBars(el);
+    else if(kind==='powell')el.innerHTML=powellChart();
+    else if(kind==='snowStore')el.innerHTML=snowStoreChart(el.dataset.basin);
+  });
+}
+/* availability predicates, so story.js can decide whether to emit a chart
+   block (with its caption) at all */
+const hasDecades=()=>!!((typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES&&SNOW_DECADES.dec);
+const hasSnowChart=()=>hasDecades()||(typeof SNOW_BASIN!=='undefined'&&Object.keys(SNOW_BASIN).length>0);
+const hasPowell=()=>!!((typeof POWELL_ANNUAL!=='undefined')&&POWELL_ANNUAL.length);
+const hasSnowStore=bid=>!!(((typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[bid])
+  ||((typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[bid])
+  ||(typeof PMH!=='undefined'&&PMH[bid]));
+
+window.CW_HISTORY={mountAll,snowDecadeTable,
+  hasDecades,hasSnowChart,hasPowell,hasSnowStore};
 })();
