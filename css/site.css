@@ -462,7 +462,7 @@ body.fs-on{overflow:hidden}
 .lr-cap{font-size:12.5px;color:var(--dim)}
 
 /* charts */
-.lr-chart{margin:18px 0;border:1px solid var(--silt);background:var(--basin);padding:14px 14px 8px}
+.lr-chart{position:relative;margin:18px 0;border:1px solid var(--silt);background:var(--basin);padding:14px 14px 8px}
 .histchart{display:block;width:100%;height:auto}
 .hc-ax{font-family:var(--mono);font-size:9px;fill:var(--dim)}
 .hc-lgd{font-family:var(--mono);font-size:9.5px;fill:var(--dust)}
@@ -581,3 +581,18 @@ body.fs-on{overflow:hidden}
 /* water-year season labels, now drawn as the snowpack chart's background */
 .wc-band{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;fill:var(--dim)}
 .wc-now{font-family:var(--mono);font-size:9px;letter-spacing:.1em;fill:#EDE6D6}
+
+/* =====================================================================
+   SHARED INTERACTION LAYER (js/charts.js) — tooltip, crosshair rule,
+   and the hidden live region that reads the crosshair aloud
+   ===================================================================== */
+.cw-tip{position:absolute;z-index:30;display:none;pointer-events:none;
+  background:rgba(6,15,22,.95);border:1px solid var(--silt-2);color:var(--bone);
+  font-family:var(--mono);font-size:10.5px;line-height:1.6;padding:7px 10px;
+  max-width:250px;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+.cw-tip .tt-h{color:var(--aqua);letter-spacing:.06em;margin-bottom:2px}
+.cw-tip .tt-d{color:var(--dust)}
+.cw-tip b{color:var(--bone);font-weight:500}
+.cw-cursor{stroke:#8DA4B0;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.cw-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}

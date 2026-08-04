@@ -10,7 +10,8 @@
 <meta name="description" content="Raw CSV downloads and sources for the Colorado Water reservoir visualization.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
@@ -130,13 +131,15 @@ python3 scripts/make_csvs.py       <span style="color:#8a8069"># re-exports the 
   </footer>
 </div>
 
-<script src="js/normals.js"></script>
-
-<script src="js/data.js"></script>
-<script src="js/live.js"></script>
+<script defer src="js/normals.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/live.js"></script>
 <script>
 "use strict";
-(function(){
+/* the external scripts above are deferred, so this inline block waits for
+   DOMContentLoaded — by then RES/LIVE_STO/pmAt all exist */
+window.addEventListener('DOMContentLoaded',function(){
 const BN=Object.fromEntries(BASINS.map(b=>[b.id,b.n]));
 function rowsNow(){
   return RES.slice().sort((a,b)=>b.cap-a.cap).map(r=>{
@@ -177,7 +180,7 @@ document.getElementById('dl-live').addEventListener('click',()=>{
 });
 window.addEventListener('cw-live',renderTable);
 renderTable();
-})();
+});
 </script>
 </body>
 </html>

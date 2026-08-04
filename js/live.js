@@ -148,5 +148,9 @@ window.CW_LIVE={refresh,USGS_URL,CDSS_URL,GAGES};
 /* live gage discharge by USGS site id — the story page has no `state`, so
    expose the same object it would have read from viz.js */
 window.CW_LIVEQ=S.live;
-refresh();
+/* The first refresh waits for DOMContentLoaded: with deferred scripts every
+   `cw-live` listener is registered by then, so a fast response can no longer
+   fire the event before anyone is listening. */
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>refresh());
+else refresh();
 })();

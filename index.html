@@ -16,7 +16,8 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
@@ -27,6 +28,10 @@
     <a href="data.html">Data</a>
     <a href="about.html">About</a>
   </nav>
+
+  <!-- live.js reports here whether the page is showing live readings or the
+       dated snapshot — the story page used to have no such element at all -->
+  <div class="livestat" id="livestat" aria-live="polite"></div>
 
   <main id="story">
     <!-- ACT 1 — the state: snowpack, the water year, reservoirs, the seven
@@ -59,13 +64,15 @@
   </footer>
 </div>
 
-<script src="js/normals.js"></script>
-<script src="js/data.js"></script>
-<script src="js/zipcodes.js"></script>
-<script src="js/basins_geo.js"></script>
-<script src="js/live.js"></script>
-<script src="js/history.js"></script>
-<script src="js/basinmap.js"></script>
-<script src="js/story.js"></script>
+<script defer src="js/vendor/d3.v7.min.js"></script>
+<script defer src="js/normals.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/zipcodes.js"></script>
+<script defer src="js/basins_geo.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/live.js"></script>
+<script defer src="js/history.js"></script>
+<script defer src="js/basinmap.js"></script>
+<script defer src="js/story.js"></script>
 </body>
 </html>
