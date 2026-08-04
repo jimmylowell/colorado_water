@@ -317,67 +317,125 @@ const POW_EVENTS=[
   {y:2000,t:'megadrought begins',row:0},
   {y:2022,t:'lowest on record',row:1}
 ];
-function powellChart(){
-  if(typeof POWELL_ANNUAL==='undefined'||!POWELL_ANNUAL.length)return '';
+function powellChart(el){
+  if(typeof POWELL_ANNUAL==='undefined'||!POWELL_ANNUAL.length){el.innerHTML='';return;}
   const W=680,H=330,padL=46,padR=62,padT=52,padB=28;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
   const yrs=POWELL_ANNUAL.map(d=>d[0]), vals=POWELL_ANNUAL.map(d=>d[1]);
   const y0=yrs[0], y1=yrs[yrs.length-1];
   const top=Math.ceil(Math.max(...vals)*1.06/5e6)*5e6;
-  const X=y=>padL+(y-y0)/(y1-y0)*iw;
-  const Y=v=>base-(v/top)*ih;
-  const line=POWELL_ANNUAL.map((d,i)=>(i?'L':'M')+X(d[0]).toFixed(1)+','+Y(d[1]).toFixed(1)).join('');
-  const area=`M${X(y0).toFixed(1)},${base} `+POWELL_ANNUAL.map(d=>'L'+X(d[0]).toFixed(1)+','+Y(d[1]).toFixed(1)).join(' ')
-    +` L${X(y1).toFixed(1)},${base} Z`;
+  const X=d3.scaleLinear().domain([y0,y1]).range([padL,padL+iw]);
+  const Y=d3.scaleLinear().domain([0,top]).range([base,padT]);
   const last=POWELL_ANNUAL[POWELL_ANNUAL.length-1];
   const peak=POWELL_ANNUAL.reduce((a,b)=>b[1]>a[1]?b:a);
   const byYear=Object.fromEntries(POWELL_ANNUAL);
 
-  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
-     aria-label="Lake Powell end-of-September storage from ${y0} to ${y1}: filled through the 1980s to a peak of
-     ${fmtAF(peak[1])} acre-feet in ${peak[0]}, then declined to ${fmtAF(last[1])} in ${last[0]},
-     approaching the ${fmtAF(POW_MINPOWER)} acre-feet needed to generate power.">
-    <defs><linearGradient id="powfill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#2F6BFF" stop-opacity="0.30"/>
-      <stop offset="1" stop-color="#2F6BFF" stop-opacity="0.02"/></linearGradient></defs>`;
+  const svg=d3.select(el).html('').append('svg')
+    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
+    .attr('aria-label',`Lake Powell end-of-September storage from ${y0} to ${y1}: filled through the 1980s to a peak of `
+      +`${fmtAF(peak[1])} acre-feet in ${peak[0]}, then declined to ${fmtAF(last[1])} in ${last[0]}, `
+      +`approaching the ${fmtAF(POW_MINPOWER)} acre-feet needed to generate power.`);
+  const grad=svg.append('defs').append('linearGradient').attr('id','powfill')
+    .attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',1);
+  grad.append('stop').attr('offset',0).attr('stop-color',PAL.POWELL.fill).attr('stop-opacity',0.30);
+  grad.append('stop').attr('offset',1).attr('stop-color',PAL.POWELL.fill).attr('stop-opacity',0.02);
 
   /* gridlines */
-  for(let v=0;v<=top;v+=top/5)
-    s+=`<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="${GRID}"/>`
-      +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">${fmtAF(v)}</text>`;
-  [1970,1985,2000,2015].filter(y=>y>=y0&&y<=y1).forEach(y=>{
-    s+=`<text x="${X(y).toFixed(1)}" y="${H-8}" text-anchor="middle" class="hc-ax">${y}</text>`;});
+  for(let v=0;v<=top;v+=top/5){
+    svg.append('line').attr('x1',padL).attr('x2',W-padR)
+      .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke',GRID);
+    svg.append('text').attr('class','hc-ax').attr('x',padL-6).attr('y',Y(v)+3)
+      .attr('text-anchor','end').text(fmtAF(v));
+  }
+  [1970,1985,2000,2015].filter(y=>y>=y0&&y<=y1).forEach(y=>
+    svg.append('text').attr('class','hc-ax').attr('x',X(y)).attr('y',H-8)
+      .attr('text-anchor','middle').text(y));
 
   /* the years that changed the river — rules behind the data */
   POW_EVENTS.filter(e=>e.y>=y0&&e.y<=y1).forEach(e=>{
     const x=X(e.y), ly=20+e.row*15, anchor=x>W-150?'end':(x<110?'start':'middle');
-    const tx=x+(anchor==='end'?4:anchor==='start'?-4:0);
-    s+=`<line x1="${x.toFixed(1)}" y1="${(ly+4).toFixed(1)}" x2="${x.toFixed(1)}" y2="${base}" stroke="#3C5364"/>`
-      +`<text x="${tx.toFixed(1)}" y="${ly}" text-anchor="${anchor}" class="hc-evt">${e.y} ${e.t}</text>`;
+    svg.append('line').attr('x1',x).attr('x2',x).attr('y1',ly+4).attr('y2',base)
+      .attr('stroke',PAL.EVENT);
+    svg.append('text').attr('class','hc-evt')
+      .attr('x',x+(anchor==='end'?4:anchor==='start'?-4:0)).attr('y',ly)
+      .attr('text-anchor',anchor).text(e.y+' '+e.t);
   });
 
   /* the series */
-  s+=`<path d="${area}" fill="url(#powfill)"/>
-    <path d="${line}" fill="none" stroke="#4E86FF" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
-  POW_EVENTS.filter(e=>e.y>=y0&&e.y<=y1&&byYear[e.y]!=null).forEach(e=>{
-    s+=`<circle cx="${X(e.y).toFixed(1)}" cy="${Y(byYear[e.y]).toFixed(1)}" r="3" fill="#0B1922" stroke="#A8C4FF" stroke-width="1.5"/>`;
-  });
+  const line=d3.line().x(d=>X(d[0])).y(d=>Y(d[1]));
+  const area=d3.area().x(d=>X(d[0])).y0(base).y1(d=>Y(d[1]));
+  svg.append('path').attr('d',area(POWELL_ANNUAL)).attr('fill','url(#powfill)');
+  svg.append('path').attr('d',line(POWELL_ANNUAL)).attr('fill','none')
+    .attr('stroke',PAL.POWELL.line).attr('stroke-width',2).attr('vector-effect','non-scaling-stroke');
+  POW_EVENTS.filter(e=>e.y>=y0&&e.y<=y1&&byYear[e.y]!=null).forEach(e=>
+    svg.append('circle').attr('cx',X(e.y)).attr('cy',Y(byYear[e.y])).attr('r',3)
+      .attr('fill','#0B1922').attr('stroke','#A8C4FF').attr('stroke-width',1.5));
 
   /* The two elevations that decide what the dam can still do sit ON TOP of the
      series — they are limits the water is measured against, so the water must
      not paint over them. */
-  s+=`<rect x="${padL}" y="${Y(POW_MINPOWER).toFixed(1)}" width="${iw}" height="${(base-Y(POW_MINPOWER)).toFixed(1)}" fill="#B4321E" opacity="0.22"/>`
-    +`<line x1="${padL}" y1="${Y(POW_MINPOWER).toFixed(1)}" x2="${W-padR}" y2="${Y(POW_MINPOWER).toFixed(1)}" stroke="${NOWCOL}"/>`
-    +`<text x="${padL+5}" y="${(Y(POW_MINPOWER)-5).toFixed(1)}" class="hc-thr" fill="${NOWCOL}">minimum power pool · 3,490 ft · no hydropower below this</text>`
-    +`<line x1="${padL}" y1="${Y(POW_DEADPOOL).toFixed(1)}" x2="${W-padR}" y2="${Y(POW_DEADPOOL).toFixed(1)}" stroke="#E2603A"/>`
-    +`<text x="${W-padR-4}" y="${(Y(POW_DEADPOOL)+11).toFixed(1)}" text-anchor="end" class="hc-thr" fill="#E2603A">dead pool · 3,370 ft · nothing flows downstream</text>`;
+  svg.append('rect').attr('x',padL).attr('y',Y(POW_MINPOWER))
+    .attr('width',iw).attr('height',base-Y(POW_MINPOWER))
+    .attr('fill',PAL.POWELL.crit).attr('opacity',0.22);
+  svg.append('line').attr('x1',padL).attr('x2',W-padR)
+    .attr('y1',Y(POW_MINPOWER)).attr('y2',Y(POW_MINPOWER)).attr('stroke',NOWCOL);
+  svg.append('text').attr('class','hc-thr').attr('fill',NOWCOL)
+    .attr('x',padL+5).attr('y',Y(POW_MINPOWER)-5)
+    .text('minimum power pool · 3,490 ft · no hydropower below this');
+  svg.append('line').attr('x1',padL).attr('x2',W-padR)
+    .attr('y1',Y(POW_DEADPOOL)).attr('y2',Y(POW_DEADPOOL)).attr('stroke',PAL.POWELL.dead);
+  svg.append('text').attr('class','hc-thr').attr('fill',PAL.POWELL.dead)
+    .attr('x',W-padR-4).attr('y',Y(POW_DEADPOOL)+11).attr('text-anchor','end')
+    .text('dead pool · 3,370 ft · nothing flows downstream');
 
   /* today's end of the line — labelled out in the right margin, clear of the
      2022 marker it used to sit on top of */
-  s+=`<circle cx="${X(last[0]).toFixed(1)}" cy="${Y(last[1]).toFixed(1)}" r="3.6" fill="${NOWCOL}"/>
-    <text x="${(X(last[0])+7).toFixed(1)}" y="${(Y(last[1])+3).toFixed(1)}" class="hc-lbl" fill="${NOWCOL}">${fmtAF(last[1])}</text>
-    <text x="${(X(last[0])+7).toFixed(1)}" y="${(Y(last[1])+14).toFixed(1)}" class="hc-ax">${last[0]}</text>`;
-  return s+'</svg>';
+  svg.append('circle').attr('cx',X(last[0])).attr('cy',Y(last[1])).attr('r',3.6).attr('fill',NOWCOL);
+  svg.append('text').attr('class','hc-lbl').attr('fill',NOWCOL)
+    .attr('x',X(last[0])+7).attr('y',Y(last[1])+3).text(fmtAF(last[1]));
+  svg.append('text').attr('class','hc-ax')
+    .attr('x',X(last[0])+7).attr('y',Y(last[1])+14).text(last[0]);
+
+  /* --- crosshair: year by year, measured against the two limits --- */
+  const evByYear=Object.fromEntries(POW_EVENTS.map(e=>[e.y,e.t]));
+  crosshair(svg.node(),{
+    count:POWELL_ANNUAL.length, y0:padT, y1:base,
+    container:el.closest('.lr-chart')||el,
+    indexAt:vx=>{
+      const y=Math.round(X.invert(vx));
+      let best=0,bd=Infinity;
+      yrs.forEach((yy,i)=>{const dd=Math.abs(yy-y);if(dd<bd){bd=dd;best=i;}});
+      return best;
+    },
+    info:i=>{
+      const d=POWELL_ANNUAL[i]; if(!d)return null;
+      const pctPeak=Math.round(d[1]/peak[1]*100);
+      const head=d[1]-POW_MINPOWER;
+      const rows=[
+        `storage <b>${fmtAF(d[1])} AF</b> (${pctPeak}% of the ${peak[0]} peak)`,
+        head>=0?`<b>${fmtAF(head)} AF</b> above minimum power pool`
+               :`<b>${fmtAF(-head)} AF</b> below minimum power pool`];
+      if(evByYear[d[0]])rows.push(`<b>${evByYear[d[0]]}</b>`);
+      return {x:X(d[0]),
+        html:`<div class="tt-h">${d[0]}</div><div class="tt-d">${rows.join('<br>')}</div>`,
+        label:`${d[0]}: ${fmtAF(d[1])} acre-feet, ${pctPeak}% of peak`};
+    }
+  });
+}
+/* every year in the chart, as text — the reachable-without-hover view */
+function powellTable(){
+  if(typeof POWELL_ANNUAL==='undefined'||!POWELL_ANNUAL.length)return '';
+  const peak=POWELL_ANNUAL.reduce((a,b)=>b[1]>a[1]?b:a);
+  return dataTable({
+    id:'tbl-powell',
+    summary:'Every year in this chart',
+    caption:`Lake Powell storage on (or nearest) September 30, in acre-feet · USBR. `
+      +`Minimum power pool ≈ ${fmtAF(POW_MINPOWER)} AF, dead pool ≈ ${fmtAF(POW_DEADPOOL)} AF.`,
+    head:['Year','End-of-Sept storage (AF)','% of '+peak[0]+' peak'],
+    rows:POWELL_ANNUAL.map(d=>[d[0],Math.round(d[1]).toLocaleString('en-US'),
+      Math.round(d[1]/peak[1]*100)+'%'])
+  });
 }
 
 /* =====================================================================
@@ -482,7 +540,7 @@ function mountAll(root){
     const kind=el.dataset.cw;
     if(kind==='snowState')snowStateChart(el);
     else if(kind==='snowBars')snowDecadeBars(el);
-    else if(kind==='powell')el.innerHTML=powellChart();
+    else if(kind==='powell')powellChart(el);
     else if(kind==='snowStore')el.innerHTML=snowStoreChart(el.dataset.basin);
   });
 }
@@ -495,6 +553,6 @@ const hasSnowStore=bid=>!!(((typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[bid])
   ||((typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[bid])
   ||(typeof PMH!=='undefined'&&PMH[bid]));
 
-window.CW_HISTORY={mountAll,snowDecadeTable,
+window.CW_HISTORY={mountAll,snowDecadeTable,powellTable,
   hasDecades,hasSnowChart,hasPowell,hasSnowStore};
 })();
