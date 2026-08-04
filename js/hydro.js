@@ -43,6 +43,7 @@ function ensure(kind,key){
 }
 
 const MABBR=['J','F','M','A','M','J','J','A','S','O','N','D'];
+const MON3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function chart(el,pts,opts){
   if(!el||!el.isConnected)return;
   const t0=pts[0].t,t1=pts[pts.length-1].t;
@@ -84,7 +85,8 @@ function chart(el,pts,opts){
       +`<path d="${med}" fill="none" stroke="#6d6450" stroke-width="1" stroke-dasharray="3 3" opacity="0.85"/>`;
   }
   el.innerHTML=`
-    <svg viewBox="0 0 ${W} ${HT}" style="display:block;width:100%">
+    <svg viewBox="0 0 ${W} ${HT}" style="display:block;width:100%" role="img"
+      aria-label="${(opts.caption||'daily chart').replace(/"/g,'&quot;')}">
       ${yt}
       ${bandSVG}
       <path d="${area}" fill="${opts.color}" opacity="${opts.dotted?0:.22}"/>
@@ -92,32 +94,27 @@ function chart(el,pts,opts){
         ${opts.dotted?'stroke-dasharray="2 4"':''} stroke-linejoin="round"/>
       ${extra}${ticks}
       <line x1="${M.l}" x2="${W-M.r}" y1="${M.t+IH2}" y2="${M.t+IH2}" stroke="#8a8069" stroke-width="1"/>
-      <rect class="hydro-hit" x="${M.l}" y="${M.t}" width="${IW2}" height="${IH2}" fill="transparent"/>
-      <g class="hydro-cursor" style="display:none">
-        <line y1="${M.t}" y2="${M.t+IH2}" stroke="#1A2730" stroke-width="0.7" stroke-dasharray="2 2"/>
-        <text y="${M.t+8}" font-size="8.5" fill="#1A2730" font-family="var(--mono)"></text>
-      </g>
     </svg>
     <div class="hydro-cap">${opts.caption}</div>`;
-  const svg=el.querySelector('svg'),cur=el.querySelector('.hydro-cursor'),
-        cl=cur.querySelector('line'),ct=cur.querySelector('text');
-  el.querySelector('.hydro-hit').addEventListener('mousemove',ev=>{
-    const box=svg.getBoundingClientRect();
-    const mx=(ev.clientX-box.left)/box.width*W;
-    const t=t0+Math.max(0,Math.min(1,(mx-M.l)/IW2))*(t1-t0);
-    let lo=0,hi=pts.length-1;
-    while(hi-lo>1){const mid=(lo+hi)>>1;(pts[mid].t<t?lo=mid:hi=mid);}
-    const p=(t-pts[lo].t<pts[hi].t-t)?pts[lo]:pts[hi];
-    const xx=x(p.t);
-    cur.style.display='';
-    cl.setAttribute('x1',xx);cl.setAttribute('x2',xx);
-    ct.setAttribute('x',xx+(xx>W-90?-4:4));
-    ct.setAttribute('text-anchor',xx>W-90?'end':'start');
-    const d=new Date(p.t);
-    ct.textContent=opts.fmtY(p.v)+' · '+d.getDate()+' '+
-      ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  /* the shared crosshair: pointer AND touch AND keyboard, unlike the
+     mousemove-only cursor this replaces */
+  window.CW_CHARTS.crosshair(el.querySelector('svg'),{
+    count:pts.length, y0:M.t, y1:M.t+IH2, container:el,
+    indexAt:vx=>{
+      const t=t0+Math.max(0,Math.min(1,(vx-M.l)/IW2))*(t1-t0);
+      let lo=0,hi=pts.length-1;
+      while(hi-lo>1){const mid=(lo+hi)>>1;(pts[mid].t<t?lo=mid:hi=mid);}
+      return (t-pts[lo].t<pts[hi].t-t)?lo:hi;
+    },
+    info:i=>{
+      const p=pts[i]; if(!p)return null;
+      const d=new Date(p.t);
+      const ds=d.getDate()+' '+MON3[d.getMonth()]+' '+d.getFullYear();
+      return {x:x(p.t),
+        html:`<div class="tt-h">${ds}</div><div class="tt-d"><b>${opts.fmtY(p.v)}</b>${opts.unit?' '+opts.unit:''}</div>`,
+        label:ds+': '+opts.fmtY(p.v)+(opts.unit?' '+opts.unit:'')};
+    }
   });
-  el.querySelector('.hydro-hit').addEventListener('mouseleave',()=>{cur.style.display='none';});
 }
 
 /* historical weekly min/median/max envelope for a reservoir, sampled across
@@ -133,16 +130,19 @@ function resBand(id,t0,t1){
   const iL=wkOf(t1);out.push({t:t1,lo:bands[0][iL],hi:bands[1][iL],med:meds[iL]});
   return out;
 }
-function monthlyFallback(el,r){
-  /* offline: the site's own basin-scaled monthly reconstruction, dotted */
-  const now=new Date('2026-07-22').getTime();
+function monthlyFallback(el,r,failed){
+  /* offline: the site's own basin-scaled monthly reconstruction, dotted.
+     `failed` = a live fetch was attempted and lost — say so, out loud. */
+  const now=new Date(SNAP_DATE).getTime();
   const pts=MONTHS.map((m,i)=>({t:now-(NOW-i)*30.4*864e5,v:stoAt(r,i)}));
   chart(el,pts,{
     color:resColour(r.id),ymax:r.cap*1.05,dotted:true,
-    fmtY:v=>(v/1000).toFixed(0)+'k',
+    fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
     band:resBand(r.id,pts[0].t,pts[pts.length-1].t),
     lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
-    caption:'basin-scaled monthly · shaded = 2005–now weekly min–max, dashed = median'
+    caption:(failed?'couldn’t reach DWR telemetry — showing the ':'')
+      +'basin-scaled monthly reconstruction (snapshot '+SNAP_DATE+') · '
+      +'shaded = 2005–now weekly min–max, dashed = median'
   });
 }
 
@@ -156,19 +156,19 @@ function mount(el,opts){
       const band=resBand(r.id,pts[0].t,pts[pts.length-1].t);
       chart(el,pts,{
         color:resColour(r.id),ymax:r.cap*1.05,
-        fmtY:v=>(v/1000).toFixed(0)+'k',
+        fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
         band:band,
         lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
         caption:band?'daily storage (AF) · shaded = 2005–now weekly min–max, dashed = median · DWR '+r.dwr
                      :'daily storage (AF), trailing 12 months · DWR telemetry '+r.dwr
       });
-    }).catch(()=>monthlyFallback(el,r));
+    }).catch(()=>monthlyFallback(el,r,true));
   }else{
     el.innerHTML='<div class="hydro-cap">loading daily flows…</div>';
     ensure('gage',opts.site).then(pts=>{
       chart(el,pts,{
         color:'#2E7E96',
-        fmtY:v=>v>=10000?(v/1000).toFixed(0)+'k':String(Math.round(v)),
+        fmtY:v=>v>=10000?(v/1000).toFixed(0)+'k':String(Math.round(v)),unit:'cfs',
         caption:'daily mean flow (cfs), trailing 12 months · USGS '+opts.site
       });
     }).catch(()=>{el.innerHTML='<div class="hydro-cap">daily flow chart needs a connection</div>';});
