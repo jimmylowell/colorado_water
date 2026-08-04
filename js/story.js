@@ -18,10 +18,8 @@
    (see BASININFO) — the derived value is the single source.
    ===================================================================== */
 (function(){
-const WEST=['colorado','gunnison','yampa','sw'];
-const slopeOf=b=>WEST.includes(b)?'w':'e';
-const kaf=n=>Math.round(n/1000).toLocaleString('en-US');
-const af=n=>Math.round(n).toLocaleString('en-US');
+/* WEST / slopeOf live in data.js; kaf/af/glass geometry in charts.js */
+const {kaf,af,sparkPath,glassGlyph,PAL}=window.CW_CHARTS;
 const cleanName=n=>n.replace(/ (Reservoir|Res\.|Lake|Canyon)$/,'');
 /* possessive that respects names already ending in s ("the Arkansas' snowpack") */
 const poss=n=>n+(/s$/i.test(n)?'’':'’s');
@@ -42,16 +40,12 @@ const cite=s=>`<span class="lr-cite">${s}</span>`;
 
 function glassMini(r){
   const frac=Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap));
-  const pm=pmAt(r,NOW), col=r.fc?'#8DA4B0':ramp(pm);
-  const topY=3, botY=34, rim=12, base=6.5, cx=15, WD=30, fillTop=(botY-(botY-topY)*frac).toFixed(1);
-  const path=`M${cx-rim},${topY} L${cx-base},${botY} Q${cx-base},${botY+2} ${cx-base+2},${botY+2} `
-    +`L${cx+base-2},${botY+2} Q${cx+base},${botY+2} ${cx+base},${botY} L${cx+rim},${topY} Z`;
-  const cid='gm'+r.id;
-  return `<svg class="gmini" width="${WD}" height="39" viewBox="0 0 ${WD} 39" aria-hidden="true">`
-    +`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
-    +`<path d="${path}" fill="#0A1620" stroke="#54798C" stroke-width="1.1"/>`
-    +`<rect x="0" y="${fillTop}" width="${WD}" height="39" fill="${col}" opacity="0.95" clip-path="url(#${cid})"/>`
-    +`<path d="${path}" fill="none" stroke="#54798C" stroke-width="1.1"/></svg>`;
+  const col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
+  /* shared geometry core: same silhouette, and the fill is now solved by
+     AREA like every other glass on the site — a half-full mini really is
+     half-full, not half-tall */
+  return `<svg class="gmini" width="30" height="39" viewBox="0 0 30 39" aria-hidden="true">`
+    +`<g transform="translate(15,37)">${glassGlyph({h:31,a:12,b:6.5,frac,col,id:'gm'+r.id,strokeW:1.1})}</g></svg>`;
 }
 /* A reservoir's normal year as a 52-week silhouette, with a dot where the
    reservoir actually sits this week. One glance answers the question the bare
@@ -65,8 +59,8 @@ function resYearSpark(r){
      seasonal shape — the whole point of this mark — disappears. */
   const top=Math.max(...nrm,stoAt(r,NOW))*1.08;
   const X=i=>i/51*w, Y=v=>h-1-(v/top)*(h-2);
-  const d='M'+nrm.map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join('L');
-  const now=stoAt(r,NOW), col=r.fc?'#8DA4B0':ramp(pmAt(r,NOW));
+  const d=sparkPath(nrm,X,Y);
+  const now=stoAt(r,NOW), col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
   return `<svg class="resspark" viewBox="0 0 ${w} ${h}" role="img"
       aria-label="A normal year at ${cleanName(r.n)} peaks in early summer; today's level is marked.">
     <path d="${d} L${w},${h} L0,${h} Z" fill="#8FA6B2" opacity="0.10"/>
@@ -234,17 +228,13 @@ function basinLegend(){
   </div>`;
 }
 function basinSummaryHTML(bid,home){
-  const b=BASINS.find(x=>x.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
-  const inb=RES.filter(r=>r.b===bid&&!r.fc);
-  const cap=inb.reduce((s,r)=>s+r.cap,0);
-  const below=inb.filter(r=>pmAt(r,NOW)<95).length;
-  const largest=inb.slice().sort((a,c)=>c.cap-a.cap)[0];
+  const b=BASINS.find(x=>x.id===bid), st=basinStats(bid);
   return `<div class="bx-head"><span class="bx-name">${b.n}${bid===home?' · your basin':''}</span>`
-    +`<span class="bx-pct" style="color:${ramp(pct)}">${pct}% of normal</span></div>`
+    +`<span class="bx-pct" style="color:${ramp(st.pct)}">${st.pct}% of normal</span></div>`
     +`<p class="bx-blurb">${BASININFO[bid]||''}</p>`
-    +`<div class="bx-stats"><span>${WEST.includes(bid)?'West slope':'East slope'}</span><span>${inb.length} reservoirs</span>`
-    +`<span>${kaf(cap)} KAF full</span><span>${below} below normal</span>`
-    +`${largest?`<span>largest: ${cleanName(largest.n)}</span>`:''}</div>`;
+    +`<div class="bx-stats"><span>${WEST.includes(bid)?'West slope':'East slope'}</span><span>${st.count} reservoirs</span>`
+    +`<span>${kaf(st.cap)} KAF full</span><span>${st.below} below normal</span>`
+    +`${st.largest?`<span>largest: ${cleanName(st.largest.n)}</span>`:''}</div>`;
 }
 function secBasinsState(home){
   return sec('basins','The state right now','Seven basins, seven different years',
@@ -306,16 +296,13 @@ function splitBar(sp,hb){
   return `<div class="splitbar"><div class="sb-track">${seg}</div><div class="sb-keys">${key}</div></div>`;
 }
 function basinStatPanel(bid){
-  const pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
-  const inb=RES.filter(r=>r.b===bid&&!r.fc);
-  const cap=inb.reduce((s,r)=>s+r.cap,0);
-  const below=inb.filter(r=>pmAt(r,NOW)<95).length;
+  const st=basinStats(bid);
   return `<div class="basin-panel">
-       <div class="bp-cell"><div class="bp-num" style="color:${ramp(pct)}">${pct}%</div>
+       <div class="bp-cell"><div class="bp-num" style="color:${ramp(st.pct)}">${st.pct}%</div>
          <div class="bp-lab">of normal storage<br>right now</div></div>
-       <div class="bp-cell"><div class="bp-num">${inb.length}</div>
-         <div class="bp-lab">reservoirs here holding<br>${kaf(cap)} KAF when full</div></div>
-       <div class="bp-cell"><div class="bp-num" style="color:${below?'#EF9A1B':'#2FD94F'}">${below}</div>
+       <div class="bp-cell"><div class="bp-num">${st.count}</div>
+         <div class="bp-lab">reservoirs here holding<br>${kaf(st.cap)} KAF when full</div></div>
+       <div class="bp-cell"><div class="bp-num" style="color:${st.below?'#EF9A1B':'#2FD94F'}">${st.below}</div>
          <div class="bp-lab">of them sitting<br>below normal</div></div>
      </div>`;
 }

@@ -22,14 +22,7 @@ const CDSS_WEEK_URL='https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/t
   +'?format=json&parameter=STORAGE&abbrev='+DWR.map(r=>r.dwr).join('%2C')
   +'&startDate='+dstr(new Date(Date.now()-8*864e5))+'&endDate='+dstr(new Date());
 
-function fetchJSON(url,ms){
-  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),ms||9000);
-  return fetch(url,{signal:ctl.signal}).then(res=>{
-    clearTimeout(to);
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    return res.json();
-  },err=>{clearTimeout(to);throw err;});
-}
+const fetchJSON=window.CW_CHARTS.fetchJSON;
 function ingestUSGS(j){
   let n=0;
   ((j.value&&j.value.timeSeries)||[]).forEach(ts=>{

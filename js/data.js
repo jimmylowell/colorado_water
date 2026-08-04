@@ -84,6 +84,13 @@ const RESHUE_FALLBACK={shadow:H.blue,willow:H.blue,wolford:H.blue,riflegap:H.blu
    ===================================================================== */
 const MONTHS=['Oct 2025','Nov 2025','Dec 2025','Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026'];
 const NOW=9;
+/* the snapshot's as-of date — anything that anchors "now" to the baked data
+   reads this rather than hard-coding a date that silently goes stale */
+const SNAP_DATE='2026-07-22';
+/* which side of the Divide each basin drains — the one WEST list; story,
+   map sheet and step-down diagrams all read this */
+const WEST=['colorado','gunnison','yampa','sw'];
+const slopeOf=b=>WEST.includes(b)?'w':'e';
 /* Monthly basin storage % of the 1991–2020 median, Oct→Jul.
    The real, derived series is PMH_DERIVED in js/normals.js (built by
    scripts/build_normals.py from CDSS daily history). It carries null for any
@@ -145,6 +152,17 @@ function pmAt(r,mi){
   return Math.round(r.pm*pmFactor(r.b,mi));
 }
 function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[NOW]; }
+/* one basin summary — story.js (Act 1 panel, Act 2 stats) and the map's
+   basin sheet each used to recompute this with subtly different fallbacks */
+function basinStats(bid,mi){
+  if(mi==null)mi=NOW;
+  const pct=Math.round(PMH[bid]?PMH[bid][mi]:100);
+  const inb=RES.filter(r=>r.b===bid&&!r.fc);
+  const cap=inb.reduce((s,r)=>s+r.cap,0);
+  const below=inb.filter(r=>pmAt(r,mi)<95).length;
+  const largest=inb.slice().sort((a,c)=>c.cap-a.cap)[0]||null;
+  return {pct,count:inb.length,cap,below,largest};
+}
 
 /* =====================================================================
    GEOGRAPHIC LAYER
@@ -578,15 +596,7 @@ function ramp(p){
   return RAMPS[RAMPS.length-1][1];
 }
 const SPARKCOL={low:'#FF7A45',mid:'#EFD01B',ok:'#2FD94F'};
-function sparkSVG(series,color){
-  const w=100,h=20,mn=Math.min(...series),mx=Math.max(...series),rng=(mx-mn)||1;
-  const X=i=>i/(series.length-1)*w, Y=v=>h-2-((v-mn)/rng)*(h-4);
-  const d=series.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join('');
-  const lx=X(series.length-1).toFixed(1),ly=Y(series[series.length-1]).toFixed(1);
-  return `<svg class="sparksvg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">`
-    +`<path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`
-    +`<circle cx="${lx}" cy="${ly}" r="1.7" fill="${color}"/></svg>`;
-}
+/* sparkSVG — relocated to js/charts.js (CW_CHARTS.sparkSVG) */
 function zipLookup(zip){
   let best=null,bestLen=0;
   TAPS.forEach(t=>t.zips.forEach(p=>{

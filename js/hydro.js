@@ -22,14 +22,7 @@ function usgsURL(site){
   return 'https://waterservices.usgs.gov/nwis/dv/?format=json&sites='+site
     +'&parameterCd=00060&period=P365D';
 }
-function fetchJSON(url){
-  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),12000);
-  return fetch(url,{signal:ctl.signal}).then(res=>{
-    clearTimeout(to);
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    return res.json();
-  },err=>{clearTimeout(to);throw err;});
-}
+const fetchJSON=url=>window.CW_CHARTS.fetchJSON(url,12000);
 function ensure(kind,key){
   const ck=kind+':'+key;
   if(!CACHE[ck]){
@@ -128,9 +121,9 @@ function chart(el,pts,opts){
 }
 
 /* historical weekly min/median/max envelope for a reservoir, sampled across
-   the chart's time span [t0,t1] from the baked RES_BANDS / RES_NORMALS. */
-function wkOf(t){const d=new Date(t);const day=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
-  return Math.max(0,Math.min(51,Math.floor((day-1)/7)));}
+   the chart's time span [t0,t1] from the baked RES_BANDS / RES_NORMALS.
+   Week indexing is data.js's weekIdx — the same key the medians are baked on. */
+const wkOf=t=>weekIdx(new Date(t));
 function resBand(id,t0,t1){
   const bands=(typeof RES_BANDS!=='undefined')&&RES_BANDS[id];
   const meds=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[id];

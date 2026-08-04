@@ -6,7 +6,7 @@ const RESNODE={}; G.nodes.forEach(n=>{if(n.k==='res')RESNODE[n.res]=n.id;});
    HELPERS
    ===================================================================== */
 const fmt=n=>Math.round(n).toLocaleString('en-US');
-const kaf=n=>(n/1000).toFixed(n<10000?1:0);
+const kaf=CW_CHARTS.kaf;
 /* hex2rgb, rgb2css, RAMPS, ramp — relocated to js/data.js (shared with story.js) */
 const GEO={n:41.0,s:37.0,w:-109.05,e:-102.05};
 const PAD={l:56,r:56,t:64,b:64};
@@ -107,22 +107,8 @@ function passesFilter(r){
    the fill level is solved so the filled AREA (not height) is the stored
    fraction: a reservoir holds less water per foot at depth, and the
    glass says so. Base center sits on the geographic point. */
-function glassDims(cap,S){
-  const h=Math.max(12,Math.min(48,Math.sqrt(cap)/16))*(S||1);
-  return{h,a:h*0.52,b:h*0.28};
-}
-function glassPathD(h,a,b){
-  const r=Math.min(3,b*0.6);
-  return `M${-a},${-h} L${-b},${-r} Q${-b},0 ${-b+r},0 L${b-r},0 Q${b},0 ${b},${-r} L${a},${-h} Z`;
-}
-/* level y (up from base) at which filled trapezoid area = f × total area */
-function fillLevel(f,h,a,b){
-  if(f<=0)return 0;
-  const f1=Math.min(f,1);
-  let y=h*(Math.sqrt(b*b+(a*a-b*b)*f1)-b)/(a-b);
-  if(f>1)y+=(f-1)*(a+b)*h/(2*a);
-  return y;
-}
+/* geometry core relocated to js/charts.js — one glass for the whole site */
+const {glassDims,glassPathD,fillLevel}=CW_CHARTS;
 let GID=0;
 function drawGlass(grp,r,color,S,bright){
   const {h,a,b}=glassDims(r.cap,S), est=r.c==='est'&&!LIVE_STO[r.id];
@@ -835,12 +821,8 @@ function renderSheet(){
   }
   if(!state.selected&&state.basin!=='all'){
     const b=BASINS.find(x=>x.id===state.basin);
-    const west=['colorado','gunnison','yampa','sw'].includes(b.id);
-    const inb=RES.filter(r=>r.b===b.id&&!r.fc);
-    const cap=inb.reduce((sum,r)=>sum+r.cap,0);
-    const pct=Math.round(PMH[b.id]?PMH[b.id][mi]:0);
-    const below=inb.filter(r=>pmAt(r,mi)<95).length;
-    const largest=inb.slice().sort((a,c)=>c.cap-a.cap)[0];
+    const west=WEST.includes(b.id);
+    const {pct,count,cap,below,largest}=basinStats(b.id,mi);
     const gg=(typeof GAGE_META!=='undefined')?Object.keys(GAGE_META).filter(x=>GAGE_META[x].basin===b.id):[];
     const rivers=[...new Set(RIVERS.filter(rv=>rv.b===b.id).map(rv=>rv.n))];
     const tuns=[...new Set(MAP_TUNNELS.filter(t=>t.fb===b.id||t.tb===b.id).map(t=>t.n))];
@@ -848,10 +830,10 @@ function renderSheet(){
     s.innerHTML=`
       <div class="tag"><span>Basin</span><span>${west?'West slope':'East slope'} · ${MONTHS[mi]}</span></div>
       <h2>${b.n}</h2>
-      <div class="sub">${inb.length} reservoirs · ${kaf(cap)} KAF when full</div>
+      <div class="sub">${count} reservoirs · ${kaf(cap)} KAF when full</div>
       <table class="rows">
         <tr><td class="lab">Storage vs normal</td><td style="color:${ramp(pct)}">${pct}% of median</td></tr>
-        <tr><td class="lab">Below normal</td><td>${below} of ${inb.length} reservoirs</td></tr>
+        <tr><td class="lab">Below normal</td><td>${below} of ${count} reservoirs</td></tr>
         ${largest?`<tr><td class="lab">Largest</td><td>${cn(largest.n)} · <span style="color:${ramp(pmAt(largest,mi))}">${pmAt(largest,mi)}%</span></td></tr>`:''}
         <tr><td class="lab">Streamgages</td><td>${gg.length}</td></tr>
       </table>
@@ -945,7 +927,7 @@ function renderStrip(){
     const series=s.spark?statSeries(s.spark):null;
     return `<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls}">${s.v}</div>`
       +`<div class="n">${s.n}</div>`
-      +(series?`<div class="spark" title="Oct 2025 → Jul 2026">${sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
+      +(series?`<div class="spark" title="Oct 2025 → Jul 2026">${CW_CHARTS.sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
       +`</div>`;
   }).join('');
 }
@@ -986,16 +968,9 @@ function renderLegend(){
 /* ---- mobile per-ZIP list (the map is hard to use on a phone) ---- */
 function miniGlass(r){
   const frac=Math.max(0,Math.min(1,stoAt(r,state.mi)/r.cap));
-  const col=r.fc?'#8DA4B0':ramp(pmAt(r,state.mi));
-  const topY=3,botY=30,rim=11,base=6,cx=14,WD=28,fillTop=(botY-(botY-topY)*frac).toFixed(1);
-  const path=`M${cx-rim},${topY} L${cx-base},${botY} Q${cx-base},${botY+2} ${cx-base+2},${botY+2} `
-    +`L${cx+base-2},${botY+2} Q${cx+base},${botY+2} ${cx+base},${botY} L${cx+rim},${topY} Z`;
-  const cid='zl'+r.id;
-  return `<svg width="${WD}" height="34" viewBox="0 0 ${WD} 34" aria-hidden="true">`
-    +`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
-    +`<path d="${path}" fill="#0A1620" stroke="#54798C" stroke-width="1"/>`
-    +`<rect x="0" y="${fillTop}" width="${WD}" height="34" fill="${col}" opacity=".95" clip-path="url(#${cid})"/>`
-    +`<path d="${path}" fill="none" stroke="#54798C" stroke-width="1"/></svg>`;
+  const col=r.fc?CW_CHARTS.PAL.GLASS.fc:ramp(pmAt(r,state.mi));
+  return `<svg width="28" height="34" viewBox="0 0 28 34" aria-hidden="true">`
+    +`<g transform="translate(14,32)">${CW_CHARTS.glassGlyph({h:27,a:11,b:6,frac,col,id:'zl'+r.id})}</g></svg>`;
 }
 function renderZipList(){
   const el=document.getElementById('ziplist'); if(!el||typeof GAGE_META==='undefined')return;

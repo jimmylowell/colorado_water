@@ -44,28 +44,23 @@ function project(bid,W,H,pad){
   const ox=(W-w*s)/2-ax0*s, oy=(H-h*s)/2-ay0*s;
   return {x:lon=>fx(lon)*s+ox, y:lat=>fy(lat)*s+oy, s};
 }
-const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc=window.CW_CHARTS.esc;
+const {glassGlyph,PAL}=window.CW_CHARTS;
 
-/* a glass glyph whose area tracks capacity and whose fill level is storage */
+/* a glass glyph whose area tracks capacity and whose fill level is storage —
+   rendered by the shared geometry core, so the fill is solved by AREA like
+   every other glass on the site */
 function glass(P,r,scale){
   const cx=P.x(r.lon), cy=P.y(r.lat);
   const h=Math.max(11,Math.min(34,Math.sqrt(r.cap)/scale));
-  const rim=h*0.40, base=h*0.21;
   const frac=Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap));
-  const top=cy-h/2, bot=cy+h/2;
-  const col=r.fc?'#8DA4B0':ramp(pmAt(r,NOW));
-  const path=`M${(cx-rim).toFixed(1)},${top.toFixed(1)} L${(cx-base).toFixed(1)},${bot.toFixed(1)} `
-    +`L${(cx+base).toFixed(1)},${bot.toFixed(1)} L${(cx+rim).toFixed(1)},${top.toFixed(1)} Z`;
-  const fillTop=(bot-(bot-top)*frac).toFixed(1);
-  const cid='bg'+r.id;
+  const col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
   return {cx,cy,h,svg:`<g class="bm-res" data-res="${r.id}" tabindex="0" role="button"`
-      +` aria-label="${esc(r.n)}, ${r.fc?'flood control':pmAt(r,NOW)+'% of normal'}">`
+      +` aria-label="${esc(r.n)}, ${r.fc?'flood control':pmAt(r,NOW)+'% of normal'}"`
+      +` transform="translate(${cx.toFixed(1)},${(cy+h/2).toFixed(1)})">`
       +`<title>${esc(r.n)} — ${r.fc?'flood control pool':pmAt(r,NOW)+'% of normal'}</title>`
-      +`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
-      +`<path d="${path}" fill="#0A1620" stroke="#6d8ea3" stroke-width="1"/>`
-      +`<rect x="${(cx-rim).toFixed(1)}" y="${fillTop}" width="${(rim*2).toFixed(1)}" height="${h.toFixed(1)}"`
-      +` fill="${col}" clip-path="url(#${cid})"/>`
-      +`<path d="${path}" fill="none" stroke="#8fb0c4" stroke-width="1"/></g>`};
+      +glassGlyph({h,a:h*0.40,b:h*0.21,frac,col,id:'bg'+r.id,stroke:'#6d8ea3',strokeHi:PAL.GLASS.strokeHi})
+      +`</g>`};
 }
 
 function render(bid,tap){
@@ -254,7 +249,7 @@ function flow(bid,tap){
      the left edge. Reading a Yampa or Gunnison step-down left-to-right meant
      reading it backwards against the map beside it. `side` comes from the flow
      graph in data.js. */
-  const flowsWest=inB.filter(n=>n.side==='w').length>inB.length/2;
+  const flowsWest=WEST.includes(bid);
   const mySide=flowsWest?'w':'e';
   /* An export leaves toward its destination's side, an import arrives from its
      origin's side — so a tunnel out of the Colorado headwaters runs RIGHT, east
@@ -346,15 +341,14 @@ function flow(bid,tap){
     let glyph='', lab=n.l||'';
     if(n.k==='res'){
       const r=RESBY[n.res];
-      const col=r?(r.fc?'#8DA4B0':ramp(pmAt(r,NOW))):'#8DA4B0';
+      const col=r?(r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW))):PAL.GLASS.fc;
       const frac=r?Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap)):0.5;
-      const w=13,h=17,top=-h/2,bot=h/2,rimw=w/2,basew=w/2*0.55;
-      const path=`M${-rimw},${top} L${-basew},${bot} L${basew},${bot} L${rimw},${top} Z`;
-      const cid='bf'+n.id;
-      glyph=`<defs><clipPath id="${cid}"><path d="${path}"/></clipPath></defs>`
-        +`<path d="${path}" fill="#0A1620" stroke="#8fb0c4" stroke-width="1"/>`
-        +`<rect x="${-rimw}" y="${(bot-h*frac).toFixed(1)}" width="${w}" height="${h}" fill="${col}" clip-path="url(#${cid})"/>`
-        +`<path d="${path}" fill="none" stroke="${mine.has(n.res)?'#EDE6D6':'#8fb0c4'}" stroke-width="${mine.has(n.res)?1.6:1}"/>`;
+      const h=17;
+      glyph=`<g transform="translate(0,${h/2})">`
+        +glassGlyph({h,a:6.5,b:3.6,frac,col,id:'bf'+n.id,stroke:PAL.GLASS.strokeHi,
+          strokeHi:mine.has(n.res)?'#EDE6D6':PAL.GLASS.strokeHi,
+          strokeW:mine.has(n.res)?1.6:1})
+        +`</g>`;
       if(r&&!r.fc)lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'')+' · '+pmAt(r,NOW)+'%';
       else lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'');
     }else if(n.k==='gage'){
