@@ -78,6 +78,42 @@ python3 -m http.server 8000
 (Opening `index.html` directly as a file also works — live fetches that the
 browser blocks simply fall back to the snapshot.)
 
+## Smoke tests
+
+The site has no build step, but it has tests. `package.json` is
+dev-tooling only (jsdom) — nothing under `js/` ever imports from
+`node_modules`.
+
+```sh
+npm install        # once
+npm run smoke      # both suites
+```
+
+- `scripts/smoke_data.mjs` — zero-dependency: evaluates the baked data and
+  every string-rendered chart (basin maps, step-downs, shared-core marks)
+  and asserts the invariants they depend on: band shapes, the
+  supply-only capacity identity, no `NaN`/`undefined` in any SVG,
+  finite viewBoxes, aria-labels present.
+- `scripts/smoke_dom.mjs` — loads `index.html` for real in jsdom with
+  network stubbed off, drives the ZIP flow, and checks every rendered
+  chart plus the keyboard crosshair/tooltip layer.
+
+### Manual verification checklist
+
+After chart changes, also eyeball the real thing:
+
+1. `python3 -m http.server 8000` **and** open `index.html` from `file://` —
+   both must render Act 1 with a clean console.
+2. `#livestat` reports either live counts or the snapshot fallback.
+3. Select a basin on the seven-basin map, hit a live refresh — the
+   selection must survive.
+4. ZIP 80302: both basin maps, both step-downs, the two-panel
+   snow/storage chart, reservoir rows.
+5. DevTools responsive mode + touch emulation: drag across the snowpack,
+   Powell, panel and hydrograph charts — tooltip follows, leaves cleanly.
+6. Keyboard: Tab to each chart, arrow through it, Escape dismisses.
+7. Lighthouse: no render-blocking script on index.html.
+
 ## Updating the snapshot
 
 Edit the values in `js/data.js` (each reservoir row carries its source and

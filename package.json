@@ -1,0 +1,11 @@
+{
+  "name": "colorado-water",
+  "private": true,
+  "description": "Dev tooling only — the site itself is build-free static HTML/JS. Never import node_modules from js/.",
+  "scripts": {
+    "smoke": "node scripts/smoke_data.mjs && node scripts/smoke_dom.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
+}
