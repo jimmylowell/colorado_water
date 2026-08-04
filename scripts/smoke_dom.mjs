@@ -92,7 +92,7 @@ ok(pageErrors.length===0,'still no script errors'
 
 console.log('interaction layer');
 const kbCharts=[...document.querySelectorAll('svg.histchart[tabindex]')];
-console.log(`  (crosshair-enabled charts: ${kbCharts.length})`);
+ok(kbCharts.length>=3,`crosshair-enabled charts present (${kbCharts.length}, expect snow + Powell + panels)`);
 for(const svg of kbCharts){
   svg.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
   const box=svg.closest('.lr-chart')||svg.parentNode;

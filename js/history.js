@@ -57,7 +57,7 @@ const inch=v=>v==null?'—':fmtTick(v)+'″';
    ===================================================================== */
 function snowStateChart(el){
   const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
-  if(!D||!D.dec){el.innerHTML=snowStateFallback();return;}
+  if(!D||!D.dec){snowStateFallback(el);return;}
   const keys=Object.keys(D.dec).sort();
   const W=680,H=336,padL=40,padR=58,padT=54,padB=46;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
@@ -285,15 +285,24 @@ function snowDecadeTable(){
 }
 
 /* Pre-SNOW_DECADES fallback: this year against the normal, no decades. */
-function snowStateFallback(){
-  if(typeof SNOW_BASIN==='undefined')return '';
-  const ids=Object.keys(SNOW_BASIN); if(!ids.length)return '';
+function snowStateFallback(el){
+  if(typeof SNOW_BASIN==='undefined'){el.innerHTML='';return;}
+  const ids=Object.keys(SNOW_BASIN); if(!ids.length){el.innerHTML='';return;}
   const mean=(key,i)=>{let s=0,n=0;ids.forEach(b=>{const v=SNOW_BASIN[b][key][i];
     if(v!=null){s+=v;n++;}});return n?s/n:null;};
   const cur=[],nrm=[];
   for(let i=0;i<10;i++){cur.push(mean('cur',i));nrm.push(mean('nrm',i));}
-  return panelChart([{title:'Snowpack · snow-water equivalent',unit:'″',
-    cur:cur,nrm:nrm,col:SNOWCOL,area:true}],'Statewide snowpack across the water year.');
+  const MID=MONTH_WK.map(wyOf);
+  drawPanels(el,[{title:'Snowpack · snow-water equivalent',unit:'″',
+    cur:{pts:series(MID,cur),dots:false,area:true,col:SNOWCOL},
+    med:{pts:series(MID,nrm)}}],
+    'Statewide snowpack across the water year, this year against the normal.',
+    i=>{
+      const si=nearSample(MID,cur,i);
+      if(si<0)return null;
+      return {rows:[`snow (mid-${monShort(si)}): <b>${inch(cur[si])}</b> this year · ${inch(nrm[si])} normal`],
+        label:`mid-${monShort(si)}: ${inch(cur[si])} this year, ${inch(nrm[si])} normal`};
+    });
 }
 
 /* =====================================================================
@@ -440,93 +449,210 @@ function powellTable(){
 
 /* =====================================================================
    STACKED PANELS — the honest form for two measures on different scales.
-   Each panel keeps its own y-axis and its own title; the x-axis (the water
-   year, Oct→Jul) is shared, so a reader compares SHAPE and TIMING without
-   the chart implying that 15 inches of snow "equals" 60% full.
+   Each panel keeps its own y-axis and its own title; the x-axis — the
+   FULL water year in weeks, the same axis as the snowpack chart above —
+   is shared, so a reader compares SHAPE and TIMING without the chart
+   implying that 15 inches of snow "equals" 60% full.
+
+   Provenance is drawn, not just captioned: the storage band and median
+   are MEASURED (CDSS daily basin totals since 2005, weekly), while
+   "this year" is the site's monthly reconstruction — so it is drawn as
+   ten dots at the end-of-month weeks it is actually anchored to, and
+   never pretends to weekly resolution. (The old chart sampled the
+   median at MID-month against a series anchored at month END — a
+   built-in two-week phase error, now structurally impossible.)
    ===================================================================== */
-const MONTH_WK=[41,45,49,2,6,10,14,19,23,27];  // ~mid-month week index, Oct..Jul
-function panelChart(panels,label){
-  const W=680,padL=44,padR=14,padT=44,gap=36,PH=112,padB=26;
+const MONTH_WK=[41,45,49,2,6,10,14,19,23,27];  // mid-month calendar week, Oct..Jul (snow sampling)
+const EOM_WK=[43,47,51,4,8,12,17,21,25,30];    // end-of-month calendar week, Oct..Jul (stoAt/PMH anchor)
+const wyOf=w=>(w-39+52)%52;                    // calendar week index -> weeks since Oct 1
+const monShort=mi=>MONTHS[mi].split(' ')[0];
+/* pair monthly values with their water-year week positions */
+const series=(pos,vals)=>vals.map((v,mi)=>v==null?null:[pos[mi]+0.5,v]).filter(Boolean);
+/* nearest monthly sample to water-year week i, or -1 if none lands close */
+function nearSample(pos,vals,i){
+  let bi=-1,bd=2.6;
+  pos.forEach((w,mi)=>{
+    const d=Math.abs(w-i);
+    if(d<bd&&vals[mi]!=null){bd=d;bi=mi;}
+  });
+  return bi;
+}
+
+/* panels: [{title, unit, top?, band?{lo,hi: 52 wy-indexed}, med:{wk:52 wy-indexed}|{pts},
+            cur?{pts, dots, area, col}}] — rowsAt(i) supplies the crosshair content. */
+function drawPanels(el,panels,ariaLabel,rowsAt){
+  const W=680,padL=44,padR=14,padT=44,gap=40,PH=118,padB=30;
   const iw=W-padL-padR;
   const H=padT+panels.length*PH+(panels.length-1)*gap+padB;
-  const X=i=>padL+i/9*iw;
-  const labs=['Oct','Dec','Feb','Apr','Jun','Jul'],idx=[0,2,4,6,8,9];
-  let s=`<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${label}">`;
-  /* One legend for both panels. Each panel owns its colour, so the legend
+  const X=d3.scaleLinear().domain([0,WYW]).range([padL,padL+iw]);
+  const svg=d3.select(el).html('').append('svg')
+    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
+    .attr('aria-label',ariaLabel);
+  /* One legend for all panels. Each panel owns its colour, so the legend
      encodes LINE STYLE and stays neutral — a coloured swatch here would name
-     a hue that only one of the two panels actually uses. */
-  s+=`<g transform="translate(${padL},12)">`
-    +`<line x1="0" y1="-4" x2="18" y2="-4" stroke="${REFCOL}" stroke-width="2.4"/><text x="23" y="0" class="hc-lgd">solid = this water year</text>`
-    +`<line x1="168" y1="-4" x2="188" y2="-4" stroke="${REFCOL}" stroke-width="1.4" stroke-dasharray="4 3"/>`
-    +`<text x="194" y="0" class="hc-lgd">dashed = normal (1991–present median)</text></g>`;
+     a hue that only one of the panels actually uses. */
+  const hasBand=panels.some(p=>p.band);
+  const lg=svg.append('g').attr('transform',`translate(${padL},12)`);
+  lg.append('line').attr('x1',0).attr('x2',18).attr('y1',-4).attr('y2',-4)
+    .attr('stroke',REFCOL).attr('stroke-width',2.4);
+  lg.append('text').attr('class','hc-lgd').attr('x',23).attr('y',0).text('solid = this water year');
+  lg.append('line').attr('x1',158).attr('x2',178).attr('y1',-4).attr('y2',-4)
+    .attr('stroke',REFCOL).attr('stroke-width',1.4).attr('stroke-dasharray','4 3');
+  lg.append('text').attr('class','hc-lgd').attr('x',184).attr('y',0).text('dashed = normal median');
+  if(hasBand){
+    lg.append('rect').attr('x',330).attr('y',-9).attr('width',18).attr('height',9)
+      .attr('fill',REFCOL).attr('opacity',0.22);
+    lg.append('text').attr('class','hc-lgd').attr('x',353).attr('y',0).text('shaded = full measured range');
+  }
+  let lastBase=0;
   panels.forEach((p,pi)=>{
-    const t=padT+pi*(PH+gap), b=t+PH;
-    const vals=p.cur.concat(p.nrm).filter(v=>v!=null);
-    const top=p.max||niceTop(Math.max(1,...vals)*1.05,2);
+    const t=padT+pi*(PH+gap), b=t+PH; lastBase=b;
+    const allV=[].concat(
+      p.cur?p.cur.pts.map(d=>d[1]):[],
+      p.med&&p.med.pts?p.med.pts.map(d=>d[1]):[],
+      p.med&&p.med.wk?p.med.wk:[],
+      p.band?p.band.hi:[]).filter(v=>v!=null);
+    const top=p.top||niceTop(Math.max(1,...allV)*1.05,2);
     const Y=v=>b-Math.max(0,Math.min(top,v))/top*PH;
-    const pts=a=>a.map((v,i)=>v==null?null:X(i).toFixed(1)+','+Y(v).toFixed(1)).filter(Boolean);
-    s+=`<text x="${padL}" y="${(t-8).toFixed(1)}" class="hc-ptitle">${p.title}</text>`;
+    svg.append('text').attr('class','hc-ptitle').attr('x',padL).attr('y',t-8).text(p.title);
     [0,top/2,top].forEach(v=>{
-      s+=`<line x1="${padL}" y1="${Y(v).toFixed(1)}" x2="${W-padR}" y2="${Y(v).toFixed(1)}" stroke="${GRID}"/>`
-        +`<text x="${padL-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end" class="hc-ax">`
-        +`${v%1?v.toFixed(1):v}${p.unit}</text>`;});
-    const cp=pts(p.cur), np=pts(p.nrm);
-    if(np.length>1)s+=`<path d="M${np.join('L')}" fill="none" stroke="${REFCOL}" stroke-width="1.4" stroke-dasharray="4 3"/>`;
-    if(cp.length>1){
+      svg.append('line').attr('x1',padL).attr('x2',W-padR)
+        .attr('y1',Y(v)).attr('y2',Y(v)).attr('stroke',GRID);
+      svg.append('text').attr('class','hc-ax').attr('x',padL-6).attr('y',Y(v)+3)
+        .attr('text-anchor','end').text(fmtTick(v)+p.unit);
+    });
+    /* the measured range, drawn first so everything reads on top of it */
+    if(p.band){
+      const wks=d3.range(52);
+      const area=d3.area().x(i=>X(i+0.5))
+        .y0(i=>Y(p.band.lo[i])).y1(i=>Y(p.band.hi[i]));
+      svg.append('path').attr('d',area(wks)).attr('fill',REFCOL).attr('opacity',0.14);
+    }
+    if(p.med){
+      const d=p.med.wk
+        ?d3.line().x(i=>X(i+0.5)).y(i=>Y(p.med.wk[i]))(d3.range(52))
+        :d3.line().x(q=>X(q[0])).y(q=>Y(q[1]))(p.med.pts);
+      if(d)svg.append('path').attr('d',d).attr('fill','none')
+        .attr('stroke',REFCOL).attr('stroke-width',1.4).attr('stroke-dasharray','4 3');
+    }
+    if(p.cur&&p.cur.pts.length>1){
+      const ln=d3.line().x(q=>X(q[0])).y(q=>Y(q[1]));
       /* Area only where the quantity IS a stock — inches of water sitting in
          the mountains. A percentage-of-capacity has no meaningful area. */
-      if(p.area)s+=`<path d="M${X(0).toFixed(1)},${b} L${cp.join('L')} L${X(cp.length-1).toFixed(1)},${b} Z" fill="${p.col}" opacity="0.13"/>`;
-      s+=`<path d="M${cp.join('L')}" fill="none" stroke="${p.col}" stroke-width="2.4" vector-effect="non-scaling-stroke"/>`;
-      const li=p.cur.reduce((bi,v,i)=>v!=null?i:bi,-1);
-      if(li>=0)s+=`<circle cx="${X(li).toFixed(1)}" cy="${Y(p.cur[li]).toFixed(1)}" r="3.4" fill="${p.col}"/>`;
+      if(p.cur.area){
+        const first=p.cur.pts[0],last=p.cur.pts[p.cur.pts.length-1];
+        svg.append('path')
+          .attr('d',`M${X(first[0])},${b} L`+p.cur.pts.map(q=>X(q[0]).toFixed(1)+','+Y(q[1]).toFixed(1)).join('L')+` L${X(last[0])},${b} Z`)
+          .attr('fill',p.cur.col).attr('opacity',0.13);
+      }
+      svg.append('path').attr('d',ln(p.cur.pts)).attr('fill','none')
+        .attr('stroke',p.cur.col).attr('stroke-width',2.4).attr('vector-effect','non-scaling-stroke');
+      /* dots at the anchor weeks make a monthly reconstruction LOOK monthly */
+      if(p.cur.dots)svg.selectAll(null).data(p.cur.pts).enter().append('circle')
+        .attr('cx',q=>X(q[0])).attr('cy',q=>Y(q[1])).attr('r',2.7).attr('fill',p.cur.col);
+      const last=p.cur.pts[p.cur.pts.length-1];
+      svg.append('circle').attr('cx',X(last[0])).attr('cy',Y(last[1]))
+        .attr('r',3.4).attr('fill',p.cur.col);
     }
-    if(pi===panels.length-1)
-      s+=idx.map((i,k)=>`<text x="${X(i).toFixed(1)}" y="${(b+16).toFixed(1)}" text-anchor="middle" class="hc-ax">${labs[k]}</text>`).join('');
   });
-  return s+'</svg>';
+  /* the shared month axis, identical to the seasonal snow chart above */
+  MON.forEach((m,i)=>svg.append('text').attr('class','hc-ax')
+    .attr('x',(X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).attr('y',lastBase+16)
+    .attr('text-anchor','middle').text(m));
+
+  crosshair(svg.node(),{
+    count:52, y0:padT, y1:lastBase,
+    container:el.closest('.lr-chart')||el,
+    indexAt:vx=>{
+      const i=Math.round((vx-padL)/iw*WYW-0.5);
+      return isFinite(i)?Math.max(0,Math.min(51,i)):0;
+    },
+    info:i=>{
+      const r=rowsAt(i);
+      if(!r)return null;
+      return {x:X(i+0.5),
+        html:`<div class="tt-h">${wkLabel(i)}</div><div class="tt-d">${r.rows.join('<br>')}</div>`,
+        label:wkLabel(i)+': '+r.label};
+    }
+  });
 }
 
 /* Snowpack and storage for one basin — the relationship that matters, as
    two panels rather than the dual axis this used to be. */
-function snowStoreChart(basinId){
+function snowStoreChart(el,basinId){
   const snow=(typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[basinId];
   const bb=(typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[basinId];
-  const tcapB=(typeof BASIN_TCAP!=='undefined')&&BASIN_TCAP[basinId];
+  const tcap=(typeof BASIN_TCAP!=='undefined')&&BASIN_TCAP[basinId];
   const bn=(BASINS.find(b=>b.id===basinId)||{}).n||'';
+  const MID=MONTH_WK.map(wyOf), EOM=EOM_WK.map(wyOf);
   const panels=[];
+  let sto=null, med=null, lo=null, hi=null;
   if(snow)panels.push({title:'Snowpack · snow-water equivalent',unit:'″',
-    cur:snow.cur,nrm:snow.nrm,col:SNOWCOL,area:true});
-  if(bb&&tcapB){
-    const tel=RES.filter(r=>r.b===basinId&&!r.fc&&r.dwr&&typeof RES_NORMALS!=='undefined'&&RES_NORMALS[r.id]);
-    const tcap=tel.reduce((s,r)=>s+r.cap,0)||tcapB;
-    if(tel.length)panels.push({title:'Reservoir storage · share of capacity',unit:'%',max:100,
-      cur:MONTHS.map((_,mi)=>tel.reduce((s,r)=>s+stoAt(r,mi),0)/tcap*100),
-      nrm:MONTH_WK.map(w=>bb[1][w]/tcap*100),col:STORECOL,area:false});
+    cur:{pts:series(MID,snow.cur),dots:false,area:true,col:SNOWCOL},
+    med:{pts:series(MID,snow.nrm)}});
+  if(bb&&tcap){
+    /* BASIN_TCAP and the client set are the same population by construction
+       (supply-only, telemetered — asserted in the smoke tests), so numerator
+       and denominator finally agree */
+    const tel=RES.filter(r=>r.b===basinId&&!r.fc&&r.dwr
+      &&typeof RES_NORMALS!=='undefined'&&RES_NORMALS[r.id]);
+    if(tel.length){
+      sto=MONTHS.map((_,mi)=>tel.reduce((s,r)=>s+stoAt(r,mi),0)/tcap*100);
+      const wy=i=>(i+39)%52;                 /* wy week -> calendar week */
+      med=d3.range(52).map(i=>bb[1][wy(i)]/tcap*100);
+      lo=d3.range(52).map(i=>bb[0][wy(i)]/tcap*100);
+      hi=d3.range(52).map(i=>bb[2][wy(i)]/tcap*100);
+      panels.push({title:'Reservoir storage · share of capacity',unit:'%',top:100,
+        band:{lo,hi},med:{wk:med},
+        cur:{pts:series(EOM,sto),dots:true,area:false,col:STORECOL}});
+    }
   }
-  if(!panels.length)return wyChart(PMH[basinId],ramp(Math.round(PMH[basinId][NOW])));
-  return panelChart(panels,`${bn} basin: snowpack and reservoir storage across the water year, `
-    +`this year against the normal, on two separate scales.`);
+  if(!panels.length){el.innerHTML='';return;}
+  drawPanels(el,panels,
+    `${bn} basin: snowpack and reservoir storage across the water year, `
+    +`this year against the normal, on two separate scales.`,
+    i=>{
+      const rows=[]; let label='';
+      if(snow){
+        const si=nearSample(MID,snow.cur,i), ni=nearSample(MID,snow.nrm,i);
+        if(si>=0)rows.push(`snow (mid-${monShort(si)}): <b>${inch(snow.cur[si])}</b> this yr · ${inch(snow.nrm[si])} normal`);
+        else if(ni>=0)rows.push(`snow (mid-${monShort(ni)}): ${inch(snow.nrm[ni])} normal`);
+      }
+      if(med){
+        rows.push(`storage median <b>${Math.round(med[i])}%</b> · range ${Math.round(lo[i])}–${Math.round(hi[i])}%`);
+        const ci=nearSample(EOM,sto,i);
+        if(ci>=0)rows.push(`this year (end of ${monShort(ci)}): <b>${Math.round(sto[ci])}%</b>`);
+        label=`storage median ${Math.round(med[i])} percent`;
+      }
+      return rows.length?{rows,label:label||'snowpack'}:null;
+    });
 }
-
-/* A basin's water-year so far — the 10 monthly % values. Last-resort fallback
-   for a basin with neither baked snowpack nor a storage band. */
-function wyChart(series,color){
-  if(!series||!series.length)return '';
-  const W=680,H=150,padL=34,padR=12,padT=14,padB=24, iw=W-padL-padR, ih=H-padT-padB;
-  const mn=Math.min(80,Math.min(...series)-4), mx=Math.max(120,Math.max(...series)+4), rng=mx-mn;
-  const X=i=>padL+i/(series.length-1)*iw, Y=v=>padT+ih-((v-mn)/rng)*ih;
-  const line=series.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join('');
-  const base=Y(100);
-  const labs=['Oct','Dec','Feb','Apr','Jun','Jul'], idx=[0,2,4,6,8,9];
-  const xt=idx.map((i,k)=>`<text x="${X(i).toFixed(1)}" y="${H-7}" text-anchor="middle" class="hc-ax">${labs[k]}</text>`).join('');
-  return `<svg class="histchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img"
-     aria-label="Basin storage percent of median across the water year.">
-    <line x1="${padL}" y1="${base.toFixed(1)}" x2="${W-padR}" y2="${base.toFixed(1)}" stroke="${REFCOL}" stroke-dasharray="4 3"/>
-    <text x="${W-padR}" y="${(base-5).toFixed(1)}" text-anchor="end" class="hc-ax">normal (100%)</text>
-    ${xt}
-    <path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/>
-    <circle cx="${X(series.length-1).toFixed(1)}" cy="${Y(series[series.length-1]).toFixed(1)}" r="3.2" fill="${color}"/>
-  </svg>`;
+/* the two-panel chart as text: one row per month of the water year so far */
+function snowStoreTable(basinId){
+  const snow=(typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[basinId];
+  const bb=(typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[basinId];
+  const tcap=(typeof BASIN_TCAP!=='undefined')&&BASIN_TCAP[basinId];
+  if(!snow&&!(bb&&tcap))return '';
+  const tel=RES.filter(r=>r.b===basinId&&!r.fc&&r.dwr
+    &&typeof RES_NORMALS!=='undefined'&&RES_NORMALS[r.id]);
+  const rows=MONTHS.map((m,mi)=>{
+    const sc=snow?inch(snow.cur[mi]):'—', sn=snow?inch(snow.nrm[mi]):'—';
+    let tc='—',tm='—';
+    if(bb&&tcap&&tel.length){
+      tc=Math.round(tel.reduce((s,r)=>s+stoAt(r,mi),0)/tcap*100)+'%';
+      tm=Math.round(bb[1][EOM_WK[mi]]/tcap*100)+'%';
+    }
+    return [m,sc,sn,tc,tm];
+  });
+  return dataTable({
+    id:'tbl-snowstore-'+basinId,
+    caption:'Snow is sampled mid-month (NRCS SNOTEL); storage at month end. '
+      +'Storage median is the CDSS 2005–present weekly median for that week; '
+      +'"this year" storage is the site’s monthly reconstruction (live where telemetered).',
+    head:['Month','Snow this yr','Snow normal','Storage this yr','Storage median'],
+    rows
+  });
 }
 
 /* =====================================================================
@@ -541,7 +667,7 @@ function mountAll(root){
     if(kind==='snowState')snowStateChart(el);
     else if(kind==='snowBars')snowDecadeBars(el);
     else if(kind==='powell')powellChart(el);
-    else if(kind==='snowStore')el.innerHTML=snowStoreChart(el.dataset.basin);
+    else if(kind==='snowStore')snowStoreChart(el,el.dataset.basin);
   });
 }
 /* availability predicates, so story.js can decide whether to emit a chart
@@ -550,9 +676,8 @@ const hasDecades=()=>!!((typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES&&SNOW_
 const hasSnowChart=()=>hasDecades()||(typeof SNOW_BASIN!=='undefined'&&Object.keys(SNOW_BASIN).length>0);
 const hasPowell=()=>!!((typeof POWELL_ANNUAL!=='undefined')&&POWELL_ANNUAL.length);
 const hasSnowStore=bid=>!!(((typeof SNOW_BASIN!=='undefined')&&SNOW_BASIN[bid])
-  ||((typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[bid])
-  ||(typeof PMH!=='undefined'&&PMH[bid]));
+  ||((typeof BASIN_BANDS!=='undefined')&&BASIN_BANDS[bid]));
 
-window.CW_HISTORY={mountAll,snowDecadeTable,powellTable,
+window.CW_HISTORY={mountAll,snowDecadeTable,powellTable,snowStoreTable,
   hasDecades,hasSnowChart,hasPowell,hasSnowStore};
 })();

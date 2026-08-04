@@ -419,7 +419,7 @@ function secMyBasin(tap){
      <h3 class="lr-h3">Snow in, water out</h3>
      ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
      ${snowLine}
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two scales, two panels — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, storage as a share of its telemetered capacity. They share the water year on the x-axis so you can compare timing and shape; they are deliberately <i>not</i> stacked on one axis, which would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div>${chartTable}</div>`:''}
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two panels sharing the water year — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites; storage as a share of its telemetered <i>supply</i> capacity (flood-control pools excluded on both sides). <b>The shaded band and dashed median are measured</b> — CDSS daily basin totals since 2005, weekly — while <b>this year’s storage is a monthly reconstruction</b> (the July snapshot scaled by the basin’s derived factors, live where telemetered), which is why it is drawn as ten end-of-month dots rather than a continuous curve. The two panels are deliberately <i>not</i> one axis: that would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div>${chartTable}</div>`:''}
      ${plumbing}`);
 }
 
