@@ -79,11 +79,11 @@ SRC = open(DATA_JS, encoding='utf-8').read()
 GAGE_BASIN = {}
 for m in re.finditer(r"gage:'(\d+)'[^}]*?sys:'(\w+)'", SRC):
     GAGE_BASIN.setdefault(m.group(1), m.group(2))
-RES_META = {}  # id -> {dwr, lat, lon, cap, b}
-for m in re.finditer(r"\{id:'(\w+)',(?:dwr:'(\w+)',)?(?:fc:\d+,)?n:'[^']*',lat:([-\d.]+),lon:([-\d.]+),cap:(\d+),[^}]*b:'(\w+)'", SRC):
-    RES_META[m.group(1)] = {'dwr': m.group(2), 'lat': float(m.group(3)),
-                            'lon': float(m.group(4)), 'cap': int(m.group(5)),
-                            'b': m.group(6)}
+RES_META = {}  # id -> {dwr, fc, lat, lon, cap, b}
+for m in re.finditer(r"\{id:'(\w+)',(?:dwr:'(\w+)',)?(fc:\d+,)?n:'[^']*',lat:([-\d.]+),lon:([-\d.]+),cap:(\d+),[^}]*b:'(\w+)'", SRC):
+    RES_META[m.group(1)] = {'dwr': m.group(2), 'fc': bool(m.group(3)),
+                            'lat': float(m.group(4)), 'lon': float(m.group(5)),
+                            'cap': int(m.group(6)), 'b': m.group(7)}
 print(f'parsed {len(GAGE_BASIN)} gages, {len(RES_META)} reservoirs from data.js')
 
 
@@ -173,11 +173,15 @@ for rid, meta in RES_META.items():
 
 # ---- 2b. basin storage bands: weekly min/median/max of the basin's TOTAL
 # telemetered storage, from daily totals on dates where >=80% of the basin's
-# telemetered capacity is reporting (so coverage gaps don't distort it) ----
+# telemetered capacity is reporting (so coverage gaps don't distort it).
+# Flood-control pools (fc:1) are excluded: they are not supply, and the client
+# excludes them from "this year" — numerator and denominator must match. ----
 BASIN_BANDS = {}   # basin -> [ [52 min], [52 median], [52 max] ]  (acre-feet)
-BASIN_TCAP = {}    # basin -> summed capacity of its telemetered reservoirs
+BASIN_TCAP = {}    # basin -> summed capacity of its telemetered SUPPLY reservoirs
 _basin_res = {}
 for rid in RES_NORMALS:
+    if RES_META[rid]['fc']:
+        continue
     _basin_res.setdefault(RES_META[rid]['b'], []).append(rid)
 for b, rids in _basin_res.items():
     tcap = sum(RES_META[r]['cap'] for r in rids)
@@ -227,7 +231,10 @@ def median_at_week(rid, ym):
 BASINS = ['colorado', 'gunnison', 'yampa', 'sw', 'rio', 'arkansas', 'platte']
 PMH = {}
 for b in BASINS:
-    rids = [rid for rid, m in RES_META.items() if m['b'] == b and rid in res_hist]
+    # supply reservoirs only — a flood pool pinned near its permanent level
+    # reads as ~100% of median and drags a basin's derived % toward normal
+    rids = [rid for rid, m in RES_META.items()
+            if m['b'] == b and rid in res_hist and not m['fc']]
     series = []
     for ym in MONTHS:
         num = den = 0.0
