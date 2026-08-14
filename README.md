@@ -60,7 +60,10 @@ government APIs:
   hydrographs
 
 Both files carry their own `attribution` and `units` blocks, and the daily
-commits double as an archive of what the site showed each day. `js/live.js`
+commits double as an archive of what the site showed each day. The untouched
+agency responses behind `live.json` are saved verbatim to `data/raw/` (see its
+README) before any cleaning, so every baked number can be audited against
+exactly what USGS/CDSS returned that morning. `js/live.js`
 overlays `live.json` on load; offline or on `file://` the fetch fails quietly
 and the dated snapshot stands.
 

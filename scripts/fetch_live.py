@@ -22,11 +22,20 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_JS = os.path.join(ROOT, 'js', 'data.js')
 OUT = os.path.join(ROOT, 'data', 'live.json')
 OUT_HYDRO = os.path.join(ROOT, 'data', 'hydro.json')
+RAW = os.path.join(ROOT, 'data', 'raw')
+os.makedirs(RAW, exist_ok=True)
 
 
-def fetch_json(url, timeout=60):
+def fetch_json(url, timeout=60, raw=None):
+    """Fetch and parse; when `raw` is given, first save the response verbatim
+    to data/raw/<raw> — the untouched agency bytes the baked numbers came
+    from. Fixed filenames, overwritten daily: git history is the archive."""
     req = urllib.request.Request(url, headers={'User-Agent': 'colorado-water-refresh/1.0'})
-    return json.loads(urllib.request.urlopen(req, timeout=timeout).read().decode('utf-8', 'ignore'))
+    data = urllib.request.urlopen(req, timeout=timeout).read()
+    if raw:
+        with open(os.path.join(RAW, raw), 'wb') as f:
+            f.write(data)
+    return json.loads(data.decode('utf-8', 'ignore'))
 
 
 # ---- parse the canonical dataset for gage/reservoir wiring ----
@@ -46,7 +55,8 @@ gages, res, delta = {}, {}, {}
 # ---- USGS instantaneous streamflow ----
 try:
     j = fetch_json('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='
-                   + ','.join(GAGES) + '&parameterCd=00060&siteStatus=all')
+                   + ','.join(GAGES) + '&parameterCd=00060&siteStatus=all',
+                   raw='usgs_iv.json')
     for ts in (j.get('value', {}).get('timeSeries') or []):
         try:
             site = ts['sourceInfo']['siteCode'][0]['value']
@@ -61,7 +71,8 @@ except Exception as e:
 # ---- CDSS latest storage ----
 try:
     j = fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/'
-                   '?format=json&parameter=STORAGE&abbrev=' + '%2C'.join(sorted(RES)))
+                   '?format=json&parameter=STORAGE&abbrev=' + '%2C'.join(sorted(RES)),
+                   raw='cdss_telemetry_storage.json')
     cutoff = NOW - datetime.timedelta(days=14)  # ignore stations gone quiet
     best = {}
     for row in (j.get('ResultList') or []):
@@ -90,7 +101,7 @@ try:
     j = fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/'
                    '?format=json&parameter=STORAGE&abbrev=' + '%2C'.join(sorted(RES))
                    + '&startDate=' + dstr(NOW - datetime.timedelta(days=8)) + '&endDate=' + dstr(NOW),
-                   timeout=90)
+                   timeout=90, raw='cdss_week_storage.json')
     by_ab = {}
     for row in (j.get('ResultList') or []):
         try:

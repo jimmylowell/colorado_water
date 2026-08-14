@@ -24,7 +24,7 @@ jobs:
 
       - name: Commit if changed
         run: |
-          git add data/live.json data/hydro.json
+          git add data/live.json data/hydro.json data/raw
           if git diff --cached --quiet; then
             echo "no change"
             exit 0
