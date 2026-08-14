@@ -27,7 +27,7 @@
     <div>
       <p class="eyebrow">Raw data · water year 2026</p>
       <h1>Take the <em>numbers</em> with you</h1>
-      <p class="standfirst">Everything behind the map, as plain CSV. The committed files are the dated snapshot the site ships with; the export button below folds in whatever live readings your browser just fetched.</p>
+      <p class="standfirst">Everything behind the map, as plain CSV. The committed files are the dated snapshot the site ships with; the export button below folds in the daily readings, baked from USGS and Colorado DWR once a day.</p>
     </div>
     <div class="asof">
       <div>snapshot <b>22 Jul 2026</b></div>
@@ -54,15 +54,15 @@
     </div>
     <div class="card">
       <h3>Current values</h3>
-      <p>reservoirs.csv, but with live Colorado DWR telemetry readings replacing the snapshot wherever your browser could fetch them just now.</p>
+      <p>reservoirs.csv, but with Colorado DWR telemetry readings from the daily refresh replacing the snapshot wherever a station reported.</p>
       <button class="dlbtn" id="dl-live">Download current CSV</button>
-      <div class="livestat" id="livestat">Contacting live services…</div>
+      <div class="livestat" id="livestat">Loading the daily readings…</div>
     </div>
   </div>
 
   <section class="prose">
     <h2>Every reservoir in the set</h2>
-    <p>Rows marked <b>live</b> were refreshed from Colorado DWR telemetry when this page loaded. <b>Observed</b> rows carry a published, dated reading; <b>basin estimate</b> rows are scaled to their basin's NRCS percent of median because no same-day public reading was available.</p>
+    <p>Rows marked <b>live</b> carry Colorado DWR telemetry from the daily refresh. <b>Observed</b> rows carry a published, dated reading; <b>basin estimate</b> rows are scaled to their basin's NRCS percent of median because no same-day public reading was available.</p>
   </section>
   <div class="tablewrap"><table class="dtable" id="restable"></table></div>
 
@@ -80,7 +80,7 @@
     <ul>
       <li><b>capacity_af / storage_af</b> — total and current storage in acre-feet. An acre-foot floods one acre a foot deep: roughly what two Front Range households use in a year.</li>
       <li><b>pct_of_median</b> — storage against this station's median for this calendar week, 100 = a normal year. When live, it is <i>derived</i> from the reading and the baked median; otherwise it carries the operator's or basin's reported figure.</li>
-      <li><b>confidence / method</b> — <i>observed / measured</i>: a published, dated reading; <i>live / derived</i>: DWR telemetry fetched by your browser, compared to the baked median; <i>basin estimate / estimated</i>: scaled from the basin's percent of median.</li>
+      <li><b>confidence / method</b> — <i>observed / measured</i>: a published, dated reading; <i>live / derived</i>: DWR telemetry from the daily refresh, compared to the baked median; <i>basin estimate / estimated</i>: scaled from the basin's percent of median.</li>
       <li><b>role</b> — <i>water supply</i>, or <i>flood control</i> for the Corps of Engineers pools (Cherry Creek, Bear Creek): famous lakes nobody drinks from, whose capacity_af is just the small permanent pool and whose percent-of-median is blank because "normal storage" doesn't apply.</li>
       <li><b>dwr_telemetry_abbrev</b> — Colorado DWR station code, usable directly against the <a href="https://dwr.state.co.us/Tools/Stations" rel="noopener">CDSS station tools</a> and REST API.</li>
     </ul>
@@ -96,7 +96,7 @@
     <p>For the authoritative answer, in order of usefulness: your utility bill; your provider’s own website; the <a href="https://sdwis.epa.gov/ords/sfdw_pub/r/sfdw/sdwis_fed_reports_public/" rel="noopener">EPA SDWIS federal reporting search</a> (look up a system by state and name); and <a href="https://www.epa.gov/dwreginfo/information-about-public-water-systems" rel="noopener">EPA’s explainer on public water systems</a>. For plain-language background on Colorado water generally, <a href="https://www.watereducationcolorado.org/" rel="noopener">Water Education Colorado</a> is the standard reference.</p>
 
     <h2>The source ledger</h2>
-    <p>Everything traces to a keyless, CORS-open, public-domain endpoint. Histories are pulled once and reduced to weekly day-of-year medians by <span style="font-family:var(--mono)">scripts/build_normals.py</span>, which writes <span style="font-family:var(--mono)">js/normals.js</span>; the browser then fetches only current values and derives the percentages live.</p>
+    <p>Everything traces to a keyless, CORS-open, public-domain endpoint. Histories are pulled once and reduced to weekly day-of-year medians by <span style="font-family:var(--mono)">scripts/build_normals.py</span>, which writes <span style="font-family:var(--mono)">js/normals.js</span>. Current values are fetched once a day by a scheduled GitHub Action (<span style="font-family:var(--mono)">scripts/fetch_live.py</span> → <span style="font-family:var(--mono)">data/live.json</span>), so your browser reads small files from this site — never the government APIs — and derives the percentages from them. The same run bakes <span style="font-family:var(--mono)">data/hydro.json</span>, the trailing year of daily values behind every station's in-sheet hydrograph.</p>
     <div class="tablewrap"><table class="dtable">
       <tr><th>Source</th><th>Endpoint</th><th>What it gives</th><th>Record</th><th>Grade</th></tr>
       <tr><td><b>USGS NWIS</b></td><td><a href="https://waterservices.usgs.gov/" rel="noopener">waterservices.usgs.gov</a></td><td>Streamflow — current (iv) + daily record (dv) for the gage medians</td><td>from 1991</td><td>measured</td></tr>
@@ -118,9 +118,10 @@
     <p class="aside">Note that the two measured sources are not quite the same quantity. A CDSS stage is today's pool, which moves through the season; a 3DEP surface is where the water stood when the elevation model was flown. Both are the water surface, and the difference is far smaller than the gaps between reservoirs, which is all the ordering depends on. The vertical spacing in that diagram is deliberately not to scale — only the order is exact.</p>
     <p>The two Lake Powell thresholds are elevations, converted to storage: <b>minimum power pool</b> (3,490 ft) from Reclamation's own daily record, which shows the reservoir holding 4.00 MAF at that elevation while filling in 1964, less the ~6.8% capacity since lost to sediment — the same record reads 5.91 MAF at 3,525 ft in 1965 against 5.51 MAF in 2026 — giving ≈3.7 MAF today. <b>Dead pool</b> (3,370 ft) is total capacity 25.16 MAF (USGS 2018 survey) less ~23.3 MAF of live capacity, ≈1.9 MAF.</p>
 
-    <p>Regenerate the baked medians from source at any time:</p>
+    <p>Regenerate the baked medians or the daily readings from source at any time:</p>
     <pre class="cmd">python3 scripts/build_normals.py   <span style="color:#8a8069"># pulls the histories, rewrites js/normals.js</span>
-python3 scripts/make_csvs.py       <span style="color:#8a8069"># re-exports the CSVs on this page</span></pre>
+python3 scripts/make_csvs.py       <span style="color:#8a8069"># re-exports the CSVs on this page</span>
+python3 scripts/fetch_live.py      <span style="color:#8a8069"># today's readings, rewrites data/live.json + data/hydro.json (a GitHub Action runs this daily)</span></pre>
     <p class="aside">All of it is public, US-government or utility-published data. This project only collates it — check the primary sources before using any number for anything that matters.</p>
   </section>
 

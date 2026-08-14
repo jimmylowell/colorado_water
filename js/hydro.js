@@ -1,43 +1,45 @@
 "use strict";
 /* =====================================================================
    HYDROGRAPH — a small gov-style daily chart in the data sheet.
-   Reservoirs: trailing year of daily STORAGE from Colorado DWR CDSS.
-   Gages: trailing year of daily discharge from USGS NWIS.
-   Offline, reservoirs fall back to the site's monthly reconstruction.
-   Both endpoints are CORS-open; series are cached per station.
+   Reservoirs: trailing year of daily STORAGE (Colorado DWR CDSS).
+   Gages: trailing year of daily discharge (USGS NWIS).
+   Both come from data/hydro.json, baked daily by the same GitHub Action
+   as data/live.json — one same-origin bundle for every station, smaller
+   than a single raw USGS response, so the browser never queries the
+   government APIs. Offline, reservoirs fall back to the site's monthly
+   reconstruction.
    ===================================================================== */
 (function(){
 const CACHE={};
 const W=294,HT=138,M={l:37,r:6,t:10,b:26};
 const IW2=W-M.l-M.r, IH2=HT-M.t-M.b;
 
-function pad2(n){return String(n).padStart(2,'0');}
-function cdssURL(abbrev){
-  const now=new Date(), ago=new Date(now.getTime()-365*864e5);
-  const f=d=>pad2(d.getMonth()+1)+'%2F'+pad2(d.getDate())+'%2F'+d.getFullYear();
-  return 'https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/'
-    +'?format=json&parameter=STORAGE&abbrev='+abbrev+'&startDate='+f(ago)+'&endDate='+f(now);
-}
-function usgsURL(site){
-  return 'https://waterservices.usgs.gov/nwis/dv/?format=json&sites='+site
-    +'&parameterCd=00060&period=P365D';
-}
 const fetchJSON=url=>window.CW_CHARTS.fetchJSON(url,12000);
+let BUNDLE=null;
+function bundle(){
+  if(!BUNDLE){
+    BUNDLE=fetchJSON('data/hydro.json').then(j=>{
+      if(!j||!j.series||!j.start)throw new Error('empty');
+      return j;
+    });
+    BUNDLE.catch(()=>{BUNDLE=null;}); /* allow retry next time */
+  }
+  return BUNDLE;
+}
 function ensure(kind,key){
   const ck=kind+':'+key;
   if(!CACHE[ck]){
-    CACHE[ck]=(kind==='res'
-      ? fetchJSON(cdssURL(key)).then(j=>((j&&j.ResultList)||[])
-          .map(row=>({t:Date.parse(row.measDate),v:row.measValue}))
-          .filter(p=>isFinite(p.t)&&isFinite(p.v)&&p.v>=0))
-      : fetchJSON(usgsURL(key)).then(j=>{
-          const ts=j.value&&j.value.timeSeries&&j.value.timeSeries[0];
-          const vv=(ts&&ts.values&&ts.values[0]&&ts.values[0].value)||[];
-          return vv.map(p=>({t:Date.parse(p.dateTime),v:parseFloat(p.value)}))
-            .filter(p=>isFinite(p.t)&&isFinite(p.v)&&p.v>=0);
-        })
-    ).then(pts=>{pts.sort((a,b)=>a.t-b.t);if(!pts.length)throw new Error('empty');return pts;});
-    CACHE[ck].catch(()=>{delete CACHE[ck];}); /* allow retry next time */
+    CACHE[ck]=bundle().then(j=>{
+      const arr=j.series[ck];
+      if(!arr)throw new Error('no series');
+      /* noon avoids the day sliding across midnight-DST boundaries */
+      const t0=Date.parse(j.start+'T12:00:00');
+      const pts=[];
+      arr.forEach((v,i)=>{if(v!=null&&isFinite(v)&&v>=0)pts.push({t:t0+i*864e5,v});});
+      if(!pts.length)throw new Error('empty');
+      return pts;
+    });
+    CACHE[ck].catch(()=>{delete CACHE[ck];});
   }
   return CACHE[ck];
 }
@@ -140,7 +142,7 @@ function monthlyFallback(el,r,failed){
     fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
     band:resBand(r.id,pts[0].t,pts[pts.length-1].t),
     lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
-    caption:(failed?'couldn’t reach DWR telemetry — showing the ':'')
+    caption:(failed?'couldn’t load the baked daily storage — showing the ':'')
       +'basin-scaled monthly reconstruction (snapshot '+SNAP_DATE+') · '
       +'shaded = 2005–now weekly min–max, dashed = median'
   });

@@ -106,13 +106,12 @@
     <div class="card">
       <h3>Data &amp; live readings</h3>
       <ul class="src">
-        <li><b>Colorado DWR telemetry (CDSS)</b> dwr.state.co.us · live storage for 27 reservoirs, fetched on load</li>
-        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · live discharge at 18 gages, fetched on load</li>
+        <li><b>Colorado DWR telemetry (CDSS)</b> dwr.state.co.us · storage for 27 reservoirs, refreshed daily</li>
+        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · discharge at 18 gages, refreshed daily</li>
         <li><b>Denver Water · USBR · Northern Water</b> published storage in the baseline snapshot</li>
         <li><b>NRCS Water Supply Outlook</b> monthly basin % of 1991–2020 median — the timeline's backbone</li>
       </ul>
-      <button class="livebtn" id="live">Refresh live readings</button>
-      <div class="livestat" id="livestat">Live readings load automatically; the snapshot stands in wherever they can't.</div>
+      <div class="livestat" id="livestat">Daily readings load automatically; the snapshot stands in wherever they can't.</div>
       <p style="margin-top:12px">Want the numbers themselves? The full dataset is on the <a href="data.html" style="color:var(--aqua)">data page</a> as downloadable CSVs.</p>
     </div>
   </div>

@@ -46,26 +46,33 @@ the root auto-redirect from the story to `map.html`.
 reservoirs, basin history, rivers, and the flow graph. The site renders
 entirely from it, so everything works offline or from a saved file.
 
-On load, the browser asks two public CORS-open APIs for fresher numbers and
-overlays whatever it gets:
+Fresher numbers are baked into the repo **once a day** by a scheduled GitHub
+Action (`.github/workflows/refresh-data.yml` → `scripts/fetch_live.py`), so
+visitors read two small same-origin files and no browser ever queries the
+government APIs:
 
-- **Colorado DWR CDSS telemetry** — latest storage for the 27 reservoirs with a
-  `dwr` station code (14-day staleness cutoff, plausibility-checked), plus the
-  past week of daily storage to compute each reservoir's drawdown rate in cfs
-- **USGS NWIS instantaneous values** — streamflow at 18 gages
+- **`data/live.json`** (~2 KB) — latest storage for the reservoirs with a
+  `dwr` station code (14-day staleness cutoff, plausibility-checked) from
+  Colorado DWR's CDSS telemetry, latest streamflow at 18 gages from USGS NWIS
+  instantaneous values, and each reservoir's past-week drawdown rate in cfs
+- **`data/hydro.json`** (~90 KB) — a trailing year of daily values per station
+  (CDSS `telemetrytimeseriesday` / USGS `nwis/dv`) behind the in-sheet
+  hydrographs
 
-Selecting a reservoir or gage additionally fetches a trailing year of daily
-data (CDSS `telemetrytimeseriesday` / USGS `nwis/dv`) for the in-sheet
-hydrograph, cached per station for the session.
+Both files carry their own `attribution` and `units` blocks, and the daily
+commits double as an archive of what the site showed each day. `js/live.js`
+overlays `live.json` on load; offline or on `file://` the fetch fails quietly
+and the dated snapshot stands.
 
 The CSVs in `data/` are generated from the snapshot:
 
 ```sh
 python3 scripts/make_csvs.py    # uses node if present, else macOS JavaScriptCore
+python3 scripts/fetch_live.py   # today's readings → data/live.json + data/hydro.json
 ```
 
 `data.html` also offers a client-side "current values" CSV export that folds in
-the live readings the browser just fetched.
+the daily readings.
 
 ## Local development
 
