@@ -927,7 +927,7 @@ function renderStrip(){
     const series=s.spark?statSeries(s.spark):null;
     return `<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls}">${s.v}</div>`
       +`<div class="n">${s.n}</div>`
-      +(series?`<div class="spark" title="Oct 2025 → Jul 2026">${CW_CHARTS.sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
+      +(series?`<div class="spark" title="Oct 2025 → Sep 2026">${CW_CHARTS.sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
       +`</div>`;
   }).join('');
 }

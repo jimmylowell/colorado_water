@@ -16,7 +16,9 @@ OUT = ROOT / 'data'
 
 EXTRACT = ("return JSON.stringify({RES:RES,PMH:PMH,"
            "PMH_DERIVED:(typeof PMH_DERIVED!=='undefined'?PMH_DERIVED:{}),"
-           "MONTHS:MONTHS,FLOWPCT:FLOWPCT,G:G,BASINS:BASINS});")
+           "MONTHS:MONTHS,FLOWPCT:FLOWPCT,"
+           "FLOWPCT_DERIVED:(typeof FLOWPCT_DERIVED!=='undefined'?FLOWPCT_DERIVED:null),"
+           "G:G,BASINS:BASINS});")
 
 
 def eval_data_js():
@@ -66,7 +68,8 @@ def main():
         return 'derived' if dv and all(v is not None for v in dv) else 'estimated'
     hist = [[basin_names.get(b, b), m, pcts[i], basin_method(b)]
             for b, pcts in d['PMH'].items() for i, m in enumerate(d['MONTHS'])]
-    hist += [['Statewide streamflow', m, d['FLOWPCT'][i], 'reconstruction']
+    flow_method = 'derived' if d.get('FLOWPCT_DERIVED') else 'reconstruction'
+    hist += [['Statewide streamflow', m, d['FLOWPCT'][i], flow_method]
              for i, m in enumerate(d['MONTHS'])]
     write(OUT / 'basin_history.csv',
           ['basin', 'month', 'pct_of_median', 'method'], hist)

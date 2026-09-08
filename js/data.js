@@ -78,12 +78,20 @@ const RESHUE_FALLBACK={shadow:H.blue,willow:H.blue,wolford:H.blue,riflegap:H.blu
   marston:H.green,ralston:H.cyan,standley:H.lime,prewitt:H.orange};
 
 /* =====================================================================
-   HISTORICAL BASIN STORAGE — % of 1991–2020 median, end of month.
-   Anchors from NRCS reports (Dec, Mar, Apr, May); other months
-   interpolated; July carries the June reading forward.
+   HISTORICAL BASIN STORAGE — % of median, end of month, for the whole
+   water year (Oct 2025 – Sep 2026). The derived series is PMH_DERIVED in
+   js/normals.js (CDSS daily history against each reservoir's own weekly
+   median); the hand-anchored PMH_FALLBACK below covers basins with no
+   telemetered reservoir. Months after the snapshot are carried forward in
+   the fallback and re-derived on each build.
    ===================================================================== */
-const MONTHS=['Oct 2025','Nov 2025','Dec 2025','Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026'];
-const NOW=9;
+const MONTHS=['Oct 2025','Nov 2025','Dec 2025','Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026','Jun 2026','Jul 2026','Aug 2026','Sep 2026'];
+const NOW=11;
+/* SNAP_MI is the month the baked reservoir readings (r.sto / r.pm) and the
+   base flows (FLOWQ) were taken in. Scaling a snapshot value to another month
+   goes through pmFactor/qFactor RELATIVE TO THIS MONTH, not to NOW — once NOW
+   moved past the snapshot month the two stopped being the same thing. */
+const SNAP_MI=9;
 /* the snapshot's as-of date — anything that anchors "now" to the baked data
    reads this rather than hard-coding a date that silently goes stale */
 const SNAP_DATE='2026-07-22';
@@ -91,19 +99,19 @@ const SNAP_DATE='2026-07-22';
    map sheet and step-down diagrams all read this */
 const WEST=['colorado','gunnison','yampa','sw'];
 const slopeOf=b=>WEST.includes(b)?'w':'e';
-/* Monthly basin storage % of the 1991–2020 median, Oct→Jul.
+/* Monthly basin storage % of the median, Oct→Sep.
    The real, derived series is PMH_DERIVED in js/normals.js (built by
    scripts/build_normals.py from CDSS daily history). It carries null for any
    basin with no live-telemetered reservoir (yampa: Steamboat Lake stopped
    reporting in 2022), so we fall back to this hand-anchored series there. */
 const PMH_FALLBACK={
- colorado:[91,90,88,88,89,91,93,84,80,80],
- gunnison:[90,86,79,78,77,76,75,72,70,70],
- yampa:  [92,89,85,84,83,82,81,80,78,78],
- sw:     [84,80,77,76,75,74,73,71,69,69],
- rio:    [118,120,122,121,120,119,118,96,86,86],
- arkansas:[100,100,100,100,100,99,100,96,91,91],
- platte: [98,99,100,100,99,100,93,92,90,90]
+ colorado:[91,90,88,88,89,91,93,84,80,80,80,80],
+ gunnison:[90,86,79,78,77,76,75,72,70,70,70,70],
+ yampa:  [92,89,85,84,83,82,81,80,78,78,78,78],
+ sw:     [84,80,77,76,75,74,73,71,69,69,69,69],
+ rio:    [118,120,122,121,120,119,118,96,86,86,86,86],
+ arkansas:[100,100,100,100,100,99,100,96,91,91,91,91],
+ platte: [98,99,100,100,99,100,93,92,90,90,90,90]
 };
 const PMH=(function(){
  const out={};
@@ -114,17 +122,21 @@ const PMH=(function(){
  }
  return out;
 })();
-/* Statewide streamflow % of normal by month — note the record-early March
-   melt spike. Illustrative reconstruction anchored to NRCS/USGS statements;
-   the LIVE streamflow % (current ÷ baked GAGE_NORMALS median) is derived in
-   js/live.js. Kept here for the timeline animation (qFactor). */
-const FLOWPCT=[55,50,48,45,46,135,70,55,34,44];
+/* Statewide streamflow % of normal by month, Oct→Sep. Derived by
+   scripts/build_normals.py as FLOWPCT_DERIVED: for each month, the sum of
+   daily flow at the mapped gages over the sum of their weekly medians — the
+   same arithmetic js/live.js uses for the live headline figure. The hand
+   series below is the pre-derivation fallback, kept only for a build that
+   could not fetch the gage record. Drives the timeline animation (qFactor). */
+const FLOWPCT_FALLBACK=[55,50,48,45,46,135,70,55,34,44,54,55];
+const FLOWPCT=(typeof FLOWPCT_DERIVED!=='undefined'&&FLOWPCT_DERIVED.length===MONTHS.length
+  &&FLOWPCT_DERIVED.every(v=>v>0))?FLOWPCT_DERIVED.slice():FLOWPCT_FALLBACK.slice();
 /* LIVE_STO is filled by live.js with {sto, asOf} per reservoir id when a
    fresh DWR telemetry reading arrives; the snapshot stands otherwise.
    LIVE_DELTA holds the week's storage trend as cfs (+ = drawing down). */
 const LIVE_STO={};
 const LIVE_DELTA={};
-function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][NOW]:1); }
+function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][SNAP_MI]:1); }
 /* week-of-year index 0..51, matching the baked weekly medians in normals.js */
 function weekIdx(d){ d=d||new Date();
   const day=Math.floor((d-new Date(d.getFullYear(),0,0))/864e5);
@@ -151,7 +163,7 @@ function pmAt(r,mi){
   }
   return Math.round(r.pm*pmFactor(r.b,mi));
 }
-function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[NOW]; }
+function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[SNAP_MI]; }
 /* one basin summary — story.js (Act 1 panel, Act 2 stats) and the map's
    basin sheet each used to recompute this with subtly different fallbacks */
 function basinStats(bid,mi){

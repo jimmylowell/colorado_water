@@ -141,6 +141,7 @@ def cdss_daily(abbrev):
 # ---- 1. gages: coords + weekly flow medians ----
 sites = get_gage_sites()
 GAGES, GAGE_NORMALS = {}, {}
+gage_hist = {}  # gid -> [(date, cfs)], kept for the monthly statewide flow index
 for gid in sorted(GAGE_BASIN):
     s = sites.get(gid)
     if not s:
@@ -152,11 +153,34 @@ for gid in sorted(GAGE_BASIN):
     hist = usgs_dv(gid)
     if len(hist) > 365:
         GAGE_NORMALS[gid] = weekly_median(hist)
+        gage_hist[gid] = hist
     print(f'  gage {gid} {s["name"][:34]:34} {len(hist):6} days')
 
 # ---- 2. reservoirs: weekly storage medians (real baseline) + WY2026 basin history ----
 MONTHS = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03',
-          '2026-04', '2026-05', '2026-06', '2026-07']
+          '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09']  # the full water year
+
+# Statewide streamflow % of normal by month: sum of daily flow at every gage
+# with a baked median, over the sum of those gages' weekly medians for the
+# same days — the arithmetic js/live.js uses for the live headline, applied
+# month by month. null where no gage reported. The current month is partial
+# until it ends; re-run after Sep 30 to close the water year.
+FLOWPCT_DERIVED = []
+for ym in MONTHS:
+    num = den = 0.0
+    for gid, hist in gage_hist.items():
+        nrm = GAGE_NORMALS.get(gid)
+        if not nrm:
+            continue
+        for d, v in hist:
+            if d.strftime('%Y-%m') != ym:
+                continue
+            m = nrm[weekidx(d)]
+            if m > 0:
+                num += v
+                den += m
+    FLOWPCT_DERIVED.append(round(num / den * 100) if den else None)
+print(f'  FLOWPCT_DERIVED {FLOWPCT_DERIVED}')
 RES_NORMALS = {}
 RES_BANDS = {}   # id -> [ [52 weekly mins], [52 weekly maxs] ] — historical range
 res_hist = {}  # id -> {date: value} for month-end lookups
@@ -274,9 +298,9 @@ def cur_wy_weekly(pairs):
     return [round(sum(b) / len(b), 2) if b else None for b in buckets]
 
 
-MONTH_WK = [41, 45, 49, 2, 6, 10, 14, 19, 23, 27]  # ~mid-month week idx, Oct..Jul
+MONTH_WK = [41, 45, 49, 2, 6, 10, 14, 19, 23, 27, 32, 36]  # ~mid-month week idx, Oct..Sep
 SNOW_NORMALS = []          # statewide weekly median (kept for compatibility)
-SNOW_BASIN = {}            # basin -> {"cur":[10 monthly SWE], "nrm":[10 monthly SWE]}
+SNOW_BASIN = {}            # basin -> {"cur":[12 monthly SWE], "nrm":[12 monthly SWE]}
 try:
     stations = json.loads(fetch(
         'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations'
@@ -594,9 +618,10 @@ with open(OUT, 'w') as f:
     f.write(js('BASIN_BANDS', BASIN_BANDS))  # basin -> [min, median, max] weekly totals (AF)
     f.write(js('BASIN_TCAP', BASIN_TCAP))    # basin -> telemetered capacity (AF)
     f.write(js('SNOW_NORMALS', SNOW_NORMALS))
-    f.write(js('SNOW_BASIN', SNOW_BASIN))    # basin -> {cur, nrm} monthly SWE, Oct..Jul
+    f.write(js('SNOW_BASIN', SNOW_BASIN))    # basin -> {cur, nrm} monthly SWE, Oct..Sep
     f.write(js('SNOW_DECADES', SNOW_DECADES))  # fixed-panel SWE by decade, water-year weeks
     f.write(js('PMH_DERIVED', PMH))        # data.js builds runtime PMH, filling dark basins (yampa)
+    f.write(js('FLOWPCT_DERIVED', FLOWPCT_DERIVED))  # data.js seeds FLOWPCT from this
     f.write(js('RES_ELEV', RES_ELEV))      # id -> {ft, src} water-surface elevation
     f.write(js('POWELL_ANNUAL', POWELL_ANNUAL))
 print(f'\nwrote {os.path.relpath(OUT, ROOT)}  '

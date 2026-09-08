@@ -135,8 +135,10 @@ function resBand(id,t0,t1){
 function monthlyFallback(el,r,failed){
   /* offline: the site's own basin-scaled monthly reconstruction, dotted.
      `failed` = a live fetch was attempted and lost — say so, out loud. */
-  const now=new Date(SNAP_DATE).getTime();
-  const pts=MONTHS.map((m,i)=>({t:now-(NOW-i)*30.4*864e5,v:stoAt(r,i)}));
+  /* anchor the monthly points to the month the snapshot was taken in, not
+     to NOW — after the month list grew past the snapshot the two differ */
+  const snap=new Date(SNAP_DATE).getTime();
+  const pts=MONTHS.map((m,i)=>({t:snap-(SNAP_MI-i)*30.4*864e5,v:stoAt(r,i)}));
   chart(el,pts,{
     color:resColour(r.id),ymax:r.cap*1.05,dotted:true,
     fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',

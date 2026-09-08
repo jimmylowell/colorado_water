@@ -291,7 +291,7 @@ function snowStateFallback(el){
   const mean=(key,i)=>{let s=0,n=0;ids.forEach(b=>{const v=SNOW_BASIN[b][key][i];
     if(v!=null){s+=v;n++;}});return n?s/n:null;};
   const cur=[],nrm=[];
-  for(let i=0;i<10;i++){cur.push(mean('cur',i));nrm.push(mean('nrm',i));}
+  for(let i=0;i<MONTHS.length;i++){cur.push(mean('cur',i));nrm.push(mean('nrm',i));}
   const MID=MONTH_WK.map(wyOf);
   drawPanels(el,[{title:'Snowpack · snow-water equivalent',unit:'″',
     cur:{pts:series(MID,cur),dots:false,area:true,col:SNOWCOL},
@@ -457,13 +457,13 @@ function powellTable(){
    Provenance is drawn, not just captioned: the storage band and median
    are MEASURED (CDSS daily basin totals since 2005, weekly), while
    "this year" is the site's monthly reconstruction — so it is drawn as
-   ten dots at the end-of-month weeks it is actually anchored to, and
+   one dot per month at the end-of-month weeks it is actually anchored to, and
    never pretends to weekly resolution. (The old chart sampled the
    median at MID-month against a series anchored at month END — a
    built-in two-week phase error, now structurally impossible.)
    ===================================================================== */
-const MONTH_WK=[41,45,49,2,6,10,14,19,23,27];  // mid-month calendar week, Oct..Jul (snow sampling)
-const EOM_WK=[43,47,51,4,8,12,17,21,25,30];    // end-of-month calendar week, Oct..Jul (stoAt/PMH anchor)
+const MONTH_WK=[41,45,49,2,6,10,14,19,23,27,32,36];  // mid-month calendar week, Oct..Sep (snow sampling)
+const EOM_WK=[43,47,51,4,8,12,17,21,25,30,34,38];    // end-of-month calendar week, Oct..Sep (stoAt/PMH anchor)
 const wyOf=w=>(w-39+52)%52;                    // calendar week index -> weeks since Oct 1
 const monShort=mi=>MONTHS[mi].split(' ')[0];
 /* pair monthly values with their water-year week positions */

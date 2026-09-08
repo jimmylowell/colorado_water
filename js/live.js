@@ -79,7 +79,15 @@ async function refresh(){
   if(got&&(got.nG||got.nR)){
     deriveStats(got.at);
     const at=got.at.toLocaleDateString('en-US',{day:'numeric',month:'short'});
-    status(`Live: <b style="color:var(--bone)">${got.nR}</b> reservoirs (DWR telemetry) · `
+    /* Once the water year the story covers has closed, the live readings are
+       the NEW year's carryover — say so, with the day count, so the reader
+       can tell the finished story from the running numbers. */
+    const wyStart=new Date(SNAP_DATE.slice(0,4)+'-10-01T00:00:00');
+    const dayN=Math.floor((got.at-wyStart)/864e5)+1;
+    const lead=dayN>=1
+      ? `Water year ${wyStart.getFullYear()+1}, day ${dayN} · carryover: `
+      : `Live: `;
+    status(lead+`<b style="color:var(--bone)">${got.nR}</b> reservoirs (DWR telemetry) · `
       +`<b style="color:var(--bone)">${got.nG}</b> gages (USGS, DWR) · readings gathered ${at}, `
       +`refreshed daily. Everything else shows the dated snapshot.`);
     /* the masthead date: pages that show "snapshot <date>" also get the

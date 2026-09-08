@@ -8,7 +8,9 @@ Colorado headwaters,Mar 2026,87,derived
 Colorado headwaters,Apr 2026,93,derived
 Colorado headwaters,May 2026,82,derived
 Colorado headwaters,Jun 2026,68,derived
-Colorado headwaters,Jul 2026,59,derived
+Colorado headwaters,Jul 2026,60,derived
+Colorado headwaters,Aug 2026,55,derived
+Colorado headwaters,Sep 2026,55,derived
 Gunnison,Oct 2025,68,derived
 Gunnison,Nov 2025,69,derived
 Gunnison,Dec 2025,72,derived
@@ -16,9 +18,11 @@ Gunnison,Jan 2026,80,derived
 Gunnison,Feb 2026,81,derived
 Gunnison,Mar 2026,83,derived
 Gunnison,Apr 2026,71,derived
-Gunnison,May 2026,68,derived
-Gunnison,Jun 2026,68,derived
-Gunnison,Jul 2026,68,derived
+Gunnison,May 2026,66,derived
+Gunnison,Jun 2026,45,derived
+Gunnison,Jul 2026,35,derived
+Gunnison,Aug 2026,28,derived
+Gunnison,Sep 2026,28,derived
 Yampa & White,Oct 2025,92,estimated
 Yampa & White,Nov 2025,89,estimated
 Yampa & White,Dec 2025,85,estimated
@@ -29,6 +33,8 @@ Yampa & White,Apr 2026,81,estimated
 Yampa & White,May 2026,80,estimated
 Yampa & White,Jun 2026,78,estimated
 Yampa & White,Jul 2026,78,estimated
+Yampa & White,Aug 2026,78,estimated
+Yampa & White,Sep 2026,78,estimated
 San Juan & Dolores,Oct 2025,102,derived
 San Juan & Dolores,Nov 2025,100,derived
 San Juan & Dolores,Dec 2025,100,derived
@@ -39,6 +45,8 @@ San Juan & Dolores,Apr 2026,91,derived
 San Juan & Dolores,May 2026,85,derived
 San Juan & Dolores,Jun 2026,78,derived
 San Juan & Dolores,Jul 2026,78,derived
+San Juan & Dolores,Aug 2026,75,derived
+San Juan & Dolores,Sep 2026,75,derived
 Rio Grande,Oct 2025,100,derived
 Rio Grande,Nov 2025,106,derived
 Rio Grande,Dec 2025,106,derived
@@ -48,7 +56,9 @@ Rio Grande,Mar 2026,107,derived
 Rio Grande,Apr 2026,97,derived
 Rio Grande,May 2026,77,derived
 Rio Grande,Jun 2026,61,derived
-Rio Grande,Jul 2026,79,derived
+Rio Grande,Jul 2026,78,derived
+Rio Grande,Aug 2026,83,derived
+Rio Grande,Sep 2026,83,derived
 Arkansas,Oct 2025,86,derived
 Arkansas,Nov 2025,82,derived
 Arkansas,Dec 2025,85,derived
@@ -58,7 +68,9 @@ Arkansas,Mar 2026,92,derived
 Arkansas,Apr 2026,87,derived
 Arkansas,May 2026,73,derived
 Arkansas,Jun 2026,56,derived
-Arkansas,Jul 2026,77,derived
+Arkansas,Jul 2026,78,derived
+Arkansas,Aug 2026,86,derived
+Arkansas,Sep 2026,86,derived
 South Platte,Oct 2025,107,derived
 South Platte,Nov 2025,113,derived
 South Platte,Dec 2025,116,derived
@@ -68,14 +80,18 @@ South Platte,Mar 2026,105,derived
 South Platte,Apr 2026,96,derived
 South Platte,May 2026,95,derived
 South Platte,Jun 2026,86,derived
-South Platte,Jul 2026,85,derived
-Statewide streamflow,Oct 2025,55,reconstruction
-Statewide streamflow,Nov 2025,50,reconstruction
-Statewide streamflow,Dec 2025,48,reconstruction
-Statewide streamflow,Jan 2026,45,reconstruction
-Statewide streamflow,Feb 2026,46,reconstruction
-Statewide streamflow,Mar 2026,135,reconstruction
-Statewide streamflow,Apr 2026,70,reconstruction
-Statewide streamflow,May 2026,55,reconstruction
-Statewide streamflow,Jun 2026,34,reconstruction
-Statewide streamflow,Jul 2026,44,reconstruction
+South Platte,Jul 2026,86,derived
+South Platte,Aug 2026,88,derived
+South Platte,Sep 2026,88,derived
+Statewide streamflow,Oct 2025,92,derived
+Statewide streamflow,Nov 2025,78,derived
+Statewide streamflow,Dec 2025,79,derived
+Statewide streamflow,Jan 2026,76,derived
+Statewide streamflow,Feb 2026,77,derived
+Statewide streamflow,Mar 2026,93,derived
+Statewide streamflow,Apr 2026,60,derived
+Statewide streamflow,May 2026,34,derived
+Statewide streamflow,Jun 2026,27,derived
+Statewide streamflow,Jul 2026,46,derived
+Statewide streamflow,Aug 2026,55,derived
+Statewide streamflow,Sep 2026,56,derived
