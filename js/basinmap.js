@@ -385,7 +385,7 @@ function flow(bid,tap){
     }
     const mEl=measured[n.id]?est[n.id]:null;
     s+=`<g transform="${g}" data-tip="<div class=&quot;tt-h&quot;>${esc(n.l||n.id)}</div>`
-      +`<div class=&quot;tt-d&quot;>${mEl!=null?ftLab(mEl)+', measured':'placed by river order — height not measured'}</div>">${glyph}</g>`;
+      +`<div class=&quot;tt-d&quot;>${mEl!=null?ftLab(mEl)+', measured':'placed by river order · height not measured'}</div>">${glyph}</g>`;
     if(!lab)return;
     /* In the staircase each node owns its own row, so labels sit BESIDE the
        glyph rather than above/below it — stacking them vertically would run a
@@ -493,7 +493,7 @@ function flowTable(bid){
     caption:'Order matches the diagram. An elevation is printed only where a water '
       +'surface is measured (DWR pool elevation, USGS gage datum, or the national '
       +'elevation model); everything else is placed by its position on the river '
-      +'and deliberately carries no number.',
+      +'and carries no number.',
     head:['Structure','Kind','Elevation','Today'],
     rows});
 }

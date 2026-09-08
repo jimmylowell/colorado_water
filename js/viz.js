@@ -445,7 +445,7 @@ function drawMap(){
         .attr('fill',live!=null?'#00D6E6':'#0A1620')
         .attr('stroke',live!=null?'#0A1620':'#4E7488').attr('stroke-width',1.1);
       const short=m.name.split(/,| At | Near | Below | Nr /i)[0].trim();
-      node.append('title').text(`${short} — USGS ${site}${live!=null?' · '+Math.round(live)+' cfs live':''}`);
+      node.append('title').text(`${short} · USGS ${site}${live!=null?' · '+Math.round(live)+' cfs live':''}`);
       const lab=node.append('g').attr('class','lab');
       lab.append('text').attr('x',8).attr('y',3).attr('class','lbl2').text(short);
       LABELS.push({el:lab.node(),x:cx,y:cy,pri:40000,minK:2.2,
@@ -489,7 +489,7 @@ function drawMap(){
     LABELS.push({el:lab.node(),x:cx,y:cy,
       pri:isTap?1e9+r.cap:(isFcTap?5e8:(tapRes?r.cap*0.02:r.cap)),
       bx0:-name.length*3.4,by0:3,bx1:name.length*3.4,by1:16,minK:isTap||isFcTap?0.1:null});
-    node.append('title').text(`${r.n} — ${r.fc?'flood control':pmAt(r,state.mi)+'% of normal'}`);
+    node.append('title').text(`${r.n} · ${r.fc?'flood control':pmAt(r,state.mi)+'% of normal'}`);
     const pickRes=()=>{state.selected=r.id;state.selectedNode=RESNODE[r.id]||null;commit();zoomBasinOf(r.b);};
     node.on('click',ev=>{if(ev.defaultPrevented)return;pickRes();});
     node.on('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pickRes();}});
@@ -504,7 +504,7 @@ function drawMap(){
     hgfx.append('circle').attr('r',3.4).attr('fill','#EDE6D6').attr('stroke','#071119').attr('stroke-width',1.2);
     const hlab=hg.append('g').attr('class','lab');
     hlab.append('text').attr('x',0).attr('y',-14).attr('class','lbl').attr('text-anchor','middle')
-      .attr('fill','#EDE6D6').text('ZIP '+state.tap.zip+' — your tap');
+      .attr('fill','#EDE6D6').text('ZIP '+state.tap.zip+' · your tap');
     LABELS.push({el:hlab.node(),x:hx,y:hy,pri:2e9,minK:0.1,
       bx0:-62,by0:-24,bx1:62,by1:-4});
   }
@@ -555,9 +555,9 @@ function drawFlow(){
     .attr('stroke','#31586B').attr('stroke-width',1.4).attr('stroke-dasharray','2 7').attr('stroke-linecap','round');
   sp.append('text').attr('x',SPINE).attr('y',50).attr('class','lbl-big').attr('text-anchor','middle').text('CONTINENTAL DIVIDE');
   CSTEXT.push({el:sp.append('text').attr('x',SPINE-26).attr('y',72).attr('class','lbl2').attr('text-anchor','end')
-    .text('◀ WEST SLOPE — Colorado River system').node(),x:SPINE-26,y:72,p:0.5});
+    .text('◀ WEST SLOPE · Colorado River system').node(),x:SPINE-26,y:72,p:0.5});
   CSTEXT.push({el:sp.append('text').attr('x',SPINE+26).attr('y',72).attr('class','lbl2').attr('text-anchor','start')
-    .text('EAST SLOPE — Platte · Arkansas · Rio Grande ▶').node(),x:SPINE+26,y:72,p:0.5});
+    .text('EAST SLOPE · Platte · Arkansas · Rio Grande ▶').node(),x:SPINE+26,y:72,p:0.5});
 
   /* ribbons */
   const layer=g.append('g').style('mix-blend-mode','screen');
@@ -736,13 +736,13 @@ function drawFlow(){
   });
 
   g.append('text').attr('x',44,).attr('y',30).attr('class','lbl-big')
-   .text('FLOW & MIXING · '+MONTHS[state.mi].toUpperCase()+' · RIBBON WIDTH = FLOW · COLOUR = SOURCE MIX');
+   .text('FLOW & MIXING · '+MONTHS[state.mi].toUpperCase()+' · RIBBON WIDTH = FLOW · COLOR = SOURCE MIX');
 
   d3.select('#viewnote').text(DOWN
-    ?'Showing where '+(NODE[state.selectedNode].l||'this water')+'’s water goes — everything off its downstream path is dimmed · click open water to clear'
+    ?'Showing where '+(NODE[state.selectedNode].l||'this water')+'’s water goes · everything off its downstream path is dimmed · click open water to clear'
     :state.mode==='blend'
-    ?'Blend · ribbon colour is the flow-weighted mix of everything upstream · ▼ = drawing down storage · dashed = tunnel under the Divide'
-    :'Braid · each ribbon splits into its true source shares — widths are the arithmetic · dashed = tunnel under the Divide');
+    ?'Blend · ribbon color is the flow-weighted mix of everything upstream · ▼ = drawing down storage · dashed = tunnel under the Divide'
+    :'Braid · each ribbon splits into its source shares · widths are the arithmetic · dashed = tunnel under the Divide');
 }
 
 /* =====================================================================
@@ -786,7 +786,7 @@ function renderSheet(){
       </table>
       ${n.gage?'<div class="hydro" id="hydrobox"></div>':''}
       ${compBlockHTML(state.selectedNode,'What this water is')}
-      <div class="prov">${live&&gageMedianNow(n.gage)>0?`<b>Live · measured flow, derived %.</b> Flow is the USGS instantaneous reading; percent of normal = that reading ÷ this gage's median for this week, built from the USGS daily record since 1991 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>). `:''}<b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice — a schematic model. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
+      <div class="prov">${live&&gageMedianNow(n.gage)>0?`<b>Live · measured flow, derived %.</b> Flow is the latest instantaneous reading (USGS NWIS, or DWR telemetry at the DWR-operated gages). Percent of normal = that reading ÷ this gage's median for this week, built from the daily record since 1991 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>). `:''}<b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice, a schematic model. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
     if(n.gage&&window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'gage',site:n.gage,label:n.l});
     return;
   }
@@ -803,7 +803,7 @@ function renderSheet(){
       <div class="tag"><span>Your water · ZIP ${t.zip}</span><span class="badge obs">tap</span></div>
       <h2>${t._approx?'Near '+t.city:t.city}</h2>
       <div class="sub">${t.prov}${t._approx?' · nearest mapped system':''}</div>
-      ${t._approx?`<div class="prov" style="margin-top:0;margin-bottom:10px;font-size:11px">No exact provider on file for ZIP ${t.zip}, so this is the nearest system we map — your actual provider, and near the Divide sometimes the basin, may differ.</div>`:''}
+      ${t._approx?`<div class="prov" style="margin-top:0;margin-bottom:10px;font-size:11px">No exact provider on file for ZIP ${t.zip}, so this is the nearest mapped system. Your provider, and near the Divide sometimes the basin, may differ.</div>`:''}
       <div class="prov" style="margin-top:0;margin-bottom:12px;font-size:11px;color:#3c3a33">${t.desc}</div>
       ${t.res.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">Your reservoirs today</div>
       <table class="rows">${rows}</table>`:''}
@@ -812,7 +812,7 @@ function renderSheet(){
         <td class="lab" style="text-transform:none;font-size:11px">${r.n}</td>
         <td style="color:#6d6450;font-weight:400">flood control</td></tr>`:'';}).join('')}</table>`:''}
       ${t.tun.length?`<div class="prov"><b>Crossing the Divide for you:</b> ${t.tun.join(' · ')}</div>`:''}
-      <div class="prov">A simplified picture — providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
+      <div class="prov">A simplified picture: providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
     s.querySelectorAll('.taprow').forEach(el=>el.addEventListener('click',()=>{
       state.selected=el.dataset.res;state.selectedNode=RESNODE[el.dataset.res]||null;commit();}));
     const c2=s.querySelector('#tapclear2');
@@ -848,7 +848,7 @@ function renderSheet(){
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
       <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond for the flow it carries. Pick a <b>basin</b> chip — or its dashed outline on the map — for a basin overview.
-      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap — or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
+      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap. Or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
     return;
   }
   const r=RESBY[state.selected];
@@ -888,9 +888,9 @@ function renderSheet(){
     </table>
     <div class="hydro" id="hydrobox"></div>
     <div class="prov">${r.fc
-      ? `<b>Flood control</b> A U.S. Army Corps of Engineers dam — nobody drinks from this lake. The pool shown${lv?' (live via DWR '+r.dwr+', read '+lv.asOf+')':''} is the small permanent one kept for recreation and sediment; the dam's far larger flood space sits empty on purpose, waiting for a storm. It's on this map because you see it from the highway — and because the water you <b>do</b> drink is somewhere else entirely.`
+      ? `<b>Flood control</b> A U.S. Army Corps of Engineers dam, not a drinking-water supply. The pool shown${lv?' (live via DWR '+r.dwr+', read '+lv.asOf+')':''} is the small permanent one kept for recreation and sediment. The dam's far larger flood space sits empty on purpose, waiting for a storm. It is on this map because you see it from the highway, and because the water you drink is somewhere else.`
       : past
-      ? `<b>Timeline mode</b> — storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
+      ? `<b>Timeline mode</b> Storage rescaled by the ${BASINS.find(b=>b.id===r.b).n} basin's NRCS monthly percent of median (interpolated between reports). A reconstruction of basin conditions, not a gage record for this reservoir.`
       : lv
         ? `<b>Live · measured storage, derived %.</b> Storage from Colorado DWR telemetry (station ${r.dwr}), read ${lv.asOf}. ${resMedianNow(r)?`Percent of normal = that reading ÷ this reservoir's own median for this week of the year, built from CDSS daily storage since 2005 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>).`:`Percent of normal compares to the basin's NRCS median.`}`
       : r.c==='obs'
@@ -982,7 +982,7 @@ function renderZipList(){
     gageSites=Object.keys(GAGE_META).filter(s=>GAGE_META[s].basin===t.hb);
   }else{
     const b=state.basin;
-    head=b==='all'?'All Colorado — largest reservoirs':BASINS.find(x=>x.id===b).n+' basin';
+    head=b==='all'?'All Colorado · largest reservoirs':BASINS.find(x=>x.id===b).n+' basin';
     resIds=RES.filter(r=>(b==='all'||r.b===b)&&!r.fc).slice().sort((a,c)=>c.cap-a.cap).slice(0,14).map(r=>r.id);
     gageSites=Object.keys(GAGE_META).filter(s=>b==='all'||GAGE_META[s].basin===b);
   }
@@ -1146,8 +1146,8 @@ function applyTap(zip){
   const t=zipLookup(zip);
   if(!t){
     zipMsg(/^8[01]/.test(zip)
-      ?'don’t have that ZIP mapped yet — try your nearest larger town'
-      :'this map covers Colorado — but wherever you are, your tap has a watershed too');
+      ?'that ZIP is not mapped yet. Try your nearest larger town'
+      :'this map covers Colorado, but wherever you are, your tap has a watershed too');
     return;
   }
   state.tap=Object.assign({zip},t);

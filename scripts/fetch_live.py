@@ -14,7 +14,10 @@ plausible reading per station, 14-day staleness cutoff, cap*1.15 sanity.
 
 Sources (both keyless, public domain):
   - USGS NWIS instantaneous values   waterservices.usgs.gov   streamflow (cfs)
-  - Colorado DWR CDSS telemetry      dwr.state.co.us/Rest     reservoir storage (AF)
+  - Colorado DWR CDSS telemetry      dwr.state.co.us/Rest     reservoir storage (AF),
+    and streamflow at the gages USGS no longer publishes discharge for (the
+    South Platte at Denver and the Poudre at the canyon mouth are DWR-operated;
+    CDSS carries them under their own abbrevs with the USGS site id attached)
 """
 import json, re, os, sys, urllib.request, datetime
 
@@ -67,6 +70,45 @@ try:
             gages[site] = round(v, 1)
 except Exception as e:
     print('  (USGS fetch failed -', str(e)[:80], ')')
+
+# ---- CDSS streamflow for the gages USGS returned nothing for ----
+# Some mapped gages are DWR-operated: NWIS lists the site but serves no
+# discharge. CDSS carries them, keyed by usgsStationId. Same staleness rule
+# as storage. gage_src records which agency each reading came from, and
+# gage_dwr keeps the abbrev so the hydrograph can be filled from CDSS too.
+gage_src = {site: 'usgs' for site in gages}
+gage_dwr = {}
+missing = [g for g in GAGES if g not in gages]
+if missing:
+    cutoff = NOW - datetime.timedelta(days=14)
+    rows = []
+    for site in missing:
+        try:
+            j = fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/'
+                           '?format=json&parameter=DISCHRG&usgsStationId=' + site)
+            rows += (j.get('ResultList') or [])
+        except Exception as e:
+            print(f'  (CDSS discharge fetch failed for {site} -', str(e)[:60], ')')
+    with open(os.path.join(RAW, 'cdss_telemetry_discharge.json'), 'w', encoding='utf-8') as f:
+        json.dump({'note': 'telemetrystation?parameter=DISCHRG, one call per USGS site id '
+                           'that NWIS iv returned no discharge for; rows concatenated verbatim',
+                   'ResultList': rows}, f)
+    for row in rows:
+        site = str(row.get('usgsStationId') or '')
+        if site not in missing:
+            continue
+        try:
+            v = float(row['measValue'])
+            t = datetime.datetime.fromisoformat(str(row['measDateTime'])).replace(tzinfo=datetime.timezone.utc)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if v < 0 or t <= cutoff:
+            continue
+        gages[site] = round(v, 1)
+        gage_src[site] = 'dwr'
+        gage_dwr[site] = row.get('abbrev')
+    print(f'  CDSS filled {len(gage_dwr)} of {len(missing)} gages USGS left empty: '
+          + ', '.join(f'{k}={v}' for k, v in gage_dwr.items()))
 
 # ---- CDSS latest storage ----
 try:
@@ -131,7 +173,9 @@ out = {
     'generated': NOW.strftime('%Y-%m-%dT%H:%M:%SZ'),
     'attribution': {
         'gages': 'Streamflow: U.S. Geological Survey, National Water Information System '
-                 '(waterservices.usgs.gov/nwis/iv). Public domain; provisional data subject to revision.',
+                 '(waterservices.usgs.gov/nwis/iv). Public domain; provisional data subject to revision. '
+                 'Sites marked dwr in gage_src are DWR-operated and read from CDSS telemetry '
+                 '(parameter DISCHRG), because NWIS publishes no discharge for them.',
         'res': 'Reservoir storage: Colorado Division of Water Resources satellite telemetry, '
                'via the CDSS REST services (dwr.state.co.us/Rest). CDSS is developed by the '
                'Colorado Water Conservation Board and DWR. Provisional data subject to revision.',
@@ -146,6 +190,7 @@ out = {
                  '(1 acre-foot/day ≈ 0.50417 cfs)',
     },
     'gages': dict(sorted(gages.items())),
+    'gage_src': dict(sorted(gage_src.items())),
     'res': dict(sorted(res.items())),
     'delta': dict(sorted(delta.items())),
 }
@@ -184,6 +229,31 @@ try:
 except Exception as e:
     print('  (USGS dv fetch failed -', str(e)[:80], ')')
 
+# the DWR-operated gages: daily mean discharge from CDSS, keyed by USGS id so
+# js/hydro.js needs no special case
+for site, ab in sorted(gage_dwr.items()):
+    if 'gage:' + site in series:
+        continue
+    try:
+        j = fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/'
+                       '?format=json&parameter=DISCHRG&abbrev=' + ab
+                       + '&startDate=' + dstr(NOW - datetime.timedelta(days=DAYS)) + '&endDate=' + dstr(NOW),
+                       timeout=90)
+    except Exception as e:
+        print(f'  (CDSS year discharge fetch failed for {ab} -', str(e)[:60], ')')
+        continue
+    arr = [None] * (DAYS + 1)
+    for row in (j.get('ResultList') or []):
+        try:
+            v = float(row['measValue'])
+            i = (datetime.date.fromisoformat(str(row['measDate'])[:10]) - start).days
+        except (KeyError, TypeError, ValueError):
+            continue
+        if v >= 0 and 0 <= i <= DAYS:
+            arr[i] = round(v, 1)
+    if any(x is not None for x in arr):
+        series['gage:' + site] = arr
+
 for ab in sorted(RES):
     j = None
     try:
@@ -212,7 +282,8 @@ hydro = {
     'attribution': {
         'gage': 'Daily mean discharge: U.S. Geological Survey, National Water Information '
                 'System (waterservices.usgs.gov/nwis/dv). Public domain; provisional data '
-                'subject to revision.',
+                'subject to revision. DWR-operated sites (gage_src = dwr in live.json) come '
+                'from CDSS telemetrytimeseriesday, parameter DISCHRG.',
         'res': 'Daily storage: Colorado Division of Water Resources satellite telemetry, via '
                'the CDSS REST services (dwr.state.co.us/Rest, telemetrytimeseriesday). CDSS is '
                'developed by the Colorado Water Conservation Board and DWR. Provisional data '

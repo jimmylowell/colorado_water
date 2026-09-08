@@ -7,7 +7,7 @@
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Colorado Water — where it sits, where it combines</title>
-<meta name="description" content="An interactive map of Colorado's reservoirs and rivers — where the water sits, where it combines, and how the 2026 drought is drawing it down.">
+<meta name="description" content="An interactive map of Colorado's reservoirs and rivers: where the water sits, where it combines, and how the 2026 drought is drawing it down.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -29,10 +29,11 @@
     <div>
       <p class="eyebrow"><a href="index.html" style="color:var(--aqua);text-decoration:none">← your water story</a> · water year 2026</p>
       <h1>Where the water sits,<br>and where it <em>combines</em></h1>
-      <p class="standfirst">The detailed, reservoir-by-reservoir map — best on a big screen. Reservoirs are glasses of water, rivers ribbons of colour, the Continental Divide down the middle. For the guided overview, start from the <a href="index.html">seven-basin story</a>; on a phone, the <b>Flow &amp; mixing</b> view shows how a basin's water steps down. Or <a href="timeline.html">watch the 2026 drought arrive</a>.</p>
+      <p class="standfirst">The detailed, reservoir-by-reservoir map, best on a big screen. Reservoirs are glasses of water, rivers are ribbons of color, and the Continental Divide runs down the middle. For the guided overview, start from the <a href="index.html">seven-basin story</a>. On a phone, the <b>Flow &amp; mixing</b> view shows how a basin's water steps down. Or <a href="timeline.html">watch the 2026 drought arrive</a>.</p>
     </div>
     <div class="asof">
-      <div>reading as of <b>22 Jul 2026</b></div>
+      <div>snapshot <b>22 Jul 2026</b></div>
+      <div id="asof-live" hidden>readings <b></b> · refreshed daily</div>
       <div>storage <b>KAF</b> · flow <b>cfs</b></div>
       <div>medians <b>derived · CDSS/USGS</b></div>
     </div>
@@ -52,8 +53,8 @@
       <button id="btn-flow" aria-pressed="false">Flow &amp; mixing</button>
     </div>
     <div id="modewrap" style="display:none;align-items:center;gap:10px">
-      <span class="seglab">Colour</span>
-      <div class="seg" role="group" aria-label="Colour mode">
+      <span class="seglab">Color</span>
+      <div class="seg" role="group" aria-label="Color mode">
         <button id="btn-blend" aria-pressed="true">Blend</button>
         <button id="btn-braid" aria-pressed="false">Braid</button>
       </div>
@@ -94,22 +95,22 @@
       <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#EDE6D6" stroke-width="2"/></svg><span><b style="color:var(--bone)">Bone tick</b> — where the level normally sits today</span></div>
       <div class="keyrow"><svg width="26" height="18"><line x1="2" y1="9" x2="24" y2="9" stroke="#00D6E6" stroke-width="3" stroke-dasharray="6 4"/></svg><span><b style="color:var(--bone)">Dashed line</b> — a tunnel carrying water under the Divide</span></div>
       <div class="keyrow"><svg width="26" height="18"><path d="M8,6 l10,0 l-5,8 z" fill="#00D6E6"/></svg><span><b style="color:var(--bone)">▼ marker</b> — the glass is being drawn down to feed the river</span></div>
-      <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity — wide at the rim, narrow at the base, the way a canyon reservoir actually holds water. Fill colour is the water's source; the level is filled by <em>area</em>, so a half-full glass really is half-full. Click any glass for its percent of normal and the rest of its detail.</p>
+      <p style="margin-top:10px">Each reservoir is a glass whose area is its total capacity, wide at the rim and narrow at the base, the way a canyon reservoir holds water. Fill color is the water's source. The level is filled by <em>area</em>, so a half-full glass holds half its capacity. Click any glass for its percent of normal and the rest of its detail.</p>
     </div>
 
     <div class="card">
-      <h3>The seven colours</h3>
+      <h3>The seven colors</h3>
       <div id="huekey"></div>
-      <p style="margin-top:12px">Colours repeat only between rivers that can never mix, so within any one river every colour is unique and a blend is always traceable. Map rivers wear the same hues — mainstems fade toward the blend of everything they've collected. <b style="color:var(--bone)">Braid</b> mode on the flow view splits every ribbon into its true source shares.</p>
+      <p style="margin-top:12px">Colors repeat only between rivers that can never mix, so within any one river every color is unique and a blend is always traceable. Map rivers use the same hues, and mainstems fade toward the blend of everything they have collected. <b style="color:var(--bone)">Braid</b> mode on the flow view splits every ribbon into its source shares.</p>
     </div>
 
     <div class="card">
       <h3>Data &amp; live readings</h3>
       <ul class="src">
-        <li><b>Colorado DWR telemetry (CDSS)</b> dwr.state.co.us · storage for 27 reservoirs, refreshed daily</li>
-        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · discharge at 18 gages, refreshed daily</li>
+        <li><b>Colorado DWR telemetry (CDSS)</b> dwr.state.co.us · storage for 27 reservoirs and flow at the 2 DWR-operated gages, refreshed daily</li>
+        <li><b>USGS NWIS</b> waterservices.usgs.gov/nwis/iv/ · discharge at the other 16 gages, refreshed daily</li>
         <li><b>Denver Water · USBR · Northern Water</b> published storage in the baseline snapshot</li>
-        <li><b>NRCS Water Supply Outlook</b> monthly basin % of 1991–2020 median — the timeline's backbone</li>
+        <li><b>NRCS Water Supply Outlook</b> monthly basin % of 1991–2020 median, the timeline's backbone</li>
       </ul>
       <div class="livestat" id="livestat">Daily readings load automatically; the snapshot stands in wherever they can't.</div>
       <p style="margin-top:12px">Want the numbers themselves? The full dataset is on the <a href="data.html" style="color:var(--aqua)">data page</a> as downloadable CSVs.</p>
@@ -117,7 +118,7 @@
   </div>
 
   <footer class="foot">
-    An educational project on drought — knowing where your water actually comes from ·
+    An educational project on drought and where your water comes from ·
     <a href="about.html">the story &amp; methods</a> · <a href="data.html">raw data (CSV)</a><br>
     Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
   </footer>

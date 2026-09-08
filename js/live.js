@@ -80,12 +80,19 @@ async function refresh(){
     deriveStats(got.at);
     const at=got.at.toLocaleDateString('en-US',{day:'numeric',month:'short'});
     status(`Live: <b style="color:var(--bone)">${got.nR}</b> reservoirs (DWR telemetry) · `
-      +`<b style="color:var(--bone)">${got.nG}</b> gages (USGS) · readings gathered ${at}, `
+      +`<b style="color:var(--bone)">${got.nG}</b> gages (USGS, DWR) · readings gathered ${at}, `
       +`refreshed daily. Everything else shows the dated snapshot.`);
+    /* the masthead date: pages that show "snapshot <date>" also get the
+       readings date once it is known, so the first thing a reader sees is
+       not a six-week-old date */
+    const al=document.getElementById('asof-live');
+    if(al){const b=al.querySelector('b');
+      if(b)b.textContent=got.at.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+      al.hidden=false;}
     redraw();
   }else{
     const snap=new Date(SNAP_DATE+'T12:00:00').toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
-    status('Couldn’t load the daily readings — showing the snapshot of '+snap+'. '
+    status('Couldn’t load the daily readings, so this shows the snapshot of '+snap+'. '
       +'(Normal when viewing this page offline or as a saved file.)');
   }
   busy=false;

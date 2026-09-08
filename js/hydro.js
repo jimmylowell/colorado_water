@@ -142,7 +142,7 @@ function monthlyFallback(el,r,failed){
     fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
     band:resBand(r.id,pts[0].t,pts[pts.length-1].t),
     lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
-    caption:(failed?'couldn’t load the baked daily storage — showing the ':'')
+    caption:(failed?'couldn’t load the baked daily storage, so this shows the ':'')
       +'basin-scaled monthly reconstruction (snapshot '+SNAP_DATE+') · '
       +'shaded = 2005–now weekly min–max, dashed = median'
   });

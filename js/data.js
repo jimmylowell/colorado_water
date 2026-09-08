@@ -472,40 +472,40 @@ const TAPS=[
   desc:'About half of Denver Water’s supply starts west of the Divide: Blue River water banked in Dillon rides the 23-mile Roberts Tunnel, and Fraser & Williams Fork water crosses beneath the Moffat. The rest is South Platte water stored in Cheesman, Eleven Mile and Antero, staged through Strontia Springs and Marston on the way to the taps.'},
  {id:'aurora',hb:'platte',city:'Aurora',prov:'Aurora Water',loc:[39.71,-104.81],
   res:['spinney','homestake','twinlakes'],tun:['Homestake Tunnel'],fcres:['cherrycreek'],zips:['8001','8004'],
-  desc:'Aurora reaches farther than almost anyone: Eagle River water from Homestake (shared with Colorado Springs) crosses the Divide to Turquoise and Twin Lakes, then comes north — while Spinney Mountain Reservoir on the South Platte is its big high-country savings account, joined by Arkansas rights and one of the state’s largest reuse systems.'},
+  desc:'Aurora reaches farther than almost anyone: Eagle River water from Homestake (shared with Colorado Springs) crosses the Divide to Turquoise and Twin Lakes, then comes north. Spinney Mountain Reservoir on the South Platte is its big high-country savings account, joined by Arkansas rights and one of the state’s largest reuse systems.'},
  {id:'castlerock',hb:'platte',city:'Castle Rock',prov:'Castle Rock Water',loc:[39.3722,-104.8561],
   res:['chatfield'],tun:[],fcres:['cherrycreek'],zips:['80104','80108','80109'],
-  desc:'Castle Rock grew up on the Denver Basin aquifer — deep, ancient groundwater that barely refills on any human timescale. To get off it, Castle Rock Water is building toward renewable supply: Plum Creek and reusable water, plus a share of WISE, the partnership that delivers surplus Denver and Aurora water down the South Platte through Chatfield. The aquifer is the drought cushion no rain can top up — which is exactly why the town is racing to replace it.'},
+  desc:'Castle Rock grew up on the Denver Basin aquifer, deep groundwater that barely refills on any human timescale. To get off it, Castle Rock Water is building toward renewable supply: Plum Creek and reusable water, plus a share of WISE, the partnership that delivers surplus Denver and Aurora water down the South Platte through Chatfield. The aquifer is a drought cushion no rain can top up, which is why the town is working to replace it.'},
  {id:'parker',hb:'platte',city:'Parker',prov:'Parker Water & Sanitation District',loc:[39.5186,-104.7614],
   res:['chatfield'],tun:[],fcres:['cherrycreek'],zips:['80134','80138'],
-  desc:'Parker leaned on the Denver Basin aquifer, then built its own answer — Rueter-Hess Reservoir, filled with reusable return flows and local creek water (too new and small to draw here). Like its neighbors it also shares WISE deliveries off the South Platte, and is chasing a Lower South Platte pipeline: all to swap finite groundwater for water that comes back every year.'},
+  desc:'Parker leaned on the Denver Basin aquifer, then built its own answer in Rueter-Hess Reservoir, filled with reusable return flows and local creek water (too new and small to draw here). Like its neighbors it also shares WISE deliveries off the South Platte, and is pursuing a Lower South Platte pipeline, all to swap finite groundwater for water that comes back every year.'},
  {id:'highlandsranch',hb:'platte',city:'Highlands Ranch',prov:'Centennial Water & Sanitation District',loc:[39.5497,-104.9689],
   res:['chatfield'],tun:[],fcres:['cherrycreek'],zips:['80126','80129','80130'],
-  desc:'Highlands Ranch runs mostly on South Platte river water — stored in McLellan Reservoir and pulled from alluvial wells along the river (not drawn here) — kept topped up with Denver Basin groundwater held in reserve for dry years. It’s a South Platte town that treats the aquifer as its savings account rather than its checking account.'},
+  desc:'Highlands Ranch runs mostly on South Platte river water, stored in McLellan Reservoir and pulled from alluvial wells along the river (not drawn here), topped up with Denver Basin groundwater held in reserve for dry years. It is a South Platte town that treats the aquifer as its savings account rather than its checking account.'},
  {id:'arvada',hb:'platte',city:'Arvada',prov:'City of Arvada',loc:[39.80,-105.10],
   res:['ralston'],tun:['Moffat Tunnel'],zips:['8000'],
   desc:'Arvada drinks Clear Creek water plus Fraser River water that crosses under the Divide in the Moffat Tunnel, both settled into Ralston Reservoir above town.'},
  {id:'northmetro',hb:'platte',city:'Westminster · Northglenn · Thornton',prov:'north metro utilities',loc:[39.87,-105.04],
   res:['standley'],tun:[],zips:['8003'],
-  desc:'The north metro cities lean on Clear Creek water stored in Standley Lake, with Thornton also pulling South Platte water. (Wheat Ridge is a Denver Water customer — the simplification shows.)'},
+  desc:'The north metro cities lean on Clear Creek water stored in Standley Lake, with Thornton also pulling South Platte water. (Wheat Ridge is a Denver Water customer; the grouping is a simplification.)'},
  {id:'broomfield',hb:'platte',city:'Broomfield · Lafayette · Louisville',prov:'east Boulder County utilities',loc:[39.94,-105.06],
   res:['granby','carter'],tun:['Adams Tunnel'],zips:['8002'],
   desc:'These towns blend local creek supplies with Colorado–Big Thompson water: Lake Granby storage that crosses beneath Rocky Mountain National Park in the Adams Tunnel.'},
  {id:'boulder',hb:'platte',city:'Boulder',prov:'City of Boulder',loc:[40.015,-105.27],
   res:['granby','carter'],tun:['Adams Tunnel'],zips:['8030'],
-  desc:'Boulder’s backbone is its own high country — Barker Reservoir on Middle Boulder Creek and the Silver Lake watershed (too small to draw here) — topped up with C-BT water from Lake Granby via the Adams Tunnel.'},
+  desc:'Boulder’s backbone is its own high country, Barker Reservoir on Middle Boulder Creek and the Silver Lake watershed (too small to draw here), topped up with C-BT water from Lake Granby via the Adams Tunnel.'},
  {id:'golden',hb:'platte',city:'Golden',prov:'City of Golden',loc:[39.755,-105.22],
   res:[],tun:[],zips:['8040','80419'],
-  desc:'Golden drinks Clear Creek itself — direct diversions upstream of town, treated at the foot of the canyon. Follow the lime ribbon on the map.'},
+  desc:'Golden drinks Clear Creek itself, diverted directly upstream of town and treated at the foot of the canyon. Follow the lime ribbon on the map.'},
  {id:'summit',hb:'colorado',city:'Summit County',prov:'Breckenridge · Frisco · Dillon districts',loc:[39.63,-106.07],
   res:['dillon'],tun:['Roberts Tunnel'],zips:['80424','80435','80443','80497','80498'],
-  desc:'Local taps drink young Blue River and tributary water — while the big reservoir in the middle of the county, Dillon, belongs to Denver, and its water leaves through the Roberts Tunnel under the Divide.'},
+  desc:'Local taps drink young Blue River and tributary water, while the big reservoir in the middle of the county, Dillon, belongs to Denver, and its water leaves through the Roberts Tunnel under the Divide.'},
  {id:'leadville',hb:'arkansas',city:'Leadville',prov:'Parkville Water District',loc:[39.25,-106.29],
   res:['turquoise'],tun:['Boustead Tunnel','Homestake Tunnel'],zips:['80461'],
   desc:'Leadville sits at the very top of the Arkansas. Next door, Turquoise Lake stores West Slope water that arrived through the Boustead and Homestake tunnels on its way to cities far downstream.'},
  {id:'grandcounty',hb:'colorado',city:'Grand County',prov:'Fraser · Granby · Grand Lake systems',loc:[39.94,-105.82],
   res:['granby','shadow','willow'],tun:['Adams Tunnel','Moffat Tunnel'],zips:['80442','80446','80447','80478','80482'],
-  desc:'You live at the source. The Fraser and upper Colorado rise here — and much of that water leaves: Granby and Shadow Mountain feed the Adams Tunnel east, and Moffat Tunnel diversions skim the Fraser. What stays runs the rivers you see out the window.'},
+  desc:'You live at the source. The Fraser and upper Colorado rise here, and much of that water leaves: Granby and Shadow Mountain feed the Adams Tunnel east, and Moffat Tunnel diversions skim the Fraser. What stays runs the rivers you see out the window.'},
  {id:'steamboat',hb:'yampa',city:'Steamboat Springs',prov:'Mount Werner Water & city',loc:[40.48,-106.83],
   res:['stagecoach'],tun:[],zips:['80487','80477'],
   desc:'Steamboat drinks Fish Creek and Yampa-basin water; Stagecoach Reservoir upstream backstops the town and keeps the Yampa flowing through dry stretches.'},
@@ -514,16 +514,16 @@ const TAPS=[
   desc:'Craig draws from the Yampa as it passes town, with Elkhead Reservoir upstream as the buffer against late-summer lows.'},
  {id:'longmont',hb:'platte',city:'Longmont',prov:'City of Longmont',loc:[40.17,-105.10],
   res:['granby'],tun:['Adams Tunnel'],zips:['8050'],
-  desc:'Longmont drinks the St. Vrain — stored in Ralph Price Reservoir up Button Rock Canyon (too small to draw) — blended with C-BT water from Lake Granby via the Adams Tunnel.'},
+  desc:'Longmont drinks the St. Vrain, stored in Ralph Price Reservoir up Button Rock Canyon (too small to draw), blended with C-BT water from Lake Granby via the Adams Tunnel.'},
  {id:'estes',hb:'platte',city:'Estes Park',prov:'Town of Estes Park',loc:[40.377,-105.52],
   res:['granby'],tun:['Adams Tunnel'],zips:['80517'],
   desc:'Estes sits on the C-BT’s doorstep: Granby water emerges from the Adams Tunnel just above town on its way to the Front Range, and local Glacier Creek supplies fill the taps.'},
  {id:'fortcollins',hb:'platte',city:'Fort Collins',prov:'Fort Collins Utilities',loc:[40.585,-105.08],
   res:['horsetooth','granby'],tun:['Adams Tunnel'],zips:['8052'],
-  desc:'Fort Collins splits its supply between the Cache la Poudre — diverted at the canyon mouth — and C-BT water that started in Lake Granby, crossed under the park in the Adams Tunnel, and waits in Horsetooth above town.'},
+  desc:'Fort Collins splits its supply between the Cache la Poudre, diverted at the canyon mouth, and C-BT water that started in Lake Granby, crossed under the park in the Adams Tunnel, and waits in Horsetooth above town.'},
  {id:'loveland',hb:'platte',city:'Loveland · Berthoud',prov:'Loveland Water & Power',loc:[40.40,-105.07],
   res:['carter','granby'],tun:['Adams Tunnel'],zips:['8053','80513'],
-  desc:'Loveland drinks the Big Thompson plus C-BT water staged in Carter Lake — Lake Granby water that crossed beneath the Divide in the Adams Tunnel.'},
+  desc:'Loveland drinks the Big Thompson plus C-BT water staged in Carter Lake, Lake Granby water that crossed beneath the Divide in the Adams Tunnel.'},
  {id:'greeley',hb:'platte',city:'Greeley · Evans',prov:'Greeley Water',loc:[40.42,-104.71],
   res:['boyd','granby'],tun:['Adams Tunnel'],zips:['8063','80620','80621','80645','80651'],
   desc:'Greeley pipes Poudre water from Bellvue and Big Thompson water from near Loveland, backed by C-BT shares; Boyd Lake stores the irrigation side of the ledger.'},
@@ -532,10 +532,10 @@ const TAPS=[
   desc:'Out here the river goes underground: towns pump the South Platte’s alluvial aquifer while North Sterling, Prewitt and Jackson bank the surface water that keeps the wells legal and the fields green.'},
  {id:'springs',hb:'arkansas',city:'Colorado Springs',prov:'Colorado Springs Utilities',loc:[38.83,-104.82],
   res:['homestake','turquoise','twinlakes','pueblo'],tun:['Homestake Tunnel','Boustead Tunnel'],zips:['808','809'],
-  desc:'Roughly three-quarters of the Springs’ water is born on the West Slope: Eagle River water through the Homestake Tunnel and Fry-Ark water through the Boustead, staged in Turquoise and Twin Lakes — plus the Southern Delivery pipeline pumping uphill from Pueblo Reservoir, and Pikes Peak’s own watersheds.'},
+  desc:'Roughly three-quarters of the Springs’ water starts on the West Slope: Eagle River water through the Homestake Tunnel and Fryingpan–Arkansas water through the Boustead, staged in Turquoise and Twin Lakes. The Southern Delivery pipeline pumps uphill from Pueblo Reservoir, and Pikes Peak’s own watersheds add the rest.'},
  {id:'pueblo',hb:'arkansas',city:'Pueblo',prov:'Pueblo Water',loc:[38.27,-104.61],
   res:['pueblo','turquoise','twinlakes'],tun:['Boustead Tunnel'],zips:['8100'],
-  desc:'Pueblo drinks the Arkansas — native flows plus Fryingpan water that crossed the Divide in the Boustead Tunnel — all staged through Pueblo Reservoir just west of town.'},
+  desc:'Pueblo drinks the Arkansas, native flows plus Fryingpan water that crossed the Divide in the Boustead Tunnel, all staged through Pueblo Reservoir just west of town.'},
  {id:'searkansas',hb:'arkansas',city:'Lower Arkansas valley',prov:'La Junta · Lamar & districts',loc:[38.09,-102.62],
   res:['johnmartin','pueblo'],tun:[],zips:['810'],
   desc:'The lower valley lives on the Arkansas and its aquifer, with John Martin Reservoir as the interstate bank account Colorado keeps with Kansas.'},
@@ -544,37 +544,37 @@ const TAPS=[
   desc:'Trinidad drinks the Purgatoire, moderated by Trinidad Lake just upstream.'},
  {id:'slv',hb:'rio',city:'San Luis Valley',prov:'Alamosa · Monte Vista & districts',loc:[37.47,-105.87],
   res:['riogrande','platoro','sanchez'],tun:[],zips:['811'],
-  desc:'Valley towns mostly pump the aquifers beneath the floor of the San Luis Valley — recharged by the Rio Grande and Conejos, which Rio Grande and Platoro reservoirs meter out under a three-state compact.'},
+  desc:'Valley towns mostly pump the aquifers beneath the floor of the San Luis Valley, recharged by the Rio Grande and Conejos, which Rio Grande and Platoro reservoirs meter out under a three-state compact.'},
  {id:'durango',hb:'sw',city:'Durango',prov:'City of Durango',loc:[37.27,-107.88],
   res:['lemon','nighthorse'],tun:[],zips:['81301','81303','81326'],
-  desc:'Durango drinks the Florida River (via Lemon Reservoir) and the Animas — with Lake Nighthorse, filled by pumping Animas water uphill, as the new insurance policy.'},
+  desc:'Durango drinks the Florida River (via Lemon Reservoir) and the Animas, with Lake Nighthorse, filled by pumping Animas water uphill, as the new insurance policy.'},
  {id:'cortez',hb:'sw',city:'Cortez · Montezuma County',prov:'Montezuma Water Co.',loc:[37.35,-108.59],
   res:['mcphee'],tun:[],zips:['81321','81323'],
-  desc:'Nearly everything here — town taps and bean fields alike — comes out of McPhee Reservoir, the Dolores River’s big catch.'},
+  desc:'Nearly everything here, town taps and bean fields alike, comes out of McPhee Reservoir, the Dolores River’s big catch.'},
  {id:'southwest',hb:'sw',city:'Southwest Colorado',prov:'regional districts',loc:[37.27,-107.20],
   res:['vallecito','lemon','nighthorse','navajo','mcphee'],tun:[],zips:['813'],
-  desc:'San Juan country runs on its snow-fed rivers — Pine, Florida, Animas, San Juan, Dolores — with Vallecito, Lemon and McPhee holding the spring surge for the dry months, and Navajo banking the San Juan at the state line.'},
+  desc:'San Juan country runs on its snow-fed rivers (Pine, Florida, Animas, San Juan, Dolores), with Vallecito, Lemon and McPhee holding the spring surge for the dry months, and Navajo banking the San Juan at the state line.'},
  {id:'gunnisontown',hb:'gunnison',city:'Gunnison valley',prov:'Gunnison · Crested Butte',loc:[38.55,-106.93],
   res:['taylor','bluemesa'],tun:[],zips:['81230','81231','81224','81225'],
-  desc:'The upper Gunnison valley drinks its own snowmelt — East River, Taylor (metered by Taylor Park Reservoir) — before the water piles into Blue Mesa, Colorado’s largest reservoir, on its way west.'},
+  desc:'The upper Gunnison valley drinks its own snowmelt, the East River and the Taylor (metered by Taylor Park Reservoir), before the water piles into Blue Mesa, Colorado’s largest reservoir, on its way west.'},
  {id:'arkheadwaters',hb:'arkansas',city:'Upper Arkansas valley',prov:'Salida · Buena Vista · Cañon City',loc:[38.53,-106.00],
   res:['twinlakes','turquoise'],tun:['Boustead Tunnel','Twin Lakes Tunnel'],zips:['812'],
-  desc:'These towns drink the young Arkansas — a river that runs higher than nature intended in summer, because Fry-Ark tunnel imports from the Roaring Fork and Eagle ride it downstream to Front Range cities.'},
+  desc:'These towns drink the young Arkansas, a river that runs higher than nature intended in summer because Fryingpan–Arkansas tunnel imports from the Roaring Fork and Eagle ride it downstream to Front Range cities.'},
  {id:'montrose',hb:'gunnison',city:'Uncompahgre valley',prov:'Montrose · Delta & Project',loc:[38.48,-107.88],
   res:['ridgway','bluemesa'],tun:[],zips:['814'],
-  desc:'The Uncompahgre valley drinks its namesake river, steadied by Ridgway Reservoir — and its farms famously borrow the Gunnison itself, through a 1909 tunnel out of the Black Canyon.'},
+  desc:'The Uncompahgre valley drinks its namesake river, steadied by Ridgway Reservoir, and its farms borrow the Gunnison itself through a 1909 tunnel out of the Black Canyon.'},
  {id:'grandjunction',hb:'colorado',city:'Grand Junction',prov:'GJ · Ute Water · Clifton',loc:[39.07,-108.55],
   res:['vega'],tun:[],zips:['8150','8152'],
   desc:'Grand Valley taps drink the Grand Mesa: Kannah Creek and Plateau Creek supplies (Vega sits atop the same mesa), high above the Colorado River the orchards and vineyards drink below.'},
  {id:'aspen',hb:'colorado',city:'Aspen · Carbondale',prov:'Roaring Fork utilities',loc:[39.19,-106.82],
   res:['ruedi'],tun:['Twin Lakes Tunnel','Boustead Tunnel'],zips:['81611','81612','81615','81621','81623'],
-  desc:'Aspen drinks Castle and Maroon creeks; Ruedi Reservoir backstops the Fryingpan. Meanwhile the top of your own watershed is exported — Twin Lakes and Boustead tunnel diversions carry Roaring Fork headwaters under the Divide to the Arkansas.'},
+  desc:'Aspen drinks Castle and Maroon creeks, and Ruedi Reservoir backstops the Fryingpan. The top of the watershed is exported: Twin Lakes and Boustead tunnel diversions carry Roaring Fork headwaters under the Divide to the Arkansas.'},
  {id:'vail',hb:'colorado',city:'Vail · Eagle valley',prov:'Eagle River Water & Sanitation',loc:[39.64,-106.37],
   res:['homestake'],tun:['Homestake Tunnel'],zips:['81620','81657','81632','81631','81645','81649'],
-  desc:'The Eagle valley drinks Gore Creek and Eagle River wells — while Homestake Reservoir, high in your basin, sends its share under the Divide to Colorado Springs and Aurora.'},
+  desc:'The Eagle valley drinks Gore Creek and Eagle River wells, while Homestake Reservoir, high in the basin, sends its share under the Divide to Colorado Springs and Aurora.'},
  {id:'glenwood',hb:'colorado',city:'Colorado mainstem towns',prov:'Glenwood · Rifle · New Castle',loc:[39.55,-107.32],
   res:['ruedi','riflegap'],tun:[],zips:['816'],
-  desc:'Towns along the middle Colorado drink their side creeks — Grizzly and No Name at Glenwood, Rifle Creek behind Rifle Gap — beside a river already carrying half the West Slope’s story past their doors.'}
+  desc:'Towns along the middle Colorado drink their side creeks, Grizzly and No Name at Glenwood and Rifle Creek behind Rifle Gap, beside a river already carrying much of the West Slope’s water past their doors.'}
 ];
 
 /* =====================================================================
@@ -623,13 +623,13 @@ function zipLookup(zip){
 /* Character of each basin — deliberately free of year-specific numbers, because
    the live derived percentage renders directly beside this text. */
 const BASININFO={
- colorado:'The Colorado River is born here in the high country astride the Divide — and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream.',
- gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa — Colorado’s largest reservoir and a linchpin of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell.',
- yampa:'The Yampa is one of the last great free-flowing rivers in the West, running wild through northwest Colorado. Ranching, Steamboat, and the sage country all lean on its snowmelt — there is no tunnel bringing in water from anywhere else.',
- sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan — rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and Lake Powell. It is dry country that lives or dies by the snowpack.',
+ colorado:'The Colorado River rises here in the high country along the Divide, and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream.',
+ gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa, Colorado’s largest reservoir and a key piece of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell.',
+ yampa:'The Yampa is one of the last largely free-flowing rivers in the West, running through northwest Colorado with few dams. Ranching, Steamboat, and the sage country all depend on its snowmelt, and no tunnel brings in water from anywhere else.',
+ sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan, rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and on to Lake Powell. It is dry country that depends on the snowpack.',
  rio:'The Rio Grande rises in the San Juans and crosses the San Luis Valley, where three states share every drop by compact and farmers pump a shrinking aquifer between deliveries.',
- arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it — Fry-Ark tunnel imports from the West Slope ride it downstream to Pueblo and the plains.',
- platte:'The South Platte drains the Front Range, where most of Colorado lives — and most of its water is imported. Denver, Boulder, and the northern cities pull nearly half their supply across the Divide through tunnels.'
+ arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it: Fryingpan–Arkansas imports from the West Slope ride it downstream to Pueblo and the plains.',
+ platte:'The South Platte drains the Front Range, where most of Colorado lives, and much of its water is imported. Denver, Boulder, and the northern cities pull a large share of their supply across the Divide through tunnels.'
 };
 /* Example places for the picker. Ordered by basin, and EVERY basin carries at
    least one — otherwise a reader in the Gunnison, Yampa or Rio Grande sees no
@@ -696,7 +696,7 @@ const TUNNELS={
  'Adams Tunnel':{year:1947,mi:13.1,proj:'Colorado–Big Thompson Project',
    note:'carries Lake Granby water east beneath Rocky Mountain National Park to the northern Front Range',wiki:'Alva_B._Adams_Tunnel'},
  'Roberts Tunnel':{year:1962,mi:23.3,proj:'Denver Water',
-   note:'moves Blue River water banked in Dillon east to the North Fork of the South Platte — Colorado’s longest water tunnel',wiki:'Harold_D._Roberts_Tunnel'},
+   note:'moves Blue River water banked in Dillon east to the North Fork of the South Platte, Colorado’s longest water tunnel',wiki:'Harold_D._Roberts_Tunnel'},
  'Moffat Tunnel':{year:1936,mi:6.2,proj:'Denver Water',
    note:'skims Fraser and Williams Fork water under the Divide to South Boulder Creek and Gross Reservoir',wiki:'Moffat_Tunnel'},
  'Boustead Tunnel':{year:1972,mi:5.4,proj:'Fryingpan–Arkansas Project',
@@ -704,7 +704,7 @@ const TUNNELS={
  'Homestake Tunnel':{year:1967,mi:5.2,proj:'Homestake Project',
    note:'diverts Homestake Creek from the Eagle basin east for Colorado Springs and Aurora',wiki:'Homestake_Reservoir'},
  'Twin Lakes Tunnel':{year:1935,mi:3.9,proj:'Independence Pass diversion',
-   note:'the oldest of these — Roaring Fork headwaters carried under Independence Pass to Twin Lakes and the Arkansas',wiki:'Twin_Lakes_(Colorado)'}
+   note:'the oldest of these: Roaring Fork headwaters carried under Independence Pass to Twin Lakes and the Arkansas',wiki:'Twin_Lakes_(Colorado)'}
 };
 
 /* Cited, verifiable facts for the opening section. cite = attributable source;
@@ -714,9 +714,9 @@ const TUNNELS={
    of the Divide, and the whole Southwest is downstream. Deliberately short —
    no two facts should lead with the same number. */
 const COLORADO_FACTS=[
- {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}} — the snow, not the reservoirs, is the real storage',cite:'NRCS / NOAA'},
- {stat:'Oct 1',lab:'the {{water year}} begins — hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
- {stat:'~9 in 10',lab:'Coloradans live east of the {{Continental Divide}} — while most of the state’s water falls west of it. That mismatch is why the tunnels exist',cite:'Colorado Water Plan (CWCB)'},
+ {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}}. The snow, not the reservoirs, is the main storage',cite:'NRCS / NOAA'},
+ {stat:'Oct 1',lab:'the {{water year}} begins. Hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
+ {stat:'~9 in 10',lab:'Coloradans live east of the {{Continental Divide}}, while most of the state’s water starts west of it. That mismatch is why the tunnels exist',cite:'Colorado Water Plan (CWCB)'},
  {stat:'40M',lab:'people across seven states and Mexico drink from the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'}
 ];
 
@@ -740,8 +740,8 @@ function providerLink(prov){
 }
 /* Statewide conservation resources every Coloradan can use. */
 const SAVE_RESOURCES=[
- {url:'https://denverwater.org/UseOnlyWhatYouNeed',lab:'Denver Water — “Use Only What You Need”'},
- {url:'https://www.epa.gov/watersense',lab:'EPA WaterSense — efficient fixtures & tips'},
+ {url:'https://denverwater.org/UseOnlyWhatYouNeed',lab:'Denver Water: “Use Only What You Need”'},
+ {url:'https://www.epa.gov/watersense',lab:'EPA WaterSense: efficient fixtures and tips'},
  {url:'https://cwcb.colorado.gov/colorado-water-plan',lab:'Colorado Water Plan (CWCB)'},
  {url:'https://www.nrcs.usda.gov/wps/portal/wcc/home/quickLinks/states/?state=CO',lab:'NRCS Colorado snow & water reports'}
 ];

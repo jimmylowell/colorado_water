@@ -141,7 +141,7 @@ function snowStateChart(el){
          colour ties it to its line without a leader. */
       svg.append('text').attr('class','hc-lbl').attr('fill',NOWCOL)
         .attr('x',X(0.6)).attr('y',padT+22)
-        .text(`WY${D.curWY} — peak ${pk.peak}″${pk.apr1!=null?`, ${pk.apr1}″ left on 1 April`:''}`);
+        .text(`WY${D.curWY} · peak ${pk.peak}″${pk.apr1!=null?`, ${pk.apr1}″ left on 1 April`:''}`);
     }
   }
 

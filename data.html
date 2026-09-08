@@ -31,6 +31,7 @@
     </div>
     <div class="asof">
       <div>snapshot <b>22 Jul 2026</b></div>
+      <div id="asof-live" hidden>readings <b></b> · refreshed daily</div>
       <div>storage <b>acre-feet</b> · flow <b>cfs</b></div>
       <div>medians <b>derived · CDSS/USGS record</b></div>
     </div>
@@ -44,12 +45,12 @@
     </div>
     <div class="card">
       <h3>basin_history.csv</h3>
-      <p>Monthly percent-of-median storage for the seven basins, Oct 2025 – Jul 2026 — the series that drives the map's timeline — each row tagged <b>derived</b> (from CDSS daily history) or <b>estimated</b>, plus statewide streamflow.</p>
+      <p>Monthly percent-of-median storage for the seven basins, Oct 2025 – Jul 2026, the series that drives the timeline. Each row is tagged <b>derived</b> (from CDSS daily history) or <b>estimated</b>, plus statewide streamflow.</p>
       <a class="dlbtn" href="data/basin_history.csv" download>Download</a>
     </div>
     <div class="card">
       <h3>gages.csv</h3>
-      <p>The 18 USGS streamgages used on the flow view, with site numbers you can look up directly at waterdata.usgs.gov.</p>
+      <p>The 18 streamgages used on the flow view, with USGS site numbers you can look up at waterdata.usgs.gov. Two are DWR-operated and read from CDSS.</p>
       <a class="dlbtn" href="data/gages.csv" download>Download</a>
     </div>
     <div class="card">
@@ -68,39 +69,39 @@
 
   <section class="prose">
     <h2>How every number is graded</h2>
-    <p>Each displayed value carries a <b>method</b> — how much to trust it, and where it came from:</p>
+    <p>Each displayed value carries a <b>method</b>, which says how much to trust it and where it came from:</p>
     <ul class="grades">
       <li><span class="badge obs">measured</span> A published or telemetered reading from the operator of the dam or gage (USGS, Colorado DWR, USBR, Denver Water). Taken as-is.</li>
-      <li><span class="badge obs">derived</span> Arithmetic on measured values: <b>percent of normal = a current reading ÷ that same station's median for this week of the year</b>. The medians are baked once from each station's own long record (see the ledger below), not guessed.</li>
-      <li><span class="badge est">estimated</span> No same-day public reading, so storage is scaled to the basin's reported percent of median. A fair guess, flagged as one.</li>
-      <li><span class="badge est">schematic</span> The map geometry and the flow-and-mixing model — a deliberately simplified diagram of where water goes, not survey data.</li>
+      <li><span class="badge obs">derived</span> Arithmetic on measured values: <b>percent of normal = a current reading ÷ that same station's median for this week of the year</b>. The medians are baked once from each station's own long record (see the ledger below).</li>
+      <li><span class="badge est">estimated</span> No same-day public reading, so storage is scaled to the basin's reported percent of median and flagged as such.</li>
+      <li><span class="badge est">schematic</span> The map geometry and the flow-and-mixing model: a simplified diagram of where water goes, not survey data.</li>
     </ul>
 
     <h2>Column dictionary</h2>
     <ul>
-      <li><b>capacity_af / storage_af</b> — total and current storage in acre-feet. An acre-foot floods one acre a foot deep: roughly what two Front Range households use in a year.</li>
+      <li><b>capacity_af / storage_af</b> — total and current storage in acre-feet. An acre-foot covers one acre a foot deep, roughly what two to three Front Range households use in a year.</li>
       <li><b>pct_of_median</b> — storage against this station's median for this calendar week, 100 = a normal year. When live, it is <i>derived</i> from the reading and the baked median; otherwise it carries the operator's or basin's reported figure.</li>
       <li><b>confidence / method</b> — <i>observed / measured</i>: a published, dated reading; <i>live / derived</i>: DWR telemetry from the daily refresh, compared to the baked median; <i>basin estimate / estimated</i>: scaled from the basin's percent of median.</li>
-      <li><b>role</b> — <i>water supply</i>, or <i>flood control</i> for the Corps of Engineers pools (Cherry Creek, Bear Creek): famous lakes nobody drinks from, whose capacity_af is just the small permanent pool and whose percent-of-median is blank because "normal storage" doesn't apply.</li>
+      <li><b>role</b> — <i>water supply</i>, or <i>flood control</i> for the Corps of Engineers pools (Cherry Creek, Bear Creek): well-known lakes that are not drinking supply. Their capacity_af is the small permanent pool, and percent-of-median is blank because normal storage does not apply.</li>
       <li><b>dwr_telemetry_abbrev</b> — Colorado DWR station code, usable directly against the <a href="https://dwr.state.co.us/Tools/Stations" rel="noopener">CDSS station tools</a> and REST API.</li>
     </ul>
 
-    <h2 id="providers">Providers, systems and rights — what this does and doesn’t model</h2>
+    <h2 id="providers">Providers, systems and rights: what this does and does not model</h2>
     <p>Three different things get called “your water,” and they are administered by three different bodies. This project models only the first, and loosely:</p>
     <ul>
       <li><b>Who delivers it — the provider (or utility).</b> A city department (Denver Water, Aurora Water), a special district (Parker Water &amp; Sanitation), or a private company. This is the everyday sense and the one the story uses.</li>
-      <li><b>Who regulates its safety — the Public Water System (PWS).</b> The unit defined by the federal <a href="https://www.epa.gov/sdwa" rel="noopener">Safe Drinking Water Act</a>; each carries a <b>PWSID</b>, and in Colorado they are overseen by <a href="https://cdphe.colorado.gov/drinking-water" rel="noopener">CDPHE</a>. A provider is an <i>organisation</i>; a PWS is a <i>regulated system</i>, and one provider can operate more than one — so the two are not interchangeable.</li>
+      <li><b>Who regulates its safety — the Public Water System (PWS).</b> The unit defined by the federal <a href="https://www.epa.gov/sdwa" rel="noopener">Safe Drinking Water Act</a>; each carries a <b>PWSID</b>, and in Colorado they are overseen by <a href="https://cdphe.colorado.gov/drinking-water" rel="noopener">CDPHE</a>. A provider is an <i>organization</i>; a PWS is a <i>regulated system</i>, and one provider can operate more than one — so the two are not interchangeable.</li>
       <li><b>Who is entitled to it — the water right.</b> Administered separately by the <a href="https://dwr.colorado.gov/" rel="noopener">Colorado Division of Water Resources</a> under prior appropriation, across the seven water divisions that this site’s basins follow. A right governs diversion, not delivery or treatment.</li>
     </ul>
-    <p class="aside"><b>The honest limits.</b> Places here are grouped by provider and matched by <b>ZIP prefix</b> — and ZIP codes are postal routes, not service-area boundaries. One ZIP can span several providers, a provider spans many ZIPs, and about a third of our entries deliberately cover a cluster of small neighbouring systems under one label. We do <b>not</b> use PWSIDs or published service-area boundaries, so nothing here is authoritative for “who serves this address.”</p>
+    <p class="aside"><b>The limits.</b> Places here are grouped by provider and matched by <b>ZIP prefix</b>, and ZIP codes are postal routes, not service-area boundaries. One ZIP can span several providers, a provider spans many ZIPs, and about a third of the entries cover a cluster of small neighboring systems under one label. We do <b>not</b> use PWSIDs or published service-area boundaries, so nothing here is authoritative for “who serves this address.”</p>
     <p>For the authoritative answer, in order of usefulness: your utility bill; your provider’s own website; the <a href="https://sdwis.epa.gov/ords/sfdw_pub/r/sfdw/sdwis_fed_reports_public/" rel="noopener">EPA SDWIS federal reporting search</a> (look up a system by state and name); and <a href="https://www.epa.gov/dwreginfo/information-about-public-water-systems" rel="noopener">EPA’s explainer on public water systems</a>. For plain-language background on Colorado water generally, <a href="https://www.watereducationcolorado.org/" rel="noopener">Water Education Colorado</a> is the standard reference.</p>
 
     <h2>The source ledger</h2>
-    <p>Everything traces to a keyless, CORS-open, public-domain endpoint. Histories are pulled once and reduced to weekly day-of-year medians by <span style="font-family:var(--mono)">scripts/build_normals.py</span>, which writes <span style="font-family:var(--mono)">js/normals.js</span>. Current values are fetched once a day by a scheduled GitHub Action (<span style="font-family:var(--mono)">scripts/fetch_live.py</span> → <span style="font-family:var(--mono)">data/live.json</span>), so your browser reads small files from this site — never the government APIs — and derives the percentages from them. The same run bakes <span style="font-family:var(--mono)">data/hydro.json</span>, the trailing year of daily values behind every station's in-sheet hydrograph, and saves the agencies' responses verbatim to <a href="https://github.com/jimmylowell/colorado_water/tree/main/data/raw" rel="noopener" style="color:var(--aqua)">data/raw/</a> before any cleaning — the repo's git history keeps every day's raw snapshot, so each baked number can be audited against exactly what USGS and CDSS returned.</p>
+    <p>Everything traces to a keyless, CORS-open, public-domain endpoint. Histories are pulled once and reduced to weekly day-of-year medians by <span style="font-family:var(--mono)">scripts/build_normals.py</span>, which writes <span style="font-family:var(--mono)">js/normals.js</span>. Current values are fetched once a day by a scheduled GitHub Action (<span style="font-family:var(--mono)">scripts/fetch_live.py</span> → <span style="font-family:var(--mono)">data/live.json</span>), so your browser reads small files from this site, never the government APIs, and derives the percentages from them. The same run bakes <span style="font-family:var(--mono)">data/hydro.json</span>, the trailing year of daily values behind every station's in-sheet hydrograph, and saves the agencies' responses verbatim to <a href="https://github.com/jimmylowell/colorado_water/tree/main/data/raw" rel="noopener" style="color:var(--aqua)">data/raw/</a> before any cleaning. The repository's git history keeps every day's raw snapshot, so each baked number can be checked against what USGS and CDSS returned.</p>
     <div class="tablewrap"><table class="dtable">
       <tr><th>Source</th><th>Endpoint</th><th>What it gives</th><th>Record</th><th>Grade</th></tr>
       <tr><td><b>USGS NWIS</b></td><td><a href="https://waterservices.usgs.gov/" rel="noopener">waterservices.usgs.gov</a></td><td>Streamflow — current (iv) + daily record (dv) for the gage medians</td><td>from 1991</td><td>measured</td></tr>
-      <tr><td><b>Colorado DWR / CDSS</b></td><td><a href="https://dwr.state.co.us/Rest/GET/Help" rel="noopener">dwr.state.co.us/Rest</a></td><td>Reservoir storage — current telemetry + daily record for the storage medians</td><td>from 2005</td><td>measured</td></tr>
+      <tr><td><b>Colorado DWR / CDSS</b></td><td><a href="https://dwr.state.co.us/Rest/GET/Help" rel="noopener">dwr.state.co.us/Rest</a></td><td>Reservoir storage — current telemetry + daily record for the storage medians; streamflow at the two DWR-operated gages</td><td>from 2005</td><td>measured</td></tr>
       <tr><td><b>NRCS AWDB</b></td><td><a href="https://wcc.sc.egov.usda.gov/" rel="noopener">wcc.sc.egov.usda.gov</a></td><td>SNOTEL snow-water-equivalent, aggregated to basin snowpack medians</td><td>from 1979</td><td>measured</td></tr>
       <tr><td><b>NRCS AWDB</b> (decades)</td><td><a href="https://wcc.sc.egov.usda.gov/" rel="noopener">wcc.sc.egov.usda.gov</a></td><td>Snowpack by decade, from a <b>fixed panel</b> of SNOTEL sites (see below)</td><td>from 1978</td><td>measured</td></tr>
       <tr><td><b>USBR</b> (UC hydrodata / RISE)</td><td><a href="https://www.usbr.gov/uc/water/" rel="noopener">usbr.gov/uc/water</a></td><td>Federal reservoirs incl. Lake Powell annual end-of-Sept storage <i>and</i> pool elevation</td><td>from 1963</td><td>measured</td></tr>
@@ -109,24 +110,24 @@
       <tr><td><b>This project</b></td><td><span style="font-family:var(--mono)">js/data.js</span></td><td>Map geometry &amp; the flow-and-mixing model</td><td>—</td><td>schematic</td></tr>
     </table></div>
     <h3 id="decades">How the snowpack-by-decade chart is built</h3>
-    <p>A decade-to-decade comparison goes wrong the moment the <i>measuring</i> changes. SNOTEL sites have been added and retired steadily since 1978, and higher or snowier sites joining the network late would manufacture a trend that is really just a change in who is reporting. So that chart uses a <b>fixed panel</b>: only sites installed by 1980 that then reported in <i>every</i> water year since 1981 — currently 43 stations, 8,240–11,600 ft. The same 43 sites are averaged in every decade. A day is used only when at least 85% of the panel reports it, and a decade's curve is the median across that decade's water years, not a mean, so one freak season cannot carry a decade.</p>
-    <p>Two honest caveats. The 2020s bar covers only five completed water years, so it is the least settled figure on the chart. And a panel of long-record sites skews toward the mid-elevation band SNOTEL was built to watch — it is a consistent sample of Colorado's snowpack, not a complete census of it.</p>
+    <p>A decade-to-decade comparison goes wrong the moment the <i>measuring</i> changes. SNOTEL sites have been added and retired steadily since 1978, and higher or snowier sites joining the network late would manufacture a trend that is only a change in who is reporting. So that chart uses a <b>fixed panel</b>: only sites installed by 1980 that then reported in <i>every</i> water year since 1981, currently 43 stations between 8,240 and 11,600 ft. The same 43 sites are averaged in every decade. A day is used only when at least 85% of the panel reports it, and a decade's curve is the median across that decade's water years, not a mean, so one freak season cannot carry a decade.</p>
+    <p>Two caveats. The 2020s bar covers only five completed water years, so it is the least settled figure on the chart. And a panel of long-record sites skews toward the mid-elevation band SNOTEL was built to watch. It is a consistent sample of Colorado's snowpack, not a complete census of it.</p>
     <h3 id="elevation">Where the elevations in the step-down come from</h3>
-    <p>The basin step-down diagram stacks every reservoir and streamgage in order of how high it actually sits. Two sources feed that: for a gage, the USGS surveyed <span style="font-family:var(--mono)">alt_va</span>, the altitude of the gage datum; for a reservoir with DWR telemetry, the CDSS <span style="font-family:var(--mono)">stage</span> field — the <i>live</i> water-surface elevation, from the same reading that gives us the storage. That covers 25 of the reservoirs here.</p>
-    <p>For the rest there is no telemetered stage, so we try to read the water surface off the USGS 3DEP elevation model — but only accept it when the samples show a <i>dominant</i> flat surface, meaning we are genuinely looking at a lake. That threshold matters: the coordinates in our dataset are label anchors for the map, not survey points, and a few sit up to two kilometres off the water. A permissive version of this test put Homestake 1,160 feet too low by measuring a hillside, so the strict rule is deliberate — a confidently wrong height would mis-order the diagram while looking authoritative. Where the test passes, checked against the reservoirs CDSS <i>does</i> report a stage for, it lands within about 60 feet.</p>
-    <p>That gives a verified surface elevation for <b>34 of the 52</b> reservoirs, plus all 18 streamgages. The remaining reservoirs appear in the step-down <b>with no elevation printed beside them</b> — we will not show a number we cannot stand behind. They are still positioned, using the one thing the river guarantees: water runs downhill, so a reservoir sits below everything upstream of it and above everything downstream. Their placement is an inference from the river's own shape; every printed figure is a measurement.</p>
-    <p class="aside">Note that the two measured sources are not quite the same quantity. A CDSS stage is today's pool, which moves through the season; a 3DEP surface is where the water stood when the elevation model was flown. Both are the water surface, and the difference is far smaller than the gaps between reservoirs, which is all the ordering depends on. The vertical spacing in that diagram is deliberately not to scale — only the order is exact.</p>
-    <p>The two Lake Powell thresholds are elevations, converted to storage: <b>minimum power pool</b> (3,490 ft) from Reclamation's own daily record, which shows the reservoir holding 4.00 MAF at that elevation while filling in 1964, less the ~6.8% capacity since lost to sediment — the same record reads 5.91 MAF at 3,525 ft in 1965 against 5.51 MAF in 2026 — giving ≈3.7 MAF today. <b>Dead pool</b> (3,370 ft) is total capacity 25.16 MAF (USGS 2018 survey) less ~23.3 MAF of live capacity, ≈1.9 MAF.</p>
+    <p>The basin step-down diagram stacks every reservoir and streamgage in order of how high it actually sits. Two sources feed that: for a gage, the USGS surveyed <span style="font-family:var(--mono)">alt_va</span>, the altitude of the gage datum; for a reservoir with DWR telemetry, the CDSS <span style="font-family:var(--mono)">stage</span> field, the <i>live</i> water-surface elevation from the same reading that gives the storage. That covers 25 of the reservoirs here.</p>
+    <p>For the rest there is no telemetered stage, so the script samples the USGS 3DEP elevation model around the point and accepts a value only when the samples show a <i>dominant</i> flat surface, meaning it is looking at a lake. That threshold matters: the coordinates in the dataset are label anchors for the map, not survey points, and a few sit up to two kilometers off the water. A permissive version of this test put Homestake 1,160 feet too low by measuring a hillside. A wrong height would mis-order the diagram while looking authoritative, so the rule is strict. Where the test passes, checked against the reservoirs CDSS <i>does</i> report a stage for, it lands within about 60 feet.</p>
+    <p>That gives a verified surface elevation for <b>34 of the 52</b> reservoirs, plus all 18 streamgages. The remaining reservoirs appear in the step-down <b>with no elevation printed beside them</b>. They are still positioned by river order: a reservoir sits below everything upstream of it and above everything downstream. Their placement is an inference from the river's shape. Every printed figure is a measurement.</p>
+    <p class="aside">Note that the two measured sources are not quite the same quantity. A CDSS stage is today's pool, which moves through the season; a 3DEP surface is where the water stood when the elevation model was flown. Both are the water surface, and the difference is far smaller than the gaps between reservoirs, which is all the ordering depends on. The vertical spacing in that diagram is not to scale. Only the order is exact.</p>
+    <p>The two Lake Powell thresholds are elevations, converted to storage: <b>minimum power pool</b> (3,490 ft) from Reclamation's own daily record, which shows the reservoir holding 4.00 MAF at that elevation while filling in 1964, less the roughly 6.8% of capacity since lost to sediment (the same record reads 5.91 MAF at 3,525 ft in 1965 against 5.51 MAF in 2026), giving about 3.7 MAF today. <b>Dead pool</b> (3,370 ft) is total capacity 25.16 MAF (USGS 2018 survey) less ~23.3 MAF of live capacity, ≈1.9 MAF.</p>
 
     <p>Regenerate the baked medians or the daily readings from source at any time:</p>
     <pre class="cmd">python3 scripts/build_normals.py   <span style="color:#8a8069"># pulls the histories, rewrites js/normals.js</span>
 python3 scripts/make_csvs.py       <span style="color:#8a8069"># re-exports the CSVs on this page</span>
 python3 scripts/fetch_live.py      <span style="color:#8a8069"># today's readings, rewrites data/live.json + data/hydro.json (a GitHub Action runs this daily)</span></pre>
-    <p class="aside">All of it is public, US-government or utility-published data. This project only collates it — check the primary sources before using any number for anything that matters.</p>
+    <p class="aside">All of it is public, US-government or utility-published data. This project only collates it. Check the primary sources before using any number for anything that matters.</p>
   </section>
 
   <footer class="foot">
-    An educational project on drought — knowing where your water actually comes from ·
+    An educational project on drought and where your water comes from ·
     <a href="about.html">the story &amp; methods</a> · <a href="map.html">the map</a><br>
     Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
   </footer>

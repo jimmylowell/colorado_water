@@ -124,19 +124,18 @@ function decadeLine(){
   const wk=LATE_MAY_WK, ga=a.wk[wk], gz=z.wk[wk];
   const springDrop=(ga>0&&gz!=null)?Math.round((1-gz/ga)*100):null;
   const cur=D.curStats;
-  return `<p class="lr-p">${W(`Stack the decades on one chart and the trend is not subtle. Across a
-     <b>fixed</b> panel of ${D.n} long-record {{SNOTEL}} sites — the same stations in every decade, so the
-     comparison isn’t an artefact of which gauges happened to be running — the median peak snowpack has
+  return `<p class="lr-p">${W(`Stack the decades on one chart and the trend is plain. Across a
+     <b>fixed</b> panel of ${D.n} long-record {{SNOTEL}} sites, the same stations in every decade so the
+     comparison does not depend on which sites happened to be running, the median peak snowpack has
      fallen from <b>${a.peak}″</b> in the ${keys[0]} to <b>${z.peak}″</b> in the ${keys[keys.length-1]},
      a drop of about <b>${drop}%</b>.`)}</p>
-     ${springDrop!=null?`<p class="lr-p">${W(`And the loss is worst exactly where it hurts most. The
-       decades barely separate in midwinter; they fan apart through <b>spring</b>, and by late May the
-       ${keys[keys.length-1]} hold roughly <b>${springDrop}% less</b> water than the ${keys[0]} did. It
-       isn’t only that less snow falls — what does fall leaves sooner, ahead of the summer that needs
-       it.`)}</p>`:''}
-     ${cur?`<p class="lr-p">${W(`Against that, this water year barely registers: a peak of
-       <b>${cur.peak}″</b>${cur.apr1!=null?`, and just <b>${cur.apr1}″</b> left on April 1`:''} — well under
-       half a normal year, and the lowest line on the chart by a wide margin.`)}</p>`:''}`;
+     ${springDrop!=null?`<p class="lr-p">${W(`The loss is concentrated in spring. The
+       decades barely separate in midwinter. They fan apart through <b>spring</b>, and by late May the
+       ${keys[keys.length-1]} hold roughly <b>${springDrop}% less</b> water than the ${keys[0]} did. Less
+       snow falls, and what does fall leaves sooner, ahead of the summer that needs it.`)}</p>`:''}
+     ${cur?`<p class="lr-p">${W(`This water year sits below all of them: a peak of
+       <b>${cur.peak}″</b>${cur.apr1!=null?`, and <b>${cur.apr1}″</b> left on April 1`:''}, well under
+       half a normal year and the lowest line on the chart by a wide margin.`)}</p>`:''}`;
 }
 function secSnow(){
   const facts=COLORADO_FACTS.map(f=>
@@ -148,33 +147,33 @@ function secSnow(){
     ?'<div class="cw-mount" data-cw="snowBars"></div>':'';
   const table=window.CW_HISTORY&&CW_HISTORY.hasDecades()?CW_HISTORY.snowDecadeTable():'';
   return sec('snow','Where it begins','Colorado’s water starts as snow',
-    `<p class="lr-p">${W(`Nearly every drop Colorado uses falls first as snow. Winter storms stack {{snowpack|snow}} on the high country, and that frozen reservoir — measured all season as {{snow water equivalent|snow-water equivalent}}, the depth of water it would melt into — is the state’s real storage. The lakes below are just where it goes afterwards.`)}</p>
+    `<p class="lr-p">${W(`Most of the water Colorado uses falls first as snow. Winter storms stack {{snowpack|snow}} on the high country, and that frozen reservoir, measured all season as {{snow water equivalent|snow-water equivalent}} (the depth of water it would melt into), is the state’s largest store of water. The lakes below are where it goes afterward.`)}</p>
      <div class="fact-grid">${facts}</div>
      <h3 class="lr-h3">A year that begins in October</h3>
-     <p class="lr-p">${W(`Hydrology doesn’t use the calendar year. The {{water year}} starts on <b>October 1</b>, because that is when the snow that will feed next summer begins to fall — so that is how the chart below reads, left to right. Snow piles up until about April. It melts through spring, and that {{snowmelt}} is what fills the reservoirs, most of a year’s inflow arriving in a few weeks. Then from summer into fall the valves open and the levels fall, until the first snows start the whole thing again.`)}</p>
+     <p class="lr-p">${W(`Hydrology does not use the calendar year. The {{water year}} starts on <b>October 1</b>, when the snow that will feed next summer begins to fall, and that is how the chart below reads, left to right. Snow piles up until about April. It melts through spring, and that {{snowmelt}} fills the reservoirs, with most of a year’s inflow arriving in a few weeks. From summer into fall the releases run and the levels fall, until the first snows start the cycle again.`)}</p>
      ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">A 1980s snow season against a 2020s one, with this year on top · statewide snow-water equivalent from a fixed panel of NRCS SNOTEL sites, median across each decade’s water years. The shaded season is when the melt reaches the reservoirs.</div></div>`:''}
      ${decadeLine()}
-     ${bars?`<div class="lr-chart">${bars}<div class="lr-chart-cap">Median peak snowpack, decade by decade — the same fixed panel of sites. No decade has peaked higher than the one before it, and the 2000s and 2010s tied. The dashed rule carries the 1980s level across for comparison.</div>${table}</div>`:''}
-     <p class="lr-p">${W(`Because the snow <i>is</i> the storage, a warm early spring can undo a decent winter: the mountains can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026 — by the last week of May, the long-record SNOTEL sites were already bare.`)}</p>`);
+     ${bars?`<div class="lr-chart">${bars}<div class="lr-chart-cap">Median peak snowpack, decade by decade, from the same fixed panel of sites. No decade has peaked higher than the one before it, and the 2000s and 2010s tied. The dashed rule carries the 1980s level across for comparison.</div>${table}</div>`:''}
+     <p class="lr-p">${W(`Because the snow is the storage, a warm early spring can undo a decent winter. The mountains can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026. By the last week of May, the long-record SNOTEL sites were already bare.`)}</p>`);
 }
 
 /* §3 what reservoirs actually do (education) */
 function secReservoirs(){
   const sanchez=RESBY['sanchez'];
   return sec('reservoirs','The lakes','What a reservoir is really for',
-    `<p class="lr-p">${W(`A reservoir isn’t a supply of water — it is a <b>delay</b>. It catches a spring flood that would otherwise run to Utah in three weeks, and pays it back over the twelve months you need it. That is why levels are supposed to fall all summer, and why a low lake in September is not automatically a crisis.`)}</p>
-     <p class="lr-p">${W(`What matters is <b>carryover</b>: the water still in storage when the next water year begins. A healthy year ends with a cushion. A dry year ends scraped low, and the following winter has to make up the difference before anyone is comfortable again.`)}</p>
-     ${sanchez?`<p class="lr-p">${W(`Purpose matters too. ${cleanName(sanchez.n)}, in the San Luis Valley, is irrigation storage — emptied to almost nothing by late summer most years, then refilled. There, empty is the job. Elsewhere, empty is a warning.`)}</p>`:''}
-     <p class="lr-p">${W(`And some famous lakes aren’t supply at all. Cherry Creek and Bear Creek are Army Corps {{flash flood|flood-control}} pools: the water you sail on is a small permanent pond, and the dam’s real capacity is kept deliberately <i>empty</i>, waiting for a storm. Nobody drinks from them.`)}</p>
+    `<p class="lr-p">${W(`A reservoir is a <b>delay</b>. It catches a spring flood that would otherwise run to Utah in three weeks and pays it back over the twelve months you need it. That is why levels are supposed to fall all summer, and why a low lake in September is not automatically a crisis.`)}</p>
+     <p class="lr-p">${W(`What matters is <b>carryover</b>: the water still in storage when the next water year begins. A healthy year ends with a cushion. A dry year ends low, and the following winter has to make up the difference.`)}</p>
+     ${sanchez?`<p class="lr-p">${W(`Purpose matters too. ${cleanName(sanchez.n)}, in the San Luis Valley, is irrigation storage, emptied to almost nothing by late summer most years and then refilled. There, empty is the job. Elsewhere, empty is a warning.`)}</p>`:''}
+     <p class="lr-p">${W(`Some well-known lakes are not supply at all. Cherry Creek and Bear Creek are Army Corps of Engineers {{flash flood|flood-control}} reservoirs. The water you sail on is a small permanent pool, and most of each dam’s capacity is kept empty, waiting for a storm.`)}</p>
      <h3 class="lr-h3">So what about summer rain?</h3>
-     <p class="lr-p">${W(`Come July the {{North American Monsoon}} pushes Gulf moisture north and Colorado’s afternoons turn to thunderstorms. It <b>feels</b> like relief — and in one real way it is — but it rarely shows up in the reservoirs:`)}</p>
+     <p class="lr-p">${W(`Come July the {{North American Monsoon}} pushes Gulf moisture north and Colorado’s afternoons turn to thunderstorms. It feels like relief, and in one way it is, but it rarely shows up in the reservoirs:`)}</p>
      <ul class="lr-list">
-       <li>${W(`<b>It cuts demand more than it adds supply.</b> A wet week means nobody irrigates, so the draw-down slows. Less water goes <i>out</i> — that alone can flatten a summer decline even if little rain flows <i>in</i>.`)}</li>
-       <li>${W(`<b>It rarely refills the big lakes.</b> Monsoon rain lands as intense, local bursts on dry ground — most evaporates or runs off fast, and the storms miss the high snowfields that feed the major reservoirs.`)}</li>
-       <li>${W(`<b>It recharges {{soil moisture}}.</b> Wet late-summer soil matters for <i>next</i> year: dry ground drinks the following spring’s melt before it ever reaches a stream.`)}</li>
-       <li>${W(`<b>It arrives as {{flash flood|flash floods}}.</b> The same bursts that can’t fill a reservoir can fill a canyon in minutes — which is exactly what those empty flood pools are for.`)}</li>
+       <li>${W(`<b>It cuts demand more than it adds supply.</b> A wet week means nobody irrigates, so the drawdown slows. Less water goes out, and that alone can flatten a summer decline even if little rain flows in.`)}</li>
+       <li>${W(`<b>It rarely refills the big lakes.</b> Monsoon rain lands as intense, local bursts on dry ground. Most of it evaporates or runs off fast, and the storms miss the high country that feeds the major reservoirs.`)}</li>
+       <li>${W(`<b>It recharges {{soil moisture}}.</b> Wet late-summer soil matters for next year. Dry ground absorbs the following spring’s melt before it reaches a stream.`)}</li>
+       <li>${W(`<b>It arrives as {{flash flood|flash floods}}.</b> The same bursts that cannot fill a reservoir can fill a canyon in minutes, which is what the empty flood pools are for.`)}</li>
      </ul>
-     <p class="lr-p lr-aside">${W(`So a strong monsoon eases a drought summer; it doesn’t end a drought. The snow still writes the year.`)}</p>`);
+     <p class="lr-p lr-aside">${W(`A strong monsoon eases a drought summer. It does not end a drought. The snowpack decides the year.`)}</p>`);
 }
 
 /* §4 the seven basins — the state as it stands right now */
@@ -228,9 +227,9 @@ function basinLegend(){
         `<span class="bxl-tick${v===100?' is-norm':''}" style="left:${(v/BXL_MAX*100).toFixed(1)}%">`
         +`<i></i><b>${v}%</b></span>`).join('')}</div>
     </div>
-    <p class="bxl-note">100% is normal — the median storage for this week of the year across the
-      record, not “full”. Below 100% the basin is holding less than it usually does now; above,
-      more. Basins are shaded against their <i>own</i> normal, so they can be read side by side.</p>
+    <p class="bxl-note">100% is normal: the median storage for this week of the year across the
+      record, not full. Below 100% the basin holds less than it usually does at this point in the
+      year. Basins are shaded against their <i>own</i> normal, so they can be read side by side.</p>
   </div>`;
 }
 function basinSummaryHTML(bid,home){
@@ -244,7 +243,7 @@ function basinSummaryHTML(bid,home){
 }
 function secBasinsState(home){
   return sec('basins','The state right now','Seven basins, seven different years',
-    `<p class="lr-p">${W(`Colorado drains into seven river basins — four west of the {{Continental Divide}}, three east. They do not share a fate: each lives on its own snowpack, so in the same year one can be near normal while another is deep in drought. Each is coloured below by how much water it is holding against its <i>own</i> normal, so they can be read side by side. Tap any basin for its details.`)}</p>
+    `<p class="lr-p">${W(`Colorado drains into seven river basins, four west of the {{Continental Divide}} and three east, matching the state’s seven water divisions. They do not share a fate. Each lives on its own snowpack, so in the same year one can be near normal while another is deep in drought. Each is colored below by how much water it holds against its <i>own</i> normal. Tap any basin for its details.`)}</p>
      <div class="basinmap-wrap" id="basin-explorer">${stateBasinsSVG(home,curSel||home||'colorado')}
        <div class="bx-panel" id="basin-sel">${basinSummaryHTML(curSel||home||'colorado',home)}</div></div>
      <p class="lr-p lr-cap">Boundaries from the public-domain USGS Watershed Boundary Dataset; storage derived from Colorado DWR telemetry against each basin’s own record.</p>`);
@@ -262,12 +261,12 @@ function secLongView(){
   const pk=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL.reduce((a,b)=>b[1]>a[1]?b:a):null;
   const last=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL[POWELL_ANNUAL.length-1]:null;
   return sec('longview','The long view','A drought, and a drier baseline',
-    `<p class="lr-p">${W(`One dry year is weather. A downward-sloping baseline is something else. Since 2000 the Colorado River basin has been living through what scientists call a {{megadrought}} — the driest stretch in twelve centuries — and warming is turning drought into a permanent condition, a shift with its own name: {{aridification}}.`)}</p>
-     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} — annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}
-     <p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s great savings account, tells the story bluntly: full through the 1980s, drawn toward dead pool over two decades. Colorado’s own {{Blue Mesa Reservoir}} — the largest in the state — is the next account upstream, and when the river runs short Blue Mesa is tapped to prop Powell up.`)}</p>
+    `<p class="lr-p">${W(`One dry year is weather. A falling baseline is something else. Since 2000 the Colorado River basin has been in what scientists call a {{megadrought}}, the driest stretch in at least twelve centuries, and warming is making the dryness structural. That shift has its own name: {{aridification}}.`)}</p>
+     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}
+     <p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s savings account, shows it plainly: full through the 1980s, drawn toward dead pool over two decades. Colorado’s own {{Blue Mesa Reservoir}}, the largest in the state, is the next account upstream. When the river runs short, Blue Mesa is released to prop Powell up.`)}</p>
      ${bm?`<div class="bignum"><div class="bignum-v" style="color:${ramp(bmPct)}">${bmPct}%</div>
-        <div class="bignum-lab">${W(`of normal — {{Blue Mesa Reservoir}} today${bmLive?`, holding ${af(bmLive.sto)} acre-feet (live, Colorado DWR)`:''}.`)}</div></div>`:''}
-     <p class="lr-p">${W(`Here is the hard part of {{aridification}}: warming shifts precipitation from snow toward rain, melts what snow there is earlier, and evaporates more from every reservoir surface. Even a <i>normal</i> snow year now yields less usable water than it did a generation ago.`)}</p>`);
+        <div class="bignum-lab">${W(`of normal: {{Blue Mesa Reservoir}} today${bmLive?`, holding ${af(bmLive.sto)} acre-feet (live, Colorado DWR)`:''}.`)}</div></div>`:''}
+     <p class="lr-p">${W(`The hard part of {{aridification}} is that warming shifts precipitation from snow toward rain, melts the snow earlier, and evaporates more from every reservoir surface. Even a <i>normal</i> snow year now yields less usable water than it did a generation ago.`)}</p>`);
 }
 
 /* =====================================================================
@@ -322,13 +321,12 @@ function dropLine(sb,b){
   const d=window.CW_BASINMAP&&CW_BASINMAP.drop?CW_BASINMAP.drop(sb):null;
   if(!d)return '';
   const ft=n=>Math.round(n).toLocaleString('en-US');
-  return `<p class="lr-p">${W(`And it is mostly downhill. Between the highest point we measure in the
-    ${b.n} — <b>${d.hiName}</b>, at ${ft(d.hi)} feet — and the lowest, <b>${d.loName}</b> at ${ft(d.lo)},
+  return `<p class="lr-p">${W(`It is mostly downhill. Between the highest point measured in the
+    ${b.n}, <b>${d.hiName}</b> at ${ft(d.hi)} feet, and the lowest, <b>${d.loName}</b> at ${ft(d.lo)},
     the water drops <b>${ft(d.drop)} feet</b>. Every reservoir on the way is a step on that staircase,
-    and gravity does most of the work. Not all of it, though: a few of Colorado's boldest moves push
-    back the other way — {{Lake Nighthorse}} was filled by pumping the {{Animas River|Animas}} uphill —
-    and every {{transmountain diversion|tunnel under the Divide}} carries water <i>sideways</i>, across
-    a watershed boundary it would never have crossed on its own.`)}</p>`;
+    and gravity does most of the work. Not all of it: {{Lake Nighthorse}} was filled by pumping the
+    {{Animas River|Animas}} uphill, and every {{transmountain diversion|tunnel under the Divide}} carries
+    water sideways, across a watershed boundary it would never cross on its own.`)}</p>`;
 }
 /* One basin's step-down: heading, the reading instructions (which depend on
    which way the basin drains), the drop, and the diagram. */
@@ -341,21 +339,21 @@ function flowBlock(bid,bo,svg,opts){
      ${opts.intro?`<p class="lr-p">${W(opts.intro)}</p>`:''}
      <p class="lr-p">${W(`Follow it in order. Snowmelt enters at the headwaters on the <b>${inSide}</b>,
        passes through each reservoir and gage in turn, and leaves the basin on the
-       <b>${outSide}</b>${opts.tunnel?` — including, for you, through a tunnel under the Divide`:''} —
-       every drop routed through the same handful of structures.`)}</p>
+       <b>${outSide}</b>${opts.tunnel?`, including, for you, through a tunnel under the Divide`:''}.
+       Every drop is routed through the same handful of structures.`)}</p>
      ${dropLine(bid,bo)}
      <div class="lr-chart cw-hover">${svg}<div class="lr-chart-cap">${bo.n} basin · ${west
-       ? `<b>this basin drains west</b>, toward Utah, so the diagram reads <b>right to left</b> — the direction the water really goes on a map. `
-       : `<b>this basin rises east of the Divide</b> and leaves the state that way, so the diagram reads left to right. `}<b>Height runs down the page</b>,
-       so it falls the way the water does. The spacing is <i>not</i> to scale — a true linear axis would crush the
-       lower half of the basin into a stripe — but the order is. A height is printed only where we have a
-       <b>measured</b> water surface (live DWR gauge readings, USGS gage datums, or the national elevation model
-       where it clearly resolves the lake); the reservoirs without one are placed by their position on the river
-       instead, and deliberately carry no number. <a href="data.html#elevation">How that is worked out →</a>
-       Ribbon width tracks how much water each reach carries (typical late-July flows); ◆ gages show live readings
-       where available. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water actually
-       reaches — so on the West Slope the river leaves to the left, toward Utah, while the tunnels break away to
-       the right, east under the Divide. A schematic of the order things happen in, not a channel map.</div>${
+       ? `<b>this basin drains west</b>, toward Utah, so the diagram reads <b>right to left</b>, the direction the water goes on a map. `
+       : `<b>this basin rises east of the Divide</b> and leaves the state that way, so the diagram reads left to right. `}<b>Height runs down the page</b>.
+       The spacing is <i>not</i> to scale, since a linear axis would crush the lower half of the basin into a
+       stripe, but the order is. A height is printed only where there is a <b>measured</b> water surface (live
+       DWR pool elevations, USGS gage datums, or the national elevation model where it clearly resolves the lake).
+       Reservoirs without one are placed by their position on the river and carry no number.
+       <a href="data.html#elevation">How that is worked out →</a>
+       Ribbon width tracks how much water each reach carries (typical late-July flows). ◆ gages show live readings
+       where available. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water reaches:
+       on the West Slope the river leaves to the left, toward Utah, while the tunnels break away to the right,
+       east under the Divide. A schematic of the order things happen in, not a channel map.</div>${
          window.CW_BASINMAP&&CW_BASINMAP.flowTable?CW_BASINMAP.flowTable(bid):''}</div>`;
 }
 function secMyBasin(tap){
@@ -388,43 +386,43 @@ function secMyBasin(tap){
     const pkc=sn.cur[ic], pkn=sn.nrm[inr];
     if(!(pkn>0)||pkc==null)return '';
     const rel=Math.round(pkc/pkn*100);
-    return `<p class="lr-p">${W(`The ${poss(b.n)} snowpack topped out at roughly <b>${rel}% of a normal peak</b>${ic<inr?`, and it peaked in ${monthName(ic)} rather than the usual ${monthName(inr)}`:''} — then melted away. The storage line beneath it never recovers: <b>low snow in, low water out</b>.`)}</p>`;
+    return `<p class="lr-p">${W(`The ${poss(b.n)} snowpack topped out at roughly <b>${rel}% of a normal peak</b>${ic<inr?`, and it peaked in ${monthName(ic)} rather than the usual ${monthName(inr)}`:''}, then melted away. The storage line beneath it never recovers: <b>low snow in, low water out</b>.`)}</p>`;
   })():'';
   const tuns=(tap.tun||[]).map(n=>TUNNELS[n]?[n,TUNNELS[n]]:null).filter(Boolean);
   const plumbing=tuns.length
     ? `<h3 class="lr-h3">The plumbing that made it livable</h3>
-       <p class="lr-p">${W(`Your basin’s water didn’t always flow the way it does now. Beginning in the 1930s, Colorado bored tunnels straight through the {{Continental Divide}} — {{transmountain diversion|transmountain diversions}} that reverse geography, carrying West Slope snowmelt east to the cities that grew up dry. The ones tied to your supply:`)}</p>
+       <p class="lr-p">${W(`Your basin’s water did not always flow the way it does now. Beginning in the 1930s, Colorado bored tunnels through the {{Continental Divide}}, {{transmountain diversion|transmountain diversions}} that carry West Slope snowmelt east to the cities that grew up dry. The ones tied to your supply:`)}</p>
        <ul class="tunlist">`
-      +tuns.map(([n,t])=>`<li><span class="tun-yr">${t.year}</span><span class="tun-body"><a class="wikilink" href="https://en.wikipedia.org/wiki/${t.wiki}" target="_blank" rel="noopener"><b>${n}</b></a> — ${t.mi} mi · ${t.proj}. ${t.note.charAt(0).toUpperCase()+t.note.slice(1)}.</span></li>`).join('')
+      +tuns.map(([n,t])=>`<li><span class="tun-yr">${t.year}</span><span class="tun-body"><a class="wikilink" href="https://en.wikipedia.org/wiki/${t.wiki}" target="_blank" rel="noopener"><b>${n}</b></a> · ${t.mi} mi · ${t.proj}. ${t.note.charAt(0).toUpperCase()+t.note.slice(1)}.</span></li>`).join('')
       +`</ul>`
     : `<h3 class="lr-h3">No tunnel feeds this one</h3>
-       <p class="lr-p">${W(`Your basin lives on its own snowmelt — nothing crosses the {{Continental Divide}} to top it up. What falls here is what you get, which makes the size of the winter snowpack everything.`)}</p>`;
-  const capCommon=`reservoirs drawn as glasses (size = capacity, fill = storage, colour = against normal), rivers in their headwater colours, ◆ streamgages showing live flow. <b>Your own reservoirs are outlined in white.</b>`;
+       <p class="lr-p">${W(`Your basin lives on its own snowmelt. Nothing crosses the {{Continental Divide}} to top it up, so the size of the winter snowpack is everything.`)}</p>`;
+  const capCommon=`Reservoirs are drawn as glasses (size = capacity, fill = storage, color = against normal), rivers in their headwater colors, ◆ streamgages show live flow. <b>Your own reservoirs are outlined in white.</b>`;
   return sec('mybasin','Act two · your basin',
     cross?'Two basins, one tap':`The ${b.n}`,
     (cross
-      ? `<p class="lr-p">${W(`Here is the part that surprises people. You live in the <b>${homeB.n}</b> — but only about <b>${homeShare}%</b> of the water your utility stores is actually kept there. The larger share, <b>${shareOut}%</b>, sits in the <b>${b.n}</b>, on the far side of the {{Continental Divide}}, and is carried to you through a tunnel. A basin map of where you <i>stand</i> would leave out your biggest reservoirs entirely, so here are both.`)}</p>
+      ? `<p class="lr-p">${W(`This is the part that surprises people. You live in the <b>${homeB.n}</b>, but only about <b>${homeShare}%</b> of the water your utility stores is kept there. The larger share, <b>${shareOut}%</b>, sits in the <b>${b.n}</b>, on the far side of the {{Continental Divide}}, and reaches you through a tunnel. A map of the basin you stand in would leave out your biggest reservoirs, so here are both.`)}</p>
          ${splitBar(sp,hb)}
-         <h3 class="lr-h3">Where your water is stored — the ${b.n}</h3>
+         <h3 class="lr-h3">Where your water is stored: the ${b.n}</h3>
          <p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
+         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
          <div class="crossnote">${W(`↓ crosses the {{Continental Divide}}${tap.tun&&tap.tun.length?` through the <b>${tap.tun.join('</b> and <b>')}</b>`:''} ↓`)}</div>
-         <h3 class="lr-h3">Where you live — the ${homeB.n}</h3>
+         <h3 class="lr-h3">Where you live: the ${homeB.n}</h3>
          <p class="lr-p">${BASININFO[hb]||''}</p>
-         ${homeMap?`<div class="lr-chart cw-hover">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
+         ${homeMap?`<div class="lr-chart cw-hover">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
       : `<p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin — ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
+         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
     +`
      ${flowBlock(sb,b,flowSVG,{suffix:cross?' in the '+b.n:'',tunnel:cross})}
      ${flowBlock(hb,homeB,homeFlow,{suffix:' in the '+homeB.n,
-       intro:`And the river you actually live on. The ${homeB.n} runs its own staircase, fed by
-         its own snow — plus, near the top, whatever arrives through the tunnel.`})}
+       intro:`And the river you live on. The ${homeB.n} runs its own staircase, fed by
+         its own snow plus, near the top, whatever arrives through the tunnel.`})}
      <h3 class="lr-h3">Snow in, water out</h3>
-     ${cross?`<p class="lr-p">${W(`And this is why that crossing matters: the snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter over there shows up in your summer.`)}</p>`:''}
+     ${cross?`<p class="lr-p">${W(`This is why the crossing matters. The snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter there shows up in your summer.`)}</p>`:''}
      ${snowLine}
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two panels sharing the water year — snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites; storage as a share of its telemetered <i>supply</i> capacity (flood-control pools excluded on both sides). <b>The shaded band and dashed median are measured</b> — CDSS daily basin totals since 2005, weekly — while <b>this year’s storage is a monthly reconstruction</b> (the July snapshot scaled by the basin’s derived factors, live where telemetered), which is why it is drawn as ten end-of-month dots rather than a continuous curve. The two panels are deliberately <i>not</i> one axis: that would imply an exchange rate between inches of snow and percent full that doesn’t exist.</div>${chartTable}</div>`:''}
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two panels sharing the water year: snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, and storage as a share of its telemetered <i>supply</i> capacity (flood-control pools excluded on both sides). <b>The shaded band and dashed median are measured</b>, from CDSS daily basin totals since 2005, weekly. <b>This year’s storage is a monthly reconstruction</b> (the July snapshot scaled by the basin’s derived factors, live where telemetered), which is why it is drawn as ten end-of-month dots rather than a continuous curve. The two panels are not on one axis, because that would imply an exchange rate between inches of snow and percent full that does not exist.</div>${chartTable}</div>`:''}
      ${plumbing}`);
 }
 
@@ -439,33 +437,32 @@ function secTap(tap){
   /* supply reservoirs only — flood-control pools are not part of the share */
   const totCap=across.concat(same).filter(r=>!r.fc).reduce((s,r)=>s+r.cap,0);
   const reveal=(across.length&&tap.tun&&tap.tun.length)
-    ? `<p class="reveal">${W(`Much of your water is born <b>across the {{Continental Divide}}</b>, in the ${acrossBasins.join(' and ')} — and crosses beneath the mountains through the <b>${tap.tun.join('</b> and <b>')}</b>.`)}</p>`
+    ? `<p class="reveal">${W(`Much of your water starts <b>across the {{Continental Divide}}</b>, in the ${acrossBasins.join(' and ')}, and crosses beneath the mountains through the <b>${tap.tun.join('</b> and <b>')}</b>.`)}</p>`
     : '';
   const fc=(tap.fcres&&tap.fcres.length)
-    ? `<p class="fc-note">${W(`The big lakes you see nearby — ${tap.fcres.map(id=>cleanName(RESBY[id].n)).join(', ')} — are the flood-control pools from earlier, not your supply.`)}</p>`
+    ? `<p class="fc-note">${W(`The big lakes you see nearby (${tap.fcres.map(id=>cleanName(RESBY[id].n)).join(', ')}) are the flood-control reservoirs from earlier, not your supply.`)}</p>`
     : '';
   const approx=tap._approx
-    ? `<p class="lr-p lr-aside">${W(`We don’t have ZIP ${tap.zip}’s exact provider mapped yet, so this shows the nearest system we do — <b>${tap.prov}</b> — to give you the regional picture. Your actual provider, and near the Divide sometimes the basin, may differ.`)}</p>`
+    ? `<p class="lr-p lr-aside">${W(`ZIP ${tap.zip}’s exact provider is not mapped yet, so this shows the nearest system that is, <b>${tap.prov}</b>, for the regional picture. Your provider, and near the Divide sometimes the basin, may differ.`)}</p>`
     : '';
   return sec('tap','Act three · your tap',tap.prov,
-    approx+`<p class="lr-p">${W(`Your tap is only as specific as your provider. <b>${tap.prov}</b> holds particular water rights and particular plumbing — which is why a neighbour two towns over, on a different utility, may drink an entirely different river. Under Colorado’s {{prior appropriation}} system, who got there first decides who gets water in a dry year.`)}</p>
+    approx+`<p class="lr-p">${W(`Your tap is only as specific as your provider. <b>${tap.prov}</b> holds particular water rights and particular plumbing, which is why a neighbor two towns over, on a different utility, may drink from a different river. Under Colorado’s {{prior appropriation}} system, seniority decides who gets water in a dry year.`)}</p>
      <div class="callout">
        <p class="co-h">A note on the words</p>
-       <p class="co-p">We say <b>provider</b> — the city department, special district or company that delivers your water. That is deliberately not the same as a <b>Public Water System</b>, the unit the federal Safe Drinking Water Act actually regulates (one provider can operate several), and not the same as a water <b>right</b>, which Colorado administers on a separate track. Some entries here also cover a cluster of small neighbouring providers rather than one.</p>
+       <p class="co-p">We say <b>provider</b> for the city department, special district or company that delivers your water. That is not the same as a <b>Public Water System</b>, the unit the federal Safe Drinking Water Act regulates (one provider can operate several), and not the same as a water <b>right</b>, which Colorado administers separately. Some entries here cover a cluster of small neighboring providers rather than one.</p>
        <p class="co-p">ZIP codes are postal routes, not service-area boundaries, so treat this as a regional picture. <a href="data.html#providers">How we model providers, and where to get the authoritative answer →</a></p>
      </div>
      <p class="lr-p">${tap.desc}</p>
      ${reveal}
      ${totCap?`<p class="lr-p">${W(`Between them, the reservoirs below hold <b>${kaf(totCap)} thousand acre-feet</b>
-        when full. Each row shows how big a share of your provider’s stored supply it is, how much is in it
-        today, and — the part a single number can’t tell you — where that sits against the <i>shape</i> of a
-        normal year at that reservoir. Storage is meant to fall through the summer; what matters is whether
-        it is falling faster than usual.`)}</p>`:''}
-     ${glassGroup('Across the Divide — West Slope',across,totCap)}
+        when full. Each row shows its share of your provider’s stored supply, how much is in it today, and
+        where that sits against the <i>shape</i> of a normal year at that reservoir. Storage is meant to fall
+        through the summer. What matters is whether it is falling faster than usual.`)}</p>`:''}
+     ${glassGroup('Across the Divide: West Slope',across,totCap)}
      ${glassGroup(home==='w'?'From your own basin':'From your side of the mountains',same,totCap)}
      ${same.length===1&&across.length?`<p class="lr-p lr-aside">${W(`That single reservoir is the whole of your
-        near-side storage — which is exactly why the tunnel matters. Most of what you drink is banked on the
-        other side of the mountains, and this one lake is the local buffer between it and your tap.`)}</p>`:''}
+        near-side storage, which is why the tunnel matters. Most of what you drink is stored on the other
+        side of the mountains, and this one lake is the local buffer between it and your tap.`)}</p>`:''}
      ${fc}`);
 }
 
@@ -473,22 +470,22 @@ function secAction(tap,zip){
   const pl=providerLink(tap.prov);
   const res=SAVE_RESOURCES.map(r=>`<li><a class="wikilink" href="${r.url}" target="_blank" rel="noopener">${r.lab}</a></li>`).join('');
   return sec('action','Your move','What you can actually do',
-    `<p class="lr-p">${W(`Supply is largely out of our hands. Demand is not — and outdoor watering is where most of a household’s share sits. Roughly half of a Front Range home’s summer water goes onto the lawn.`)}</p>
-     ${pl?`<p class="lr-p"><b>Your provider’s current rules.</b> Watering restrictions change through the season and by utility — we won’t guess yours. Check the source directly: <a class="wikilink" href="${pl.url}" target="_blank" rel="noopener">${pl.lab} →</a></p>`
-        :`<p class="lr-p"><b>Your provider’s current rules.</b> Watering restrictions vary by utility and change through the season — check <b>${tap.prov}</b>’s website for the current status before you set a sprinkler timer.</p>`}
+    `<p class="lr-p">${W(`Supply is largely out of our hands. Demand is not, and outdoor watering is where most of a household’s share sits. Roughly half of a Front Range home’s summer water goes onto the lawn.`)}</p>
+     ${pl?`<p class="lr-p"><b>Your provider’s current rules.</b> Watering restrictions change through the season and by utility, and this site does not guess yours. Check the source directly: <a class="wikilink" href="${pl.url}" target="_blank" rel="noopener">${pl.lab} →</a></p>`
+        :`<p class="lr-p"><b>Your provider’s current rules.</b> Watering restrictions vary by utility and change through the season. Check <b>${tap.prov}</b>’s website for the current status before you set a sprinkler timer.</p>`}
      <h3 class="lr-h3">Simple, high-leverage habits</h3>
      <ul class="lr-list">
-       <li>Water before dawn or after dusk, and skip a cycle after rain — the monsoon does the watering for you.</li>
-       <li>Trade thirsty turf for native and xeric plantings; a single low-water bed can cut a big share of summer use.</li>
-       <li>Fix the quiet leaks — a running toilet or a drip line can waste more than the whole indoor household.</li>
-       <li>Take the utility rebates for efficient fixtures and smart controllers; they exist because saving water is cheaper than finding more.</li>
+       <li>Water before dawn or after dusk, and skip a cycle after rain.</li>
+       <li>Replace thirsty turf with native and xeric plantings. A single low-water bed can cut a big share of summer use.</li>
+       <li>Fix the quiet leaks. A running toilet or a leaking drip line can waste more than the rest of the household uses indoors.</li>
+       <li>Use the utility rebates for efficient fixtures and smart controllers. They exist because saving water is cheaper than finding more.</li>
      </ul>
      <h3 class="lr-h3">Go deeper</h3>
      <ul class="lr-list lr-links">${res}</ul>
-     <p class="lr-p lr-aside">${W(`Every tap in Colorado is at the end of a specific thread — a river, a tunnel, a glass draining in the hills. You can now point at yours.`)}</p>
+     <p class="lr-p lr-aside">${W(`Every tap in Colorado is at the end of a specific thread: a river, a tunnel, a reservoir in the hills. You can now point at yours.`)}</p>
      <div class="explore-block">
        <p class="xb-h">Want the whole state, reservoir by reservoir?</p>
-       <p class="xb-sub">The detailed map plots all ${RES.length} reservoirs, every gage and every tunnel at once. It is dense — best on a large screen.</p>
+       <p class="xb-sub">The detailed map plots all ${RES.length} reservoirs, every gage and every tunnel at once. It is dense and best on a large screen.</p>
        <div class="xb-links">
          <a class="story-cta" href="map.html#zip=${zip}">Open the detailed map →</a>
          <a class="xb-alt" href="timeline.html">or watch the water year month by month →</a>
@@ -505,7 +502,7 @@ function renderState(){
     `<header class="lr-hero"><p class="lr-eyebrow">Colorado water · a drought story</p>
        <h1 class="lr-title">The water year</h1>
        <p class="lr-servedby">Where Colorado’s water comes from, where it is stored, and how much of it there is right now</p>
-       <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins holding what’s left. Then find your own. Bold terms link out so you can verify and dig deeper.`)}</p></header>`
+       <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins holding what is left. Then find your own. Bold terms link to sources.`)}</p></header>`
     +secSnow()+secReservoirs()+secBasinsState(home)+secLongView();
   if(window.CW_HISTORY)CW_HISTORY.mountAll(document.getElementById('state-body'));
   wireBasinExplorer(home);
@@ -562,8 +559,8 @@ function submitZip(){
   if(!/^\d{5}$/.test(z)){msg('five digits, e.g. 80302');return;}
   const t=zipLookup(z);
   if(!t){msg(/^8[01]/.test(z)
-    ?'don’t have that ZIP mapped yet — try a nearby city below'
-    :'this covers Colorado — but wherever you are, your tap has a watershed too');return;}
+    ?'that ZIP is not mapped yet. Try a nearby city below'
+    :'this covers Colorado, but wherever you are, your tap has a watershed too');return;}
   msg('');
   choosePlace(t,z);
 }
@@ -574,7 +571,7 @@ const cc=document.getElementById('citychips');
 cc.innerHTML=STORY_CITIES.map(c=>{
   const bn=(BASINS.find(x=>x.id===c.b)||{}).n||'';
   const hue=(typeof BASIN_HUE!=='undefined'&&BASIN_HUE[c.b])||'#8FA6B2';
-  return `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}" title="${c.label} — ${bn} basin">`
+  return `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}" title="${c.label} · ${bn} basin">`
     +`<span class="cc-city">${c.label}</span>`
     +`<span class="cc-basin"><i style="background:${hue}"></i>${bn}</span></button>`;
 }).join('');

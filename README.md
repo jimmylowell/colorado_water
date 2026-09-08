@@ -1,9 +1,9 @@
 # Colorado Water — where it sits, where it combines
 
 An interactive map of Colorado's reservoirs and rivers for drought awareness:
-where the water actually sits, where it comes from, and how a dry year draws it
+where the water sits, where it comes from, and how a dry year draws it
 down. Reservoirs are drawn as glasses of water (fill level = storage, filled by
-area so the level is honest), rivers as source-coloured ribbons, and the
+area), rivers as source-colored ribbons, and the
 transmountain tunnels that move West Slope water to the Front Range as dashed
 crossings of the Continental Divide.
 
@@ -11,7 +11,7 @@ The front door (`index.html`) is one scrolling **story in three acts**, widening
 then narrowing:
 
 1. **Colorado** — snowpack, the water year that begins Oct 1, what a reservoir
-   is actually for, the seven basins shaded by how each stands against its own
+   is for, the seven basins shaded by how each stands against its own
    normal, and the long view (Lake Powell, aridification). No ZIP required.
 2. *— the ZIP/city gate sits here, once the reader knows what they're looking
    at and has a reason to want their own —*
@@ -42,7 +42,7 @@ the root auto-redirect from the story to `map.html`.
 
 ## How data flows
 
-`js/data.js` is the canonical dataset — a dated snapshot (22 Jul 2026) of 49
+`js/data.js` is the canonical dataset — a dated snapshot (22 Jul 2026) of 52
 reservoirs, basin history, rivers, and the flow graph. The site renders
 entirely from it, so everything works offline or from a saved file.
 
@@ -53,8 +53,11 @@ government APIs:
 
 - **`data/live.json`** (~2 KB) — latest storage for the reservoirs with a
   `dwr` station code (14-day staleness cutoff, plausibility-checked) from
-  Colorado DWR's CDSS telemetry, latest streamflow at 18 gages from USGS NWIS
-  instantaneous values, and each reservoir's past-week drawdown rate in cfs
+  Colorado DWR's CDSS telemetry, latest streamflow at 18 gages (16 from USGS
+  NWIS instantaneous values; the two DWR-operated gages, the South Platte at
+  Denver and the Poudre at the canyon mouth, from CDSS `DISCHRG` telemetry
+  because NWIS publishes no discharge for them; `gage_src` says which), and
+  each reservoir's past-week drawdown rate in cfs
 - **`data/hydro.json`** (~90 KB) — a trailing year of daily values per station
   (CDSS `telemetrytimeseriesday` / USGS `nwis/dv`) behind the in-sheet
   hydrographs

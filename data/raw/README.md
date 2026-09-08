@@ -8,6 +8,7 @@ baked number can be checked against exactly what the agency returned.
 |---|---|---|
 | `usgs_iv.json` | USGS NWIS instantaneous values (waterservices.usgs.gov/nwis/iv) | latest discharge (cfs) at the mapped gages |
 | `cdss_telemetry_storage.json` | Colorado DWR CDSS REST (dwr.state.co.us/Rest, telemetrystation) | latest telemetered storage (acre-feet) at the mapped reservoirs |
+| `cdss_telemetry_discharge.json` | Colorado DWR CDSS REST (telemetrystation, parameter DISCHRG) | latest discharge (cfs) at the DWR-operated gages NWIS returned nothing for, one call per USGS site id, rows concatenated |
 | `cdss_week_storage.json` | Colorado DWR CDSS REST (telemetrytimeseriesday) | past week of daily storage, behind the drawdown markers |
 
 Fixed filenames, overwritten by each daily run: **git history is the archive**
