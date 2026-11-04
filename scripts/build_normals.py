@@ -352,6 +352,11 @@ except Exception as e:
 # across all decades. Indexed on the WATER year (days since Oct 1) rather than
 # the calendar year, so the curve reads left-to-right as one season.
 WY_NOW = TODAY.year + 1 if TODAY.month >= 10 else TODAY.year
+# The panel needs 250 days of the "current" year. Early in a new water year
+# that cannot be met, so stay on the year just closed (the site's story year)
+# until the new one is 250 days in.
+if (TODAY - datetime.date(WY_NOW - 1, 10, 1)).days < 250:
+    WY_NOW -= 1
 DEC_FROM = 1981                       # first full water year after the 1978-80 build-out
 
 
