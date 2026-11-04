@@ -7,13 +7,16 @@
   overlay "today" only. The about page's 80% line now cites the Colorado Water
   Plan, chapter 4 (70% of surface water west of the Divide, about 80% with the
   Rio Grande, which is the figure usually quoted).
-- **Next** — The September rebuild: `rm -rf /tmp/cw_normals_cache && python3
-  scripts/build_normals.py && python3 scripts/make_csvs.py && npm run smoke`,
-  then rewrite the about page's "Water year 2026" section as a finished-year
-  narrative with the final September figures. The fetch takes more than ten
-  minutes; it caches as it goes, so a second run resumes. It worked if
-  `basin_history.csv` shows distinct August and September rows and the live
-  status line reads "Water year 2027, day N · carryover".
+- **Next** — Rewrite the about page's "Water year 2026" section as a
+  finished-year narrative using the final September figures in
+  `data/basin_history.csv` (rebuilt 2026-11-04, smoke all green). It worked if
+  every number in the prose matches the CSV and the live status line reads
+  "Water year 2027, day N · carryover". A fresh fetch takes more than ten
+  minutes; it caches under `/tmp/cw_normals_cache`, so a second run resumes.
+- **Decided** — The snow-decade panel (`SNOW_DECADES`) stays on the year just
+  closed until the new water year is 250 days in (2026-11-04). Reason: in
+  November no station had 250 days of WY2027, so the panel came out empty and
+  the smoke test failed.
 - **Decided** — The site is a retrospective of water year 2026 plus the new
   year's carryover, not a rolling dashboard (2026-09-07). Reason: the live
   overlay was overwriting parts of a story that stopped in July, and the two
