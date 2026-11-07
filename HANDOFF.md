@@ -1,5 +1,18 @@
 # Handoff
 
+- **State, hosting (2026-11-06)** — Moving from GitHub Pages to Cloudflare
+  Pages, project `colorado-water` (`colorado-water.pages.dev`, first deploy
+  2026-11-06 by direct upload of the pages, `css/`, `js/`, `img/`, `data/`
+  and the icons). water.myjimmycloud.com still points at GitHub Pages until
+  the DNS flip. This branch drops `CNAME` and gives `refresh-data.yml` a
+  deploy step (wrangler pinned to 4.42.0), so the daily refresh publishes
+  itself once the repo has `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`
+  (a Pages-Edit-only token). Merge only after the secrets are set and the
+  domain is flipped; until then the deploy step would fail.
+- **Next, hosting** — Secrets set, one `workflow_dispatch` run proves a
+  deploy lands, attach the domain, flip the CNAME, merge. A merge that is not
+  a data refresh goes live by running the workflow from the Actions tab (it
+  always deploys), or `wrangler pages deploy` of the same files.
 - **State** — The story spans the whole water year (Oct 2025 – Sep 2026,
   `MONTHS` has 12 entries, `NOW=11`). Snapshot scaling is anchored to July via
   `SNAP_MI`. Basin storage (`PMH_DERIVED`) and statewide streamflow
