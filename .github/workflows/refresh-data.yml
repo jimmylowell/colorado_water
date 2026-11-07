@@ -1,12 +1,14 @@
 # Bakes data/live.json + data/hydro.json once a day so visitors read small
-# same-origin files instead of each browser hitting USGS/CDSS. The commit
-# lands on main, which GitHub Pages redeploys automatically.
+# same-origin files instead of each browser hitting USGS/CDSS, then deploys
+# the site to Cloudflare Pages (project colorado-water). GitHub Pages no
+# longer serves water.myjimmycloud.com, so a commit alone publishes nothing:
+# the deploy step below is what puts the new readings live.
 name: Refresh live data
 
 on:
   schedule:
     - cron: '15 12 * * *'   # 12:15 UTC ≈ 6:15 am MDT, after overnight readings post
-  workflow_dispatch: {}      # manual run from the Actions tab
+  workflow_dispatch: {}      # manual run from the Actions tab; also deploys
 
 permissions:
   contents: write
@@ -33,3 +35,20 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "data: daily live refresh $(date -u +%F)"
           git push
+
+      # Only what the site serves: the pages, css, js, img, data and icons.
+      # Repo notes, scripts/, package files and tests stay out.
+      - name: Stage the site
+        run: |
+          mkdir -p "$RUNNER_TEMP/site"
+          cp -r *.html css js img data favicon.ico apple-touch-icon.png "$RUNNER_TEMP/site/"
+
+      # wranglerVersion is pinned: the action's default 3.x ignores a .jsonc
+      # config and can deploy nothing behind a green check.
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.42.0"
+          command: pages deploy ${{ runner.temp }}/site --project-name colorado-water --branch main --commit-dirty=true
