@@ -11,6 +11,10 @@
   basin-storage figure in it comes from `data/basin_history.csv` (rebuilt
   2026-11-04), and the section links that CSV. The one other number, 91% of
   SNOTEL sites bare by 1 June, is the NRCS figure already on the stat strip.
+- **State** — Every page's footer links the source on GitHub, and the repo
+  carries an MIT `LICENSE` (2026-11-10, Jimmy's approved line: "I want people
+  to be able to take this in the free and open source software ideology").
+  Vendored libraries under `js/vendor/` keep their own licences.
 - **Next** — Jimmy reviews and merges PR #1. Before any later rebuild, check
   the about page's figures against the new CSV: the prose quotes it by hand.
   A fresh fetch takes more than ten minutes; it caches under
