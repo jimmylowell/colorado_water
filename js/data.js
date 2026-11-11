@@ -7,15 +7,6 @@ const H={blue:'#2F6BFF',cyan:'#00D6E6',green:'#2FD94F',lime:'#C6E01A',orange:'#F
 /* =====================================================================
    RESERVOIRS  (c:'obs' = published reading; c:'est' = basin-scaled)
    ===================================================================== */
-const STATEWIDE=[
- {k:'Statewide storage',v:'75%',n:'of 1991–2020 median · NRCS, 1 Jun',cls:'mid',spark:'storage'},
- {k:'Statewide streamflow',v:'44%',n:'of normal · USGS gages, 20 Jul',cls:'low',spark:'flow'},
- {k:'Peak snowpack',v:'melted',n:'91% of SNOTEL sites bare by 1 Jun',cls:'low'},
- {k:'Denver Water system',v:'77%',n:'full vs. 97% normal · 20 Jul',cls:'mid',spark:'denver'},
- {k:'Colorado R. at Cameo',v:'1,520',n:'cfs · USGS 09095500',cls:'low',spark:'flow'},
- {k:'Reservoir capacity used',v:'54%',n:'statewide · NRCS, 1 Jun',cls:'mid',spark:'storage'}
-];
-
 const RES=[
  {id:'granby',dwr:'GRARESCO',n:'Lake Granby',lat:40.150,lon:-105.910,cap:539758,sto:366074,pm:84,b:'colorado',r:'Colorado River',c:'obs',d:'7 Jun 2026',s:'USBR ARCWEB'},
  {id:'shadow',dwr:'SHARESCO',n:'Shadow Mountain',lat:40.222,lon:-105.848,cap:18369,sto:17450,pm:99,b:'colorado',r:'Colorado River',c:'est'},
@@ -125,7 +116,7 @@ const PMH=(function(){
 /* Statewide streamflow % of normal by month, Oct→Sep. Derived by
    scripts/build_normals.py as FLOWPCT_DERIVED: for each month, the sum of
    daily flow at the mapped gages over the sum of their weekly medians — the
-   same arithmetic js/live.js uses for the live headline figure. The hand
+   same arithmetic the map's old headline strip used. The hand
    series below is the pre-derivation fallback, kept only for a build that
    could not fetch the gage record. Drives the timeline animation (qFactor). */
 const FLOWPCT_FALLBACK=[55,50,48,45,46,135,70,55,34,44,54,55];

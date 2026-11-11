@@ -323,9 +323,24 @@ const POW_MINPOWER=3700000, POW_DEADPOOL=1900000;
 const POW_EVENTS=[
   {y:1980,t:'first full pool',row:0},
   {y:1983,t:'record runoff',row:1},
-  {y:2000,t:'megadrought begins',row:0},
-  {y:2022,t:'lowest on record',row:1}
+  {y:2000,t:'megadrought begins',row:0}
 ];
+/* The latest year's mark is read off the series, not written by hand: 2022
+   was labeled "lowest on record" until September 2026 came in lower (5.16M
+   against 5.80M AF), and the lake was lower still only while it first filled.
+   So the last year is marked "lowest since <year>" whenever no year after
+   that one ended September as low. */
+(function(){
+  if(typeof POWELL_ANNUAL==='undefined'||POWELL_ANNUAL.length<2)return;
+  const last=POWELL_ANNUAL[POWELL_ANNUAL.length-1];
+  let since=null;
+  for(let i=POWELL_ANNUAL.length-2;i>=0;i--){
+    if(POWELL_ANNUAL[i][1]<=last[1]){since=POWELL_ANNUAL[i][0];break;}
+  }
+  /* only worth a mark when it reaches back a generation */
+  if(since==null)POW_EVENTS.push({y:last[0],t:'lowest on record',row:1});
+  else if(last[0]-since>=20)POW_EVENTS.push({y:last[0],t:'lowest since '+since,row:1});
+})();
 function powellChart(el){
   if(typeof POWELL_ANNUAL==='undefined'||!POWELL_ANNUAL.length){el.innerHTML='';return;}
   const W=680,H=330,padL=46,padR=62,padT=52,padB=28;

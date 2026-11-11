@@ -28,40 +28,6 @@ function ingest(j){
   Object.entries(j.delta||{}).forEach(([id,v])=>{if(isFinite(v))LIVE_DELTA[id]=v;});
   return {nG,nR,at:new Date(Date.parse(j.generated))};
 }
-/* Derive statewide % of normal from the baked weekly medians (js/normals.js):
-   streamflow = Σ live flow / Σ gage median; storage = capacity-weighted mean of
-   each live reservoir's (live / its median). Updates the matching headline
-   tiles in place so the strip shows a real, current, derived number. */
-function deriveStats(asOf){
-  const out={};
-  if(typeof gageMedianNow==='function'){
-    let num=0,den=0;
-    Object.entries(S.live).forEach(([site,v])=>{
-      const m=gageMedianNow(site);
-      if(m>0&&isFinite(v)){num+=v;den+=m;}
-    });
-    if(den>0)out.flow=Math.round(num/den*100);
-  }
-  if(typeof resMedianNow==='function'){
-    let num=0,den=0;
-    RES.forEach(r=>{
-      const lv=LIVE_STO[r.id],m=resMedianNow(r);
-      if(r.fc||!lv||!(m>0))return;
-      num+=(lv.sto/m)*r.cap;den+=r.cap;
-    });
-    if(den>0)out.storage=Math.round(num/den*100);
-  }
-  if(typeof STATEWIDE!=='undefined'){
-    const at=(asOf||new Date()).toLocaleDateString('en-US',{day:'numeric',month:'short'});
-    STATEWIDE.forEach(s=>{
-      if(s.k==='Statewide streamflow'&&out.flow!=null){s.v=out.flow+'%';s.n='of the weekly median · USGS gages, '+at+' · derived';}
-      if(s.k==='Statewide storage'&&out.storage!=null){s.v=out.storage+'%';s.n='of the weekly median · DWR telemetry, '+at+' · derived';}
-    });
-    if(typeof renderStrip==='function')renderStrip();
-  }
-  window.CW_STATS=out;
-  return out;
-}
 function status(html){
   const el=document.getElementById('livestat');
   if(el)el.innerHTML=html;
@@ -77,7 +43,6 @@ async function refresh(){
     if(j&&j.generated)got=ingest(j);
   }catch(e){}
   if(got&&(got.nG||got.nR)){
-    deriveStats(got.at);
     const at=got.at.toLocaleDateString('en-US',{day:'numeric',month:'short'});
     /* Once the water year the story covers has closed, the live readings are
        the NEW year's carryover — say so, with the day count, so the reader
