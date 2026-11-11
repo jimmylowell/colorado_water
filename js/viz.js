@@ -906,31 +906,7 @@ function renderSheet(){
 /* =====================================================================
    CHROME
    ===================================================================== */
-/* monthly series behind a headline stat, so the tile shows its own trend */
-function statSeries(kind){
-  if(kind==='flow')return FLOWPCT.slice();
-  if(kind==='denver')return MONTHS.map((_,i)=>(PMH.colorado[i]+PMH.platte[i])/2);
-  if(kind==='storage'){
-    const capB={};RES.forEach(r=>{if(!r.fc)capB[r.b]=(capB[r.b]||0)+r.cap;});
-    return MONTHS.map((_,i)=>{
-      let num=0,den=0;
-      for(const b in PMH){const c=capB[b]||0;num+=PMH[b][i]*c;den+=c;}
-      return den?num/den:0;
-    });
-  }
-  return null;
-}
 /* SPARKCOL, sparkSVG — relocated to js/data.js (shared with story.js) */
-function renderStrip(){
-  const el=document.getElementById('strip');if(!el)return;
-  el.innerHTML=STATEWIDE.map(s=>{
-    const series=s.spark?statSeries(s.spark):null;
-    return `<div class="stat"><div class="k">${s.k}</div><div class="v ${s.cls}">${s.v}</div>`
-      +`<div class="n">${s.n}</div>`
-      +(series?`<div class="spark" title="Oct 2025 → Sep 2026">${CW_CHARTS.sparkSVG(series,SPARKCOL[s.cls]||'#8DA4B0')}</div>`:'')
-      +`</div>`;
-  }).join('');
-}
 /* focus a basin (from a chip, an outline, or the sheet): filter, clear any
    selection so the basin panel shows, redraw, and frame it. */
 function selectBasin(id){
@@ -1182,7 +1158,7 @@ document.addEventListener('keydown',ev=>{
 });
 
 /* boot — live fetches are wired up in js/live.js */
-renderStrip();renderChips();renderLegend();
+renderChips();renderLegend();
 setViewBox();
 if(location.hash)restoreFromHash();
 else{renderSheet();draw();}

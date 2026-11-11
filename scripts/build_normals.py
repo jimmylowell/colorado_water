@@ -162,7 +162,7 @@ MONTHS = ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03',
 
 # Statewide streamflow % of normal by month: sum of daily flow at every gage
 # with a baked median, over the sum of those gages' weekly medians for the
-# same days — the arithmetic js/live.js uses for the live headline, applied
+# same days — the arithmetic the map's old headline strip used, applied
 # month by month. null where no gage reported. The current month is partial
 # until it ends; re-run after Sep 30 to close the water year.
 FLOWPCT_DERIVED = []
