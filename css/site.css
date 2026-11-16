@@ -216,6 +216,7 @@ body.fs-on{overflow:hidden}
 .foot{margin-top:52px;border-top:1px solid var(--silt);padding-top:16px;font-family:var(--mono);
   font-size:10.5px;color:var(--dim);line-height:1.8}
 .foot a{color:var(--dust)}
+.mjc-foot{margin:10px 0 0;text-align:center}
 
 /* ------- v2: flow animation + hydrograph ------- */
 @keyframes flowdash{to{stroke-dashoffset:-36}}
