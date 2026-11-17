@@ -534,6 +534,8 @@ function renderLocal(tap,zip){
        <p class="lr-servedby">${tap._approx?'Nearest mapped system: ':'Served by '}<b>${tap.prov}</b> · ${b.n} basin</p></header>`
     +secMyBasin(tap)+secTap(tap)+secAction(tap,zip);
   if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
+  /* on a phone the maps are wider than the screen: open each one centred */
+  el.querySelectorAll('.mapscroll').forEach(m=>{m.scrollLeft=(m.scrollWidth-m.clientWidth)/2;});
   /* the basin maps and step-downs are string-built; their tooltips attach
      to the inserted DOM via the shared delegated hover */
   el.querySelectorAll('.cw-hover').forEach(box=>{

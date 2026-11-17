@@ -647,7 +647,7 @@ svg:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
   .basinmap .sbasin-pct{font-size:21px;stroke-width:5px}
 
   .mapscroll{position:relative}
-  .mapscroll::before{content:'Swipe sideways to see the whole map \2192';display:block;position:sticky;left:0;
+  .mapscroll::before{content:'Swipe sideways to see the whole map \2194';display:block;position:sticky;left:0;
     font-family:var(--mono);font-size:12px;color:var(--dust);padding:2px 2px 8px}
   .mapscroll svg{min-width:640px}
   .bm-lab{font-size:12px} .bm-riv{font-size:13px}
