@@ -1,5 +1,21 @@
 # Handoff
 
+- **State, hosting** — water.myjimmycloud.com is Cloudflare Pages project
+  `colorado-water` (`colorado-water.pages.dev`), a direct upload, with the
+  domain a proxied CNAME to that address. GitHub Pages no longer serves it,
+  so a merge or the daily data commit goes live only when main is deployed
+  by hand. The deploy is the pages, `css/`, `js/`, `img/`, `data/` and the two
+  icons, nothing else:
+  `npx wrangler pages deploy <that folder> --project-name colorado-water --branch main`.
+- **Decided, hosting** — The daily refresh commits and does not deploy, and
+  this repo holds no Cloudflare token. Reason: the owner chose not to make
+  another token, so the live readings lag the commits until the next deploy.
+  A token with Cloudflare Pages Edit only, in the repo secrets, plus a
+  `cloudflare/wrangler-action@v3` step pinned to `wranglerVersion: "4.42.0"`,
+  would make it daily again.
+- **Over to you, hosting** — GitHub Pages is still switched on in the repo
+  Settings and serves nothing now; switching it off is harmless and optional.
+  `README.md` still describes GitHub Pages hosting.
 - **State** — The story spans the whole water year (Oct 2025 – Sep 2026,
   `MONTHS` has 12 entries, `NOW=11`). Snapshot scaling is anchored to July via
   `SNAP_MI`. Basin storage (`PMH_DERIVED`) and statewide streamflow

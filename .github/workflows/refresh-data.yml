@@ -1,6 +1,10 @@
 # Bakes data/live.json + data/hydro.json once a day so visitors read small
 # same-origin files instead of each browser hitting USGS/CDSS. The commit
-# lands on main, which GitHub Pages redeploys automatically.
+# lands on main and does not publish itself: water.myjimmycloud.com is a
+# Cloudflare Pages direct upload (project colorado-water), so new readings go
+# live at the next hand deploy of main (see HANDOFF.md), and the live page can
+# lag this commit by days. There is no deploy step here on purpose: one would
+# need a Cloudflare token in this repo's secrets.
 name: Refresh live data
 
 on:
