@@ -235,7 +235,7 @@ function basinLegend(){
 function basinSummaryHTML(bid,home){
   const b=BASINS.find(x=>x.id===bid), st=basinStats(bid);
   return `<div class="bx-head"><span class="bx-name">${b.n}${bid===home?' · your basin':''}</span>`
-    +`<span class="bx-pct" style="color:${ramp(st.pct)}">${st.pct}% of normal</span></div>`
+    +`<span class="bx-pct" style="color:${rampText(st.pct)}">${st.pct}% of normal</span></div>`
     +`<p class="bx-blurb">${BASININFO[bid]||''}</p>`
     +`<div class="bx-stats"><span>${WEST.includes(bid)?'West slope':'East slope'}</span><span>${st.count} reservoirs</span>`
     +`<span>${kaf(st.cap)} KAF full</span><span>${st.below} below normal</span>`
@@ -264,7 +264,7 @@ function secLongView(){
     `<p class="lr-p">${W(`One dry year is weather. A falling baseline is something else. Since 2000 the Colorado River basin has been in what scientists call a {{megadrought}}, the driest stretch in at least twelve centuries, and warming is making the dryness structural. That shift has its own name: {{aridification}}.`)}</p>
      ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}
      <p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s savings account, shows it plainly: full through the 1980s, drawn toward dead pool over two decades. Colorado’s own {{Blue Mesa Reservoir}}, the largest in the state, is the next account upstream. When the river runs short, Blue Mesa is released to prop Powell up.`)}</p>
-     ${bm?`<div class="bignum"><div class="bignum-v" style="color:${ramp(bmPct)}">${bmPct}%</div>
+     ${bm?`<div class="bignum"><div class="bignum-v" style="color:${rampText(bmPct)}">${bmPct}%</div>
         <div class="bignum-lab">${W(`of normal: {{Blue Mesa Reservoir}} today${bmLive?`, holding ${af(bmLive.sto)} acre-feet (live, Colorado DWR)`:''}.`)}</div></div>`:''}
      <p class="lr-p">${W(`The hard part of {{aridification}} is that warming shifts precipitation from snow toward rain, melts the snow earlier, and evaporates more from every reservoir surface. Even a <i>normal</i> snow year now yields less usable water than it did a generation ago.`)}</p>`);
 }
@@ -306,7 +306,7 @@ function splitBar(sp,hb){
 function basinStatPanel(bid){
   const st=basinStats(bid);
   return `<div class="basin-panel">
-       <div class="bp-cell"><div class="bp-num" style="color:${ramp(st.pct)}">${st.pct}%</div>
+       <div class="bp-cell"><div class="bp-num" style="color:${rampText(st.pct)}">${st.pct}%</div>
          <div class="bp-lab">of normal storage<br>right now</div></div>
        <div class="bp-cell"><div class="bp-num">${st.count}</div>
          <div class="bp-lab">reservoirs here holding<br>${kaf(st.cap)} KAF when full</div></div>

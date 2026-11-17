@@ -658,7 +658,7 @@ function drawFlow(){
       lab.append('text').attr('x',0).attr('y',ly).attr('class','lbl')
         .attr('text-anchor','middle').text(n.l);
       const sub=lab.append('text').attr('x',0).attr('y',ly+11.5).attr('class','pmlbl')
-        .attr('text-anchor','middle').attr('fill',ramp(pmAt(r,state.mi)))
+        .attr('text-anchor','middle').attr('fill',rampText(pmAt(r,state.mi)))
         .text(pmAt(r,state.mi)+'%'+(dimRes?'':(dd>15?' · drawing down ~'+fmt(dd)+' cfs':(dd<-15?' · filling ~'+fmt(-dd)+' cfs':''))));
       if(!dimRes&&Math.abs(dd)>15){
         const tx=dims.a+7,ty=-dims.h*0.5;
@@ -752,7 +752,7 @@ function compBlockHTML(nodeId,title){
   const parts=sortedParts(COMP[nodeId]);
   if(parts.length<2)return'';
   const T=parts.reduce((a,p)=>a+p[1],0)||1;
-  return `<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:14px 0 4px">${title}</div>
+  return `<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#5f5949;margin:14px 0 4px">${title}</div>
     <div class="compbar">${parts.map(([sid,w])=>`<div style="width:${(w/T*100).toFixed(2)}%;background:${NODE[sid].hue}"></div>`).join('')}</div>
     <div class="complist">${parts.slice().sort((a,b)=>b[1]-a[1]).map(([sid,w])=>
       `<div><span class="sw" style="background:${NODE[sid].hue}"></span>${NODE[sid].l}<b>${(w/T*100).toFixed(0)}%</b></div>`).join('')}</div>`;
@@ -780,7 +780,7 @@ function renderSheet(){
         <tr><td class="lab">Flow (${MONTHS[mi]})</td><td>${fmt((live||FLOWQ[state.selectedNode])*(live?1:qFactor(mi)))} cfs${live?' · live':''}</td></tr>
         ${(()=>{const med=n.gage&&gageMedianNow(n.gage);
           if(live&&med>0){const p=Math.round(live/med*100);
-            return `<tr><td class="lab">Percent of normal</td><td style="color:${ramp(p)}">${p}%</td></tr>`;}
+            return `<tr><td class="lab">Percent of normal</td><td style="color:${rampText(p,'paper')}">${p}%</td></tr>`;}
           return '';})()}
         <tr><td class="lab">Headwaters upstream</td><td>${sortedParts(COMP[state.selectedNode]).length}</td></tr>
       </table>
@@ -797,7 +797,7 @@ function renderSheet(){
       const pm=pmAt(r,mi);
       return `<tr class="taprow" data-res="${id}" style="cursor:pointer">
         <td class="lab" style="text-transform:none;font-size:11px">${r.n}</td>
-        <td style="color:${ramp(pm)}">${pm}%<span style="color:#8a8069;font-weight:400"> · ${kaf(stoAt(r,mi))} KAF</span></td></tr>`;
+        <td style="color:${rampText(pm,'paper')}">${pm}%<span style="color:#5f5949;font-weight:400"> · ${kaf(stoAt(r,mi))} KAF</span></td></tr>`;
     }).join('');
     s.innerHTML=`
       <div class="tag"><span>Your water · ZIP ${t.zip}</span><span class="badge obs">tap</span></div>
@@ -805,12 +805,12 @@ function renderSheet(){
       <div class="sub">${t.prov}${t._approx?' · nearest mapped system':''}</div>
       ${t._approx?`<div class="prov" style="margin-top:0;margin-bottom:10px;font-size:11px">No exact provider on file for ZIP ${t.zip}, so this is the nearest mapped system. Your provider, and near the Divide sometimes the basin, may differ.</div>`:''}
       <div class="prov" style="margin-top:0;margin-bottom:12px;font-size:11px;color:#3c3a33">${t.desc}</div>
-      ${t.res.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">Your reservoirs today</div>
+      ${t.res.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#5f5949;margin:12px 0 4px">Your reservoirs today</div>
       <table class="rows">${rows}</table>`:''}
-      ${t.fcres&&t.fcres.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#6d6450;margin:12px 0 4px">The lakes you see — not your supply</div>
+      ${t.fcres&&t.fcres.length?`<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#5f5949;margin:12px 0 4px">The lakes you see — not your supply</div>
       <table class="rows">${t.fcres.map(id=>{const r=RESBY[id];return r?`<tr class="taprow" data-res="${id}" style="cursor:pointer">
         <td class="lab" style="text-transform:none;font-size:11px">${r.n}</td>
-        <td style="color:#6d6450;font-weight:400">flood control</td></tr>`:'';}).join('')}</table>`:''}
+        <td style="color:#5f5949;font-weight:400">flood control</td></tr>`:'';}).join('')}</table>`:''}
       ${t.tun.length?`<div class="prov"><b>Crossing the Divide for you:</b> ${t.tun.join(' · ')}</div>`:''}
       <div class="prov">A simplified picture: providers blend sources and trade shares. Click a highlighted glass for its details, or <a href="#" id="tapclear2" style="color:#1A2730">clear</a> to see the whole state.</div>`;
     s.querySelectorAll('.taprow').forEach(el=>el.addEventListener('click',()=>{
@@ -832,9 +832,9 @@ function renderSheet(){
       <h2>${b.n}</h2>
       <div class="sub">${count} reservoirs · ${kaf(cap)} KAF when full</div>
       <table class="rows">
-        <tr><td class="lab">Storage vs normal</td><td style="color:${ramp(pct)}">${pct}% of median</td></tr>
+        <tr><td class="lab">Storage vs normal</td><td style="color:${rampText(pct,'paper')}">${pct}% of median</td></tr>
         <tr><td class="lab">Below normal</td><td>${below} of ${count} reservoirs</td></tr>
-        ${largest?`<tr><td class="lab">Largest</td><td>${cn(largest.n)} · <span style="color:${ramp(pmAt(largest,mi))}">${pmAt(largest,mi)}%</span></td></tr>`:''}
+        ${largest?`<tr><td class="lab">Largest</td><td>${cn(largest.n)} · <span style="color:${rampText(pmAt(largest,mi),'paper')}">${pmAt(largest,mi)}%</span></td></tr>`:''}
         <tr><td class="lab">Streamgages</td><td>${gg.length}</td></tr>
       </table>
       ${BASININFO[b.id]?`<div class="prov" style="font-size:12px;color:#4a4636">${BASININFO[b.id]}</div>`:''}
@@ -876,7 +876,7 @@ function renderSheet(){
       <tr><td class="lab">Storage</td><td>${fmt(sto)} AF</td></tr>
       <tr><td class="lab">${r.fc?'Permanent pool':'Capacity'}</td><td>${fmt(r.cap)} AF</td></tr>
       ${r.fc?`<tr><td class="lab">Role</td><td>flood control · USACE</td></tr>`
-        :`<tr><td class="lab">Percent of normal</td><td style="color:${ramp(pm)}">${pm}%</td></tr>`}
+        :`<tr><td class="lab">Percent of normal</td><td style="color:${rampText(pm,'paper')}">${pm}%</td></tr>`}
       ${!r.fc&&deficit>0?`<tr><td class="lab">Below normal by</td><td>${fmt(deficit)} AF</td></tr>`:''}
       <tr><td class="lab">Reading</td><td>${past?'basin-scaled':(lv?lv.asOf+' · live':(r.d||'1 Jun 2026 basin'))}</td></tr>
       ${(()=>{
@@ -965,14 +965,14 @@ function renderZipList(){
   const resRow=id=>{const r=RESBY[id];if(!r)return'';const pm=pmAt(r,state.mi);
     return `<button class="zl-row" data-res="${id}"><span class="zl-g">${miniGlass(r)}</span>`
       +`<span class="zl-n">${r.n.replace(/ (Reservoir|Res\.|Lake)$/,'')}</span>`
-      +`<span class="zl-p" style="color:${r.fc?'#8DA4B0':ramp(pm)}">${r.fc?'flood':pm+'%'}</span></button>`;};
+      +`<span class="zl-p" style="color:${r.fc?'#8DA4B0':rampText(pm)}">${r.fc?'flood':pm+'%'}</span></button>`;};
   const gageRow=s=>{const nid=GAGE_NODE[s],live=state.live[s];
     const med=(typeof gageMedianNow==='function')?gageMedianNow(s):null;
     const pct=(live!=null&&med>0)?Math.round(live/med*100):null;
     const nm=GAGE_META[s].name.split(/,| At | Near | Below | Nr /i)[0].trim();
     return `<button class="zl-row zl-gage" data-node="${nid||''}"><span class="zl-g zl-dia">◆</span>`
       +`<span class="zl-n">${nm}</span>`
-      +`<span class="zl-p" style="color:${pct!=null?ramp(pct):'#5C7484'}">`
+      +`<span class="zl-p" style="color:${pct!=null?rampText(pct):'#7E96A3'}">`
       +`${pct!=null?pct+'%':(live!=null?Math.round(live)+' cfs':'gage')}</span></button>`;};
   el.innerHTML=`<div class="zl-head">${head}</div>`
     +(resIds.length?`<div class="zl-sec">Reservoirs</div>`+resIds.map(resRow).join(''):'')

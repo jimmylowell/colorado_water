@@ -598,6 +598,19 @@ function ramp(p){
   }
   return RAMPS[RAMPS.length-1][1];
 }
+/* rampText: the ramp colour as text. The ramp's reds and ambers are made for
+   fills; as text they fall under 4.5:1 on the dark ground and on the paper
+   sheet, so the colour is mixed toward white (dark ground) or toward black
+   (paper) until it reads at 4.5:1. Same hue, so the colour still says the same. */
+function cssRGB(s){if(s[0]==='#')return hex2rgb(s);return s.match(/\d+/g).slice(0,3).map(Number);}
+function relLum(c){return c.map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}).reduce((a,v,i)=>a+v*[0.2126,0.7152,0.0722][i],0);}
+function contrast(a,b){const x=relLum(a),y=relLum(b);return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05);}
+function rampText(p,ground){
+  const bg=hex2rgb(ground==='paper'?'#E6DECB':'#162A36'), to=ground==='paper'?[0,0,0]:[255,255,255];
+  let c=cssRGB(ramp(p));
+  for(let i=0;i<20&&contrast(c,bg)<4.6;i++)c=c.map((v,j)=>v+(to[j]-v)*0.08);
+  return rgb2css(c);
+}
 const SPARKCOL={low:'#FF7A45',mid:'#EFD01B',ok:'#2FD94F'};
 /* sparkSVG — relocated to js/charts.js (CW_CHARTS.sparkSVG) */
 function zipLookup(zip){
