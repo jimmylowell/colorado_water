@@ -205,7 +205,7 @@ function stateBasinsSVG(home,sel){
     const bb=BASINS.find(x2=>x2.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
     /* neutral, not ramp-coloured: the fill beneath already carries the value */
     s+=`<text class="sbasin-lab" x="${x}" y="${y}" text-anchor="middle" pointer-events="none">${bb.n.toUpperCase()}</text>`;
-    s+=`<text class="sbasin-pct" x="${x}" y="${(+y+13)}" text-anchor="middle" pointer-events="none">${pct}%</text>`;
+    s+=`<text class="sbasin-pct" x="${x}" y="${y}" dy="1.1em" text-anchor="middle" pointer-events="none">${pct}%</text>`;
   });
   return s+'</svg>'+basinLegend();
 }
@@ -342,7 +342,7 @@ function flowBlock(bid,bo,svg,opts){
        <b>${outSide}</b>${opts.tunnel?`, including, for you, through a tunnel under the Divide`:''}.
        Every drop is routed through the same handful of structures.`)}</p>
      ${dropLine(bid,bo)}
-     <div class="lr-chart cw-hover">${svg}<div class="lr-chart-cap">${bo.n} basin · ${west
+     <div class="lr-chart cw-hover"><div class="mapscroll">${svg}</div><div class="lr-chart-cap">${bo.n} basin · ${west
        ? `<b>this basin drains west</b>, toward Utah, so the diagram reads <b>right to left</b>, the direction the water goes on a map. `
        : `<b>this basin rises east of the Divide</b> and leaves the state that way, so the diagram reads left to right. `}<b>Height runs down the page</b>.
        The spacing is <i>not</i> to scale, since a linear axis would crush the lower half of the basin into a
@@ -406,14 +406,14 @@ function secMyBasin(tap){
          <h3 class="lr-h3">Where your water is stored: the ${b.n}</h3>
          <p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
+         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
          <div class="crossnote">${W(`↓ crosses the {{Continental Divide}}${tap.tun&&tap.tun.length?` through the <b>${tap.tun.join('</b> and <b>')}</b>`:''} ↓`)}</div>
          <h3 class="lr-h3">Where you live: the ${homeB.n}</h3>
          <p class="lr-p">${BASININFO[hb]||''}</p>
-         ${homeMap?`<div class="lr-chart cw-hover">${homeMap}<div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
+         ${homeMap?`<div class="lr-chart cw-hover"><div class="mapscroll">${homeMap}</div><div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
       : `<p class="lr-p">${BASININFO[sb]||''}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover">${map}<div class="lr-chart-cap">${W(`The ${b.n} basin. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
+         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
     +`
      ${flowBlock(sb,b,flowSVG,{suffix:cross?' in the '+b.n:'',tunnel:cross})}
      ${flowBlock(hb,homeB,homeFlow,{suffix:' in the '+homeB.n,
