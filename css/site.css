@@ -1,6 +1,7 @@
 :root{
+  color-scheme:dark;
   --abyss:#060F16; --basin:#0B1922; --silt:#162A36; --silt-2:#20404F;
-  --bone:#EDE6D6; --dust:#8DA4B0; --dim:#5C7484;
+  --bone:#EDE6D6; --dust:#8DA4B0; --dim:#7E96A3;
   --paper:#E6DECB; --paper-ink:#1A2730; --ember:#FF7A45; --aqua:#00D6E6;
   --display:'Fraunces',Georgia,serif;
   --body:'Archivo',system-ui,sans-serif;
@@ -8,6 +9,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+a{color:var(--aqua)}
 body{
   background:var(--abyss);color:var(--bone);font-family:var(--body);font-size:15px;line-height:1.5;
   -webkit-font-smoothing:antialiased;
@@ -66,7 +68,7 @@ h1 em{font-style:italic;color:var(--aqua)}
 
 .sheet{background:var(--paper);color:var(--paper-ink);border:1px solid #cfc5ab;padding:18px 18px 16px;
   position:sticky;top:18px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
-.sheet .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#6d6450;
+.sheet .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#5f5949;
   border-bottom:1px solid #cfc5ab;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;gap:8px}
 .sheet h2{font-family:var(--display);font-weight:600;font-size:23px;line-height:1.05;margin:0 0 2px;letter-spacing:-.01em}
 .sheet .sub{font-size:12px;color:#5f5949;margin-bottom:12px}
@@ -81,11 +83,12 @@ h1 em{font-style:italic;color:var(--aqua)}
 .rows td{padding:5px 0;border-bottom:1px solid #d7cdb5;vertical-align:top}
 .rows td:last-child{text-align:right;font-weight:500}
 .rows tr:last-child td{border-bottom:0}
-.rows .lab{color:#6d6450;letter-spacing:.04em;text-transform:uppercase;font-size:9.5px;padding-right:10px}
+.rows .lab{color:#5f5949;letter-spacing:.04em;text-transform:uppercase;font-size:9.5px;padding-right:10px}
 .prov{margin-top:12px;font-size:10.5px;line-height:1.5;color:#5f5949;font-family:var(--mono)}
 .prov b{color:#1A2730;font-weight:500}
 .badge{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border:1px solid currentColor}
-.badge.obs{color:#1d5c4a} .badge.est{color:#8a5a1d}
+.badge.obs{color:#4FD6A0} .badge.est{color:#E0A24A}
+.sheet .badge.obs{color:#1d5c4a} .sheet .badge.est{color:#7a4f19}
 .empty{color:#5f5949;font-size:12.5px;line-height:1.6}
 .compbar{display:flex;height:16px;border:1px solid #bfb59c;margin:2px 0 10px;overflow:hidden}
 .compbar div{height:100%}
@@ -118,12 +121,12 @@ text{font-family:var(--body);user-select:none;-webkit-user-select:none}
 .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.03em;fill:#D9E4EA}
 .lbl2{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;fill:#A9BCC7}
 .gval{font-family:var(--mono);font-size:10px;fill:#8FA8B5}
-.gid{font-family:var(--mono);font-size:8.5px;fill:#547482}
+.gid{font-family:var(--mono);font-size:8.5px;fill:var(--dim)}
 .pmlbl{font-family:var(--mono);font-size:9.5px}
 .xlbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;fill:#D8DFE3}
 .xq{font-family:var(--mono);font-size:9px;fill:#7E96A3}
 .lbl-riv{font-family:var(--display);font-style:italic;font-size:11.5px;fill:#8FB2C4;paint-order:stroke;stroke:#071119;stroke-width:3px}
-.lbl-big{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;fill:#4E6E80}
+.lbl-big{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;fill:var(--dim)}
 .lbl-basin{font-family:var(--mono);font-size:10px;letter-spacing:.22em;cursor:pointer;paint-order:stroke;stroke:#071119;stroke-width:3px}
 .lbl-basin:hover{fill:#EDE6D6}
 .tick{font-family:var(--mono);font-size:8px;fill:var(--dim)}
@@ -227,7 +230,7 @@ body.fs-on{overflow:hidden}
 .mapdash{animation:mapdash 1.8s linear infinite}
 
 .hydro{margin:14px 0 4px;border-top:1px solid #d7cdb5;padding-top:10px}
-.hydro-cap{font-family:var(--mono);font-size:9px;color:#6d6450;margin-top:4px;letter-spacing:.04em;line-height:1.5}
+.hydro-cap{font-family:var(--mono);font-size:9px;color:#5f5949;margin-top:4px;letter-spacing:.04em;line-height:1.5}
 
 /* ------- your tap: ZIP lookup bar ------- */
 .zipbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;border:1px solid var(--silt);
@@ -463,7 +466,7 @@ body.fs-on{overflow:hidden}
 .hc-thr{font-family:var(--mono);font-size:9px;letter-spacing:.06em}
 /* value sitting inside a bar: the fills are all light steps, so it takes the
    chart surface as ink rather than a colour of its own */
-.hc-barval{font-family:var(--mono);font-size:11px;font-weight:600;fill:#08131B}
+.hc-barval{font-family:var(--mono);font-size:11px;font-weight:600;fill:#02070B}
 .hc-evt{font-family:var(--mono);font-size:9px;letter-spacing:.04em;fill:var(--dust)}
 .lr-chart-cap{font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--dim);margin-top:8px;line-height:1.5}
 
@@ -555,7 +558,7 @@ body.fs-on{overflow:hidden}
 .bf-lab{font-family:var(--mono);font-size:9px;fill:#C7D4DA;paint-order:stroke;stroke:#08131B;stroke-width:3px}
 .bf-lab.mine{fill:#F2ECE0;font-weight:500}
 .bf-out{font-family:var(--mono);font-size:8.5px;fill:#8DA4B0;paint-order:stroke;stroke:#08131B;stroke-width:3px}
-.bf-cap{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;fill:#5C7484}
+.bf-cap{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;fill:var(--dim)}
 /* the height on the second line of a step-down label — recessive, so the name
    and the percentage still read first */
 .bf-elev{font-size:8px;fill:#7C93A1;letter-spacing:.04em}
@@ -588,3 +591,104 @@ body.fs-on{overflow:hidden}
 .cw-cursor{stroke:#8DA4B0;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
 .cw-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 svg:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+
+/* =====================================================================
+   PHONE: readable charts and text at 360-430 px
+   ===================================================================== */
+/* Charts drawn at the column's own width (history.js marks them .narrow),
+   where one viewBox unit is one CSS pixel, so these sizes are what shows. */
+.histchart.narrow .hc-ax,.histchart.narrow .hc-thr,.histchart.narrow .hc-evt,
+.histchart.narrow .hc-barval,.histchart.narrow .wc-band,.histchart.narrow .wc-now{font-size:11px}
+.histchart.narrow .hc-lgd,.histchart.narrow .hc-lbl{font-size:12px}
+.histchart.narrow .hc-ptitle{font-size:11px;letter-spacing:.06em}
+/* event labels sit on top of the other events' rules, so they get a halo */
+.histchart.narrow .hc-evt{paint-order:stroke;stroke:#0B1922;stroke-width:5px;stroke-linejoin:round}
+
+/* The basin maps keep their geography, so on a phone they are drawn wider
+   than the screen inside a frame that swipes sideways; the page itself
+   never scrolls sideways. */
+.mapscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.lr-table{overflow-x:auto}
+
+@media (max-width:600px){
+  body{font-size:16px}
+  .wrap{padding:16px 14px 48px}
+  .nav{font-size:13px;gap:4px 18px;margin-bottom:14px}
+  .nav a{display:inline-block;padding:11px 0 9px}
+  .livestat{font-size:12.5px}
+  .eyebrow,.lr-eyebrow,.lr-kicker,.zg-kicker,.story-kicker,.co-h{font-size:12px;letter-spacing:.14em}
+
+  /* reading text: 16 px floor */
+  .lr-p,.lr-list li,.lr-sub,.prose,.story-prose,.tl-intro,.standfirst,.bx-blurb,.co-p,
+  .tun-body,.zg-sub,.bignum-lab,.fact-lab,.xb-sub,.reveal,.story-hero .lede{font-size:16px}
+  .lr-aside,.prose .aside,.fc-note,.dt-note,.bxl-note,.lr-cap,.xb-alt{font-size:15px}
+  .lr-servedby{font-size:14px}
+  .lr-cite{font-size:12px}
+
+  /* chart frames, captions, tables */
+  .lr-chart{padding:10px 8px 8px;margin:16px -6px}
+  .lr-chart-cap,.hydro-cap{font-size:12.5px;line-height:1.55}
+  .lr-table summary{font-size:12.5px;padding:12px 0}
+  .dtab{font-size:13px}
+  .dtab caption{font-size:12.5px}
+  .dtab thead th{font-size:11.5px}
+  .cw-tip{font-size:12.5px;max-width:230px}
+  .bxl-cap,.bxl-tick b{font-size:11.5px}
+  .bx-stats,.sb-keys,.bx-links a{font-size:13px}
+  .bx-name{font-size:22px}
+  .rr-sub,.rr-af,.rr-sparklab,.rr-of{font-size:12px}
+  .rr-name{font-size:15.5px}
+  .rr-live{font-size:10.5px}
+  .src-slope-h{font-size:11.5px}
+  .bp-lab{font-size:12.5px}
+  .crossnote{font-size:13px;max-width:100%}
+
+  /* the seven-basin map is sparse enough to keep on screen; only its
+     labels grow (it is drawn at about half size here) */
+  .basinmap{overflow:visible}
+  .basinmap .sbasin-lab{font-size:17px;letter-spacing:.04em;stroke-width:5px}
+  .basinmap .sbasin-pct{font-size:21px;stroke-width:5px}
+
+  .mapscroll{position:relative}
+  .mapscroll::before{content:'Swipe sideways to see the whole map \2194';display:block;position:sticky;left:0;
+    font-family:var(--mono);font-size:12px;color:var(--dust);padding:2px 2px 8px}
+  .mapscroll svg{min-width:640px}
+  .bm-lab{font-size:12px} .bm-riv{font-size:13px}
+  .bm-q,.bm-tun{font-size:11px}
+  .bf-lab{font-size:12px} .bf-out{font-size:11px} .bf-cap{font-size:10.5px} .bf-elev{font-size:10.5px}
+
+  /* subpages */
+  .prose pre.cmd{font-size:13px}
+  .dtable{font-size:13px}
+  .dtable th{font-size:11px}
+  .card h3{font-size:12px}
+  .card p{font-size:16px}
+  .keyrow{font-size:15px}
+  .asof{font-size:12.5px;white-space:normal}
+  .badge{font-size:10.5px}
+  .zipbar button,.zipbar #zipmsg{font-size:12.5px}
+  .zipbar button{padding:11px 14px}
+  .src{font-size:13px}
+  .dlbtn{font-size:12.5px;padding:12px 16px}
+  .foot{font-size:12.5px}
+  .foot a{display:inline-block;padding:6px 0}
+  .zl-sec{font-size:11.5px}
+  .zl-head,.zl-p{font-size:13px}
+  .zl-n{font-size:16px}
+  .zl-row{min-height:48px}
+  .month{font-size:14px}
+  .month small{font-size:11px}
+  .timeline input[type=range]{height:36px}
+  .playbtn{width:44px;height:44px}
+  .seg button{font-size:12.5px;padding:12px 15px}
+  .seglab{font-size:11.5px}
+  .chip{font-size:12px;padding:10px 12px}
+  .citychip{padding:10px 14px}
+  .citychip .cc-city{font-size:14px}
+  .citychip .cc-basin{font-size:11px}
+  .zipmsg{font-size:13px}
+  .orpick,.skiplink{font-size:12px}
+  .sheet .tag,.rows .lab{font-size:11.5px}
+  .rows,.prov,.complist,.srcline{font-size:13px}
+  .sheet .sub,.empty{font-size:14px}
+}

@@ -64,12 +64,12 @@ function chart(el,pts,opts){
   for(let d=new Date(d0.getFullYear(),d0.getMonth()+1,1),i=0;d.getTime()<t1;d.setMonth(d.getMonth()+1),i++){
     const tx=x(d.getTime());
     ticks+=`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${M.t+IH2}" y2="${M.t+IH2+3}" stroke="#8a8069" stroke-width="1"/>`;
-    if(i%2===0)ticks+=`<text x="${tx.toFixed(1)}" y="${M.t+IH2+12}" text-anchor="middle" font-size="8" fill="#6d6450" font-family="var(--mono)">${MABBR[d.getMonth()]}</text>`;
+    if(i%2===0)ticks+=`<text x="${tx.toFixed(1)}" y="${M.t+IH2+12}" text-anchor="middle" font-size="8" fill="#5f5949" font-family="var(--mono)">${MABBR[d.getMonth()]}</text>`;
   }
   const yt=[0,.5,1].map(f=>{
     const v=ymax*f, yy=y(v);
     return `<line x1="${M.l-3}" x2="${W-M.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}" stroke="#c9bfa4" stroke-width="${f?0.6:1}" ${f?'stroke-dasharray="2 3"':''}/>`
-      +`<text x="${M.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#6d6450" font-family="var(--mono)">${opts.fmtY(v)}</text>`;
+      +`<text x="${M.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#5f5949" font-family="var(--mono)">${opts.fmtY(v)}</text>`;
   }).join('');
   const extra=(opts.lines||[]).map(l=>{
     const yy=y(l.v);
@@ -143,7 +143,7 @@ function monthlyFallback(el,r,failed){
     color:resColour(r.id),ymax:r.cap*1.05,dotted:true,
     fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
     band:resBand(r.id,pts[0].t,pts[pts.length-1].t),
-    lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
+    lines:[{v:r.cap,color:'#7a4f19',label:'capacity'}],
     caption:(failed?'couldn’t load the baked daily storage, so this shows the ':'')
       +'basin-scaled monthly reconstruction (snapshot '+SNAP_DATE+') · '
       +'shaded = 2005–now weekly min–max, dashed = median'
@@ -162,7 +162,7 @@ function mount(el,opts){
         color:resColour(r.id),ymax:r.cap*1.05,
         fmtY:v=>(v/1000).toFixed(0)+'k',unit:'AF',
         band:band,
-        lines:[{v:r.cap,color:'#8a5a1d',label:'capacity'}],
+        lines:[{v:r.cap,color:'#7a4f19',label:'capacity'}],
         caption:band?'daily storage (AF) · shaded = 2005–now weekly min–max, dashed = median · DWR '+r.dwr
                      :'daily storage (AF), trailing 12 months · DWR telemetry '+r.dwr
       });
