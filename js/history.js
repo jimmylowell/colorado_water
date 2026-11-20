@@ -46,6 +46,37 @@ const wkLabel=i=>'wk of '+new Date(2000,9,4+i*7)
   .toLocaleDateString('en-US',{month:'short',day:'numeric'});
 const inch=v=>v==null?'—':fmtTick(v)+'″';
 
+/* ---------- phone width ----------
+   A chart drawn 680 units wide and shrunk into a 330 px phone column shows
+   its labels at under half their size. Below NARROW the chart is drawn at the
+   column's own width instead, so one viewBox unit is one CSS pixel and the
+   labels keep their size (the .narrow rules in site.css set them for a
+   phone); each chart then trims its layout to what fits: legends stack,
+   every other month is named, long labels shorten. */
+const FULLW=680, NARROW=560;
+function chartW(el){
+  const cw=el.clientWidth||0;
+  return cw>0&&cw<NARROW?Math.max(280,Math.round(cw)):FULLW;
+}
+const histClass=W=>'histchart'+(W<FULLW?' narrow':'');
+/* month labels: all twelve, or every other one when the chart is narrow */
+const monthShown=(i,narrow)=>!narrow||i%2===0;
+/* a stacked legend for a narrow chart: one item per row, 17 px apart */
+function legend(svg,x,y,items,narrow,gapX){
+  const lg=svg.append('g').attr('transform',`translate(${x},${y})`);
+  let cx=0;
+  items.forEach((it,k)=>{
+    const ox=narrow?0:cx, oy=narrow?k*17:0;
+    if(it.rect)lg.append('rect').attr('x',ox).attr('y',oy-9).attr('width',18).attr('height',9)
+      .attr('fill',it.col).attr('opacity',it.opacity);
+    else lg.append('line').attr('x1',ox).attr('x2',ox+20).attr('y1',oy-4).attr('y2',oy-4)
+      .attr('stroke',it.col).attr('stroke-width',it.w).attr('stroke-dasharray',it.dash||null);
+    lg.append('text').attr('class','hc-lgd').attr('x',ox+25).attr('y',oy).text(it.t);
+    cx+=gapX[k]||0;
+  });
+  return lg;
+}
+
 /* =====================================================================
    SNOWPACK BY DECADE — the climate signal, with the water-year calendar
    folded in rather than sitting in a chart of its own.
@@ -59,7 +90,8 @@ function snowStateChart(el){
   const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
   if(!D||!D.dec){snowStateFallback(el);return;}
   const keys=Object.keys(D.dec).sort();
-  const W=680,H=336,padL=40,padR=58,padT=54,padB=46;
+  const W=chartW(el), nar=W<FULLW;
+  const H=nar?390:336,padL=nar?36:40,padR=nar?12:58,padT=nar?124:54,padB=46;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
   const X=d3.scaleLinear().domain([0,WYW]).range([padL,padL+iw]);
   const all=keys.map(k=>D.dec[k].wk).concat([D.cur]).flat().filter(v=>v!=null);
@@ -71,7 +103,7 @@ function snowStateChart(el){
   const oldW=D.dec[oldK].wk, newW=D.dec[newK].wk;
 
   const svg=d3.select(el).html('').append('svg')
-    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('class',histClass(W)).attr('viewBox',`0 0 ${W} ${H}`)
     .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
     .attr('aria-label',`Colorado snowpack across the water year, by decade. Median peak snow-water equivalent falls from `
       +`${D.dec[oldK].peak} inches in the ${oldK} to ${D.dec[newK].peak} inches in the `
@@ -85,7 +117,7 @@ function snowStateChart(el){
   [APR,JUL].forEach(w=>svg.append('line')
     .attr('x1',X(w)).attr('x2',X(w)).attr('y1',padT).attr('y2',base)
     .attr('stroke',PAL.SEASON.rule));
-  [[0,APR,'Snow accumulates'],[APR,JUL,'Melt → reservoirs fill'],[JUL,WYW,'Draw-down']]
+  [[0,APR,'Snow accumulates'],[APR,JUL,nar?'Melt':'Melt → reservoirs fill'],[JUL,WYW,'Draw-down']]
     .forEach(([a,b,t])=>svg.append('text').attr('class','wc-band')
       .attr('x',(X(a)+X(b))/2).attr('y',padT-9).attr('text-anchor','middle').text(t));
 
@@ -96,8 +128,8 @@ function snowStateChart(el){
     svg.append('text').attr('class','hc-ax').attr('x',padL-6).attr('y',Y(v)+3)
       .attr('text-anchor','end').text(fmtTick(v)+'″');
   }
-  MON.forEach((m,i)=>svg.append('text').attr('class','hc-ax')
-    .attr('x',(X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).attr('y',base+15)
+  MON.forEach((m,i)=>monthShown(i,nar)&&svg.append('text').attr('class','hc-ax')
+    .attr('x',(X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).attr('y',base+16)
     .attr('text-anchor','middle').text(m));
 
   /* --- then, now, and the gap between ---
@@ -139,9 +171,16 @@ function snowStateChart(el){
       /* The annotation goes in the empty top-left of the plot, not beside the
          point: early winter is the one region no curve occupies, and the ember
          colour ties it to its line without a leader. */
-      svg.append('text').attr('class','hc-lbl').attr('fill',NOWCOL)
-        .attr('x',X(0.6)).attr('y',padT+22)
-        .text(`WY${D.curWY} · peak ${pk.peak}″${pk.apr1!=null?`, ${pk.apr1}″ left on 1 April`:''}`);
+      /* on a phone the note runs past the plot and meets the "today" rule,
+         so it moves up into the legend, on two lines */
+      const ax=nar?padL:X(0.6), ay=nar?16+3*17:padT+22;
+      const ann=svg.append('text').attr('class','hc-lbl').attr('fill',NOWCOL)
+        .attr('x',ax).attr('y',ay);
+      const left=pk.apr1!=null?`${pk.apr1}″ left on 1 April`:'';
+      if(nar){
+        ann.append('tspan').text(`WY${D.curWY} · peak ${pk.peak}″`);
+        if(left)ann.append('tspan').attr('x',ax).attr('dy',16).text(left);
+      }else ann.text(`WY${D.curWY} · peak ${pk.peak}″${left?', '+left:''}`);
     }
   }
 
@@ -155,13 +194,9 @@ function snowStateChart(el){
     .attr('text-anchor',nw>WYW*0.8?'end':'start').text('today');
 
   /* --- legend --- */
-  const lg=svg.append('g').attr('transform',`translate(${padL},16)`);
-  [[0,THENCOL,2.1,`${oldK} median`],[126,NOWDEC,2.1,`${newK} median`],
-   [252,NOWCOL,2.6,'this water year']].forEach(([x,col,w,t])=>{
-    lg.append('line').attr('x1',x).attr('x2',x+20).attr('y1',-4).attr('y2',-4)
-      .attr('stroke',col).attr('stroke-width',w);
-    lg.append('text').attr('class','hc-lgd').attr('x',x+25).attr('y',0).text(t);
-  });
+  legend(svg,padL,16,[
+    {col:THENCOL,w:2.1,t:`${oldK} median`},{col:NOWDEC,w:2.1,t:`${newK} median`},
+    {col:NOWCOL,w:2.6,t:'this water year'}],nar,[126,126]);
 
   /* --- crosshair: the season, week by week --- */
   crosshair(svg.node(),{
@@ -196,15 +231,16 @@ function snowDecadeBars(el){
   const bars=keys.map((k,i)=>({k,v:D.dec[k].peak,n:D.dec[k].n,
     col:DECRAMP[Math.round(i/(keys.length-1||1)*(DECRAMP.length-1))]}));
   if(cur)bars.push({k:'WY'+D.curWY,v:cur.peak,col:NOWCOL,now:true});
-  const W=680,H=196,padL=40,padR=14,padT=30,padB=40;
+  const W=chartW(el), nar=W<FULLW;
+  const H=nar?230:196,padL=nar?36:40,padR=nar?8:14,padT=30,padB=40;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
   const top=niceTop(Math.max(...bars.map(b=>b.v))*1.02,4);
   const Y=d3.scaleLinear().domain([0,top]).range([base,padT]);
-  const slot=iw/bars.length, bw=Math.min(64,slot-16);
+  const slot=iw/bars.length, bw=Math.min(64,slot-(nar?6:16));
   const ref=bars[0].v;
 
   const svg=d3.select(el).html('').append('svg')
-    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('class',histClass(W)).attr('viewBox',`0 0 ${W} ${H}`)
     .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
     .attr('aria-label',`Median peak snowpack by decade: ${bars.map(b=>b.k+' '+b.v+' inches').join(', ')}.`);
 
@@ -235,9 +271,9 @@ function snowDecadeBars(el){
     sel.append('text').attr('class','hc-ax').attr('x',x+bw/2).attr('y',base+15)
       .attr('text-anchor','middle').text(b.k);
     if(b.n&&b.n<10)sel.append('text').attr('class','hc-ax').attr('x',x+bw/2)
-      .attr('y',base+26).attr('text-anchor','middle').text(b.n+' yrs');
+      .attr('y',base+(nar?30:26)).attr('text-anchor','middle').text(b.n+' yrs');
     if(b.now)sel.append('text').attr('class','hc-ax').attr('x',x+bw/2)
-      .attr('y',base+26).attr('text-anchor','middle').text('so far');
+      .attr('y',base+(nar?30:26)).attr('text-anchor','middle').text('so far');
     /* the hit target is the full slot height, far bigger than the mark */
     const delta=b.now||i===0?null:Math.round((b.v/ref-1)*100);
     sel.append('rect').attr('x',padL+i*slot).attr('y',padT)
@@ -253,7 +289,8 @@ function snowDecadeBars(el){
   });
   svg.append('text').attr('class','hc-ax').attr('fill',THENCOL)
     .attr('x',W-padR).attr('y',Y(ref)-6).attr('text-anchor','end').text(keys[0]+' level');
-  markHover(el,{container:el.closest('.lr-chart')||el});
+  /* delegated on the mount, which outlives a redraw: attach it once */
+  if(!el._cwHover){el._cwHover=true;markHover(el,{container:el.closest('.lr-chart')||el});}
 }
 
 /* The numbers behind the decade chart — the table view, so no value in that
@@ -343,7 +380,11 @@ const POW_EVENTS=[
 })();
 function powellChart(el){
   if(typeof POWELL_ANNUAL==='undefined'||!POWELL_ANNUAL.length){el.innerHTML='';return;}
-  const W=680,H=330,padL=46,padR=62,padT=52,padB=28;
+  const W=chartW(el), nar=W<FULLW;
+  /* on a phone each event takes a row of its own, so the plot starts lower */
+  const evRows=nar?POW_EVENTS.length:2, evStep=nar?17:15;
+  const padT=nar?20+evRows*evStep+6:52;
+  const H=nar?padT+250:330,padL=nar?40:46,padR=nar?48:62,padB=28;
   const iw=W-padL-padR, ih=H-padT-padB, base=padT+ih;
   const yrs=POWELL_ANNUAL.map(d=>d[0]), vals=POWELL_ANNUAL.map(d=>d[1]);
   const y0=yrs[0], y1=yrs[yrs.length-1];
@@ -355,7 +396,7 @@ function powellChart(el){
   const byYear=Object.fromEntries(POWELL_ANNUAL);
 
   const svg=d3.select(el).html('').append('svg')
-    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('class',histClass(W)).attr('viewBox',`0 0 ${W} ${H}`)
     .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
     .attr('aria-label',`Lake Powell end-of-September storage from ${y0} to ${y1}: filled through the 1980s to a peak of `
       +`${fmtAF(peak[1])} acre-feet in ${peak[0]}, then declined to ${fmtAF(last[1])} in ${last[0]}, `
@@ -377,14 +418,17 @@ function powellChart(el){
       .attr('text-anchor','middle').text(y));
 
   /* the years that changed the river — rules behind the data */
-  POW_EVENTS.filter(e=>e.y>=y0&&e.y<=y1).forEach(e=>{
-    const x=X(e.y), ly=20+e.row*15, anchor=x>W-150?'end':(x<110?'start':'middle');
+  POW_EVENTS.filter(e=>e.y>=y0&&e.y<=y1).forEach((e,k)=>{
+    const x=X(e.y), ly=20+(nar?k:e.row)*evStep;
+    const anchor=nar?(x>W/2?'end':'start'):(x>W-150?'end':(x<110?'start':'middle'));
     svg.append('line').attr('x1',x).attr('x2',x).attr('y1',ly+4).attr('y2',base)
       .attr('stroke',PAL.EVENT);
     svg.append('text').attr('class','hc-evt')
       .attr('x',x+(anchor==='end'?4:anchor==='start'?-4:0)).attr('y',ly)
       .attr('text-anchor',anchor).text(e.y+' '+e.t);
   });
+  /* on a phone the rules of later events cross earlier labels: lift the labels */
+  if(nar)svg.selectAll('.hc-evt').raise();
 
   /* the series */
   const line=d3.line().x(d=>X(d[0])).y(d=>Y(d[1]));
@@ -406,12 +450,12 @@ function powellChart(el){
     .attr('y1',Y(POW_MINPOWER)).attr('y2',Y(POW_MINPOWER)).attr('stroke',NOWCOL);
   svg.append('text').attr('class','hc-thr').attr('fill',NOWCOL)
     .attr('x',padL+5).attr('y',Y(POW_MINPOWER)-5)
-    .text('minimum power pool · 3,490 ft · no hydropower below this');
+    .text(nar?'minimum power pool · 3,490 ft':'minimum power pool · 3,490 ft · no hydropower below this');
   svg.append('line').attr('x1',padL).attr('x2',W-padR)
     .attr('y1',Y(POW_DEADPOOL)).attr('y2',Y(POW_DEADPOOL)).attr('stroke',PAL.POWELL.dead);
   svg.append('text').attr('class','hc-thr').attr('fill',PAL.POWELL.dead)
     .attr('x',W-padR-4).attr('y',Y(POW_DEADPOOL)+11).attr('text-anchor','end')
-    .text('dead pool · 3,370 ft · nothing flows downstream');
+    .text(nar?'dead pool · 3,370 ft':'dead pool · 3,370 ft · nothing flows downstream');
 
   /* today's end of the line — labelled out in the right margin, clear of the
      2022 marker it used to sit on top of */
@@ -496,30 +540,24 @@ function nearSample(pos,vals,i){
 /* panels: [{title, unit, top?, band?{lo,hi: 52 wy-indexed}, med:{wk:52 wy-indexed}|{pts},
             cur?{pts, dots, area, col}}] — rowsAt(i) supplies the crosshair content. */
 function drawPanels(el,panels,ariaLabel,rowsAt){
-  const W=680,padL=44,padR=14,padT=44,gap=40,PH=118,padB=30;
-  const iw=W-padL-padR;
-  const H=padT+panels.length*PH+(panels.length-1)*gap+padB;
-  const X=d3.scaleLinear().domain([0,WYW]).range([padL,padL+iw]);
-  const svg=d3.select(el).html('').append('svg')
-    .attr('class','histchart').attr('viewBox',`0 0 ${W} ${H}`)
-    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
-    .attr('aria-label',ariaLabel);
+  const W=chartW(el), nar=W<FULLW;
   /* One legend for all panels. Each panel owns its colour, so the legend
      encodes LINE STYLE and stays neutral — a coloured swatch here would name
      a hue that only one of the panels actually uses. */
   const hasBand=panels.some(p=>p.band);
-  const lg=svg.append('g').attr('transform',`translate(${padL},12)`);
-  lg.append('line').attr('x1',0).attr('x2',18).attr('y1',-4).attr('y2',-4)
-    .attr('stroke',REFCOL).attr('stroke-width',2.4);
-  lg.append('text').attr('class','hc-lgd').attr('x',23).attr('y',0).text('solid = this water year');
-  lg.append('line').attr('x1',158).attr('x2',178).attr('y1',-4).attr('y2',-4)
-    .attr('stroke',REFCOL).attr('stroke-width',1.4).attr('stroke-dasharray','4 3');
-  lg.append('text').attr('class','hc-lgd').attr('x',184).attr('y',0).text('dashed = normal median');
-  if(hasBand){
-    lg.append('rect').attr('x',330).attr('y',-9).attr('width',18).attr('height',9)
-      .attr('fill',REFCOL).attr('opacity',0.22);
-    lg.append('text').attr('class','hc-lgd').attr('x',353).attr('y',0).text('shaded = full measured range');
-  }
+  const items=[{col:REFCOL,w:2.4,t:'solid = this water year'},
+    {col:REFCOL,w:1.4,dash:'4 3',t:'dashed = normal median'}];
+  if(hasBand)items.push({rect:true,col:REFCOL,opacity:0.22,t:'shaded = full measured range'});
+  const padL=nar?38:44,padR=nar?8:14,gap=nar?44:40,PH=nar?130:118,padB=30;
+  const padT=nar?14+items.length*17+22:44;
+  const iw=W-padL-padR;
+  const H=padT+panels.length*PH+(panels.length-1)*gap+padB;
+  const X=d3.scaleLinear().domain([0,WYW]).range([padL,padL+iw]);
+  const svg=d3.select(el).html('').append('svg')
+    .attr('class',histClass(W)).attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('preserveAspectRatio','xMidYMid meet').attr('role','img')
+    .attr('aria-label',ariaLabel);
+  legend(svg,padL,nar?16:12,items,nar,[158,172]);
   let lastBase=0;
   panels.forEach((p,pi)=>{
     const t=padT+pi*(PH+gap), b=t+PH; lastBase=b;
@@ -572,7 +610,7 @@ function drawPanels(el,panels,ariaLabel,rowsAt){
     }
   });
   /* the shared month axis, identical to the seasonal snow chart above */
-  MON.forEach((m,i)=>svg.append('text').attr('class','hc-ax')
+  MON.forEach((m,i)=>monthShown(i,nar)&&svg.append('text').attr('class','hc-ax')
     .attr('x',(X(MONSTART[i])+X(i===11?WYW:MONSTART[i+1]))/2).attr('y',lastBase+16)
     .attr('text-anchor','middle').text(m));
 
@@ -675,14 +713,24 @@ function snowStoreTable(basinId){
    into its innerHTML, then calls mountAll(root); each chart builds real
    DOM in place so its crosshair/tooltip listeners survive.
    ===================================================================== */
+function render(el){
+  const kind=el.dataset.cw;
+  el._cwW=chartW(el);
+  if(kind==='snowState')snowStateChart(el);
+  else if(kind==='snowBars')snowDecadeBars(el);
+  else if(kind==='powell')powellChart(el);
+  else if(kind==='snowStore')snowStoreChart(el,el.dataset.basin);
+}
+/* Redraw a chart when its column changes width enough to change the drawn
+   width (a phone turned sideways, a window resized, a hidden block shown). */
+const RO=(typeof ResizeObserver!=='undefined')?new ResizeObserver(entries=>{
+  entries.forEach(en=>{const el=en.target; if(el.isConnected&&chartW(el)!==el._cwW)render(el);});
+}):null;
 function mountAll(root){
   if(!root)return;
   root.querySelectorAll('.cw-mount[data-cw]').forEach(el=>{
-    const kind=el.dataset.cw;
-    if(kind==='snowState')snowStateChart(el);
-    else if(kind==='snowBars')snowDecadeBars(el);
-    else if(kind==='powell')powellChart(el);
-    else if(kind==='snowStore')snowStoreChart(el,el.dataset.basin);
+    render(el);
+    if(RO)RO.observe(el);
   });
 }
 /* availability predicates, so story.js can decide whether to emit a chart

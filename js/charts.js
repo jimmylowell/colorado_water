@@ -25,7 +25,7 @@ const PAL={
   SNOW:'#6FC9DF',      /* snowpack, wherever it stands alone */
   STORE:'#3F7BFF',     /* reservoir storage, wherever it stands alone */
   GRID:'#1b2b36',
-  BONE:'#EDE6D6', DIM:'#5C7484', SURFACE:'#08131B',
+  BONE:'#EDE6D6', DIM:'#7E96A3', SURFACE:'#08131B',
   GLASS:{well:'#0A1620',stroke:'#54798C',strokeHi:'#8fb0c4',fc:'#8DA4B0'},
   POWELL:{line:'#4E86FF',fill:'#2F6BFF',dead:'#E2603A',crit:'#B4321E'},
   SEASON:{band:'#8FA6B2',rule:'#2A4150'},
