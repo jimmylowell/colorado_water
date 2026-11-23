@@ -64,9 +64,9 @@
   daily storage against weekly medians (`PMH_DERIVED`); the Yampa & White's
   are a hand-anchored estimate. About's Methods now says so (it said NRCS
   reports).
-- **Next** — Put `next` up as the preview once wrangler is signed in again
-  (`npx wrangler whoami` says not authenticated), check it at 390 and 1280 px
-  in light and dark, then step 3. Before any later rebuild of the normals,
+- **Next** — Step 3, Today's own snow and Lake Powell data, on `next`. Steps
+  1 and 2 are up as the preview, checked at 390 and 1280 px in light and dark
+  with no console errors and no sideways scroll. Before any later rebuild of the normals,
   check the report's figures against the new CSV: they are typed by hand. A
   fresh fetch takes more than ten minutes and caches under
   `/tmp/cw_normals_cache`.
