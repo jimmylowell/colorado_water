@@ -675,12 +675,12 @@ function secBlueMesa(){
    The block carries its own date; a day it was not refreshed shows that date. */
 function secSnowToday(){
   const s=LIVE_META.snow; if(!s||s.swe==null)return '';
-  const when=fmtDay(s.asOf,true);
+  const when=fmtDay(s.asOf,true), inch=v=>v.toFixed(1)+' in';
   const big=s.pct!=null
     ?`<div class="bignum"><div class="bignum-v" style="color:${rampText(s.pct)}">${s.pct}%</div>
-       <div class="bignum-lab">of the median for ${when}: <b>${s.swe} in</b> of water on average, against a median of ${s.med} in for that day (NRCS SNOTEL).</div></div>`
-    :`<div class="bignum"><div class="bignum-v">${s.swe} in</div>
-       <div class="bignum-lab">of water on average on ${when} (NRCS SNOTEL). The sites’ median for that day is ${s.med!=null?s.med+' in':'not known'}, so no percent is given.</div></div>`;
+       <div class="bignum-lab">of the median for ${when}: <b>${inch(s.swe)}</b> of water on average, against a median of ${inch(s.med)} for that day (NRCS SNOTEL).</div></div>`
+    :`<div class="bignum"><div class="bignum-v">${inch(s.swe)}</div>
+       <div class="bignum-lab">of water on average on ${when} (NRCS SNOTEL). The sites’ median for that day is ${s.med!=null?inch(s.med):'not known'}, so no percent is given.</div></div>`;
   return sec('snowtoday','Snow so far','Water year '+s.wy+', snow so far',
     `${big}
      <ul class="lr-list lr-cap">

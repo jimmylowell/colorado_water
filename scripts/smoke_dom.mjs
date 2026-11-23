@@ -189,8 +189,8 @@ console.log('Today, snow so far and Lake Powell');
   noNaN(el,'Today with snow and Powell');
   const sn=el.querySelector('#lr-snowtoday');
   ok(!!sn,'snow section shown');
-  if(sn&&S.pct!=null)ok(sn.textContent.includes(S.pct+'%')&&sn.textContent.includes(S.swe+' in')
-    &&sn.textContent.includes(S.med+' in'),`snow figure is ${S.pct}% (${S.swe} in against ${S.med} in)`);
+  if(sn&&S.pct!=null)ok(sn.textContent.includes(S.pct+'%')&&sn.textContent.includes(S.swe.toFixed(1)+' in')
+    &&sn.textContent.includes(S.med.toFixed(1)+' in'),`snow figure is ${S.pct}% (${S.swe} in against ${S.med} in)`);
   if(sn)ok(new RegExp(`${S.reporting} of the ${S.panel} panel sites reported`).test(sn.textContent),'snow says how many sites reported');
   /* the percent is the reporting sites' sum over their medians' sum, checked here from the files */
   const panel=JSON.parse(fs.readFileSync(path.join(ROOT,'data/snow_panel.json'),'utf8'));
