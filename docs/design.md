@@ -8,7 +8,7 @@ finished story from the day's readings.
 
 | Page | File | What is on it | Changes |
 |---|---|---|---|
-| **Today** | `index.html` | The date of the newest readings and the water-year day. The seven basins from that day's readings only, as a map and a list. Blue Mesa. The ZIP box, which opens your provider's reservoirs with their newest readings. Links to the other pages. | daily |
+| **Today** | `index.html` | The date of the newest readings and the water-year day. The seven basins from that day's readings only, as a map and a list. This winter's snow so far against the median for the date. Lake Powell on its newest day. Blue Mesa. The ZIP box, which opens your provider's reservoirs with their newest readings. Links to the other pages. | daily |
 | **Water year 2026** | `water-year-2026.html` | The finished year, 1 October 2025 to 30 September 2026: the year in brief, the snow season chart with 2026 on it, where each basin ended on 30 September, the month-by-month player, snow in and water out for each basin. It loads no daily readings. | never |
 | **Reports** | (step 4) | The check-ins and the yearly report, newest first. | four times a year |
 | **The long view** | `long-view.html` | The record, year by year: Lake Powell every September since 1963 (chart and table), the snowpack by decade since the 1980s (chart and table). Each October the closed year is added as one more value. | once a year |
@@ -38,6 +38,20 @@ forward to the map.
   date (`readingOf`, `readingWhen`): a DWR reading up to 14 days old, a
   published reading from the July snapshot, or the snapshot's estimate,
   labelled as one.
+- Snow so far is the fixed 43-site SNOTEL panel of the snowpack-by-decade
+  chart (`data/snow_panel.json`, built by `scripts/build_snow_panel.py` with
+  that chart's rule). The day is the newest on which at least 85% of the
+  panel reported, else the newest with any reading. The figure is the sum of
+  the reporting sites' readings over the sum of their own medians for that
+  calendar day (water years 1981 to 2026), with the mean of each and how many
+  of the 43 reported. Sites with no reading are left out; with no median for
+  the day, no percent is shown.
+- Lake Powell is USBR's newest daily row of storage and elevation, the
+  30 September row that opened the water year, and the same calendar day a
+  year earlier; the changes are plain differences. A missing row says "no
+  reading".
+- Snow and Lake Powell carry their own dates, which can differ from the
+  reservoirs' day. A day the fetch fails keeps the last block with its date.
 - If the daily file does not load, Today says so and shows no basin figures.
 - Every other figure carries its own date. The report page loads no daily
   readings, so nothing on it can move into the new year.
@@ -82,8 +96,9 @@ before it is public.
 | Weekly medians, monthly basin history | CDSS daily from 2005, USGS daily values from 1991 | on rebuild, `scripts/build_normals.py` |
 | Snowpack, by basin and by decade | NRCS AWDB SNOTEL snow-water equivalent, [wcc.sc.egov.usda.gov](https://wcc.sc.egov.usda.gov/); a fixed panel of 43 sites for the decades | on rebuild, `scripts/build_normals.py` |
 | Lake Powell, every September | USBR Upper Colorado daily storage, [usbr.gov/uc](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv) | on rebuild, `scripts/build_normals.py` |
-| Lake Powell, daily (step 3) | USBR Upper Colorado daily [storage](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv) and [elevation](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/49.csv) | daily, `scripts/fetch_live.py` |
-| Snowpack so far this winter (step 3) | NRCS AWDB SNOTEL, daily snow-water equivalent on the same fixed panel of 43 sites, with the panel's median for that day of the water year | daily, `scripts/fetch_live.py` |
+| Lake Powell, daily | USBR Upper Colorado daily [storage](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv) and [elevation](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/49.csv) | daily, `scripts/fetch_live.py` |
+| Snowpack so far this winter | NRCS AWDB SNOTEL, daily snow-water equivalent on the same fixed panel of 43 sites, [AWDB REST](https://wcc.sc.egov.usda.gov/awdbRestApi/) | daily, `scripts/fetch_live.py` |
+| The panel and each site's median for every day of the water year | the same NRCS records, water years 1981 to 2026 | on rebuild, `scripts/build_snow_panel.py` |
 
 ## Roadmap
 
@@ -92,8 +107,8 @@ before it is public.
    descriptions remain)
 3. Today's own data: snow so far against the median for the date, and Lake
    Powell daily with its change since 30 September and the same day a year
-   earlier. The readings publish daily (needs a Cloudflare Pages token in the
-   repo secrets).
+   earlier. (done; publishing the readings daily needs a Cloudflare Pages
+   token in the repo secrets)
 4. Reports and the autumn 2026 check-in, which moves About's *Since
    September* section; then the reworked site goes live.
 5. Later, on the long view: one value per year for snow (the peak, 1981 on)

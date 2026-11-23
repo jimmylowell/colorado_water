@@ -30,6 +30,9 @@ function ingest(j){
   if(typeof LIVE_META!=='undefined'){
     LIVE_META.day=Object.values(LIVE_STO).map(o=>o.asOf).filter(Boolean).sort().pop()||null;
     LIVE_META.generated=j.generated||null;
+    /* snow on the fixed SNOTEL panel and Lake Powell: each block carries its own date */
+    LIVE_META.snow=j.snow&&j.snow.asOf?j.snow:null;
+    LIVE_META.powell=j.powell&&j.powell.now?j.powell:null;
   }
   return {nG,nR,at:new Date(Date.parse(j.generated))};
 }

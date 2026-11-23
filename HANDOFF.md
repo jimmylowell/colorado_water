@@ -5,9 +5,18 @@
   (`water-year-2026.html`), The long view (`long-view.html`) and How it works
   (`how-it-works.html`). The design is [docs/design.md](docs/design.md). It is
   built on branch `next` and deployed to next.colorado-water.pages.dev only;
-  the live site is unchanged. Step 2, the words as bullets, is on `next`
-  too. Steps 3 and 4 (Today's own snow and Lake Powell data, Reports with
-  the autumn check-in) follow on `next`, then it goes live in one step.
+  the live site is unchanged. Steps 2 (the words as bullets) and 3 (Today's
+  own snow and Lake Powell data) are on `next` too. Step 4, Reports with the
+  autumn check-in, follows on `next`, then it goes live in one step.
+- **State, snow and Lake Powell on Today** — `scripts/fetch_live.py` adds
+  `snow` and `powell` blocks to `data/live.json` each day (method in
+  [docs/design.md](docs/design.md), *Today means today*), and saves the NRCS
+  response and the last 400 USBR rows under `data/raw/`. The 43-site panel
+  and each site's median for every day are in `data/snow_panel.json`, built
+  by `scripts/build_snow_panel.py`, which stops unless it finds the same
+  number of sites as `SNOW_DECADES`. Rebuild it when the normals are rebuilt.
+  On 22 November 2026: 42 of 43 sites, 1.9 in of water, 65% of the median
+  (3.0 in); Lake Powell 6,510,899 acre-feet at 3,540.98 ft.
 - **State, the words** — Every story page is bullets, one claim to a bullet,
   each with its source; `shortProse` in `scripts/smoke_dom.mjs` fails any
   story paragraph over 30 words. The report's figures were checked against
@@ -64,8 +73,12 @@
   daily storage against weekly medians (`PMH_DERIVED`); the Yampa & White's
   are a hand-anchored estimate. About's Methods now says so (it said NRCS
   reports).
-- **Next** — Step 3, Today's own snow and Lake Powell data, on `next`. Steps
-  1 and 2 are up as the preview, checked at 390 and 1280 px in light and dark
+- **Next** — Step 4, Reports and the autumn check-in, on `next`. At go-live,
+  `data/live.json`, `data/hydro.json` and `data/raw/` on `next` and on main
+  will both have moved: run `scripts/fetch_live.py` on the merge (main's
+  file lacks the snow and Powell blocks), then check Today shows both
+  sections. Steps
+  1 to 3 are up as the preview, checked at 390 and 1280 px in light and dark
   with no console errors and no sideways scroll. Before any later rebuild of the normals,
   check the report's figures against the new CSV: they are typed by hand. A
   fresh fetch takes more than ten minutes and caches under

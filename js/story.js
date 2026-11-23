@@ -670,10 +670,52 @@ function secBlueMesa(){
        <li>Lake Powell year by year: <a href="long-view.html">the long view</a>.</li>
      </ul>`);
 }
+/* This winter's snow on the fixed SNOTEL panel, against each reporting
+   site's median for that day (data/live.json `snow`, scripts/fetch_live.py).
+   The block carries its own date; a day it was not refreshed shows that date. */
+function secSnowToday(){
+  const s=LIVE_META.snow; if(!s||s.swe==null)return '';
+  const when=fmtDay(s.asOf,true);
+  const big=s.pct!=null
+    ?`<div class="bignum"><div class="bignum-v" style="color:${rampText(s.pct)}">${s.pct}%</div>
+       <div class="bignum-lab">of the median for ${when}: <b>${s.swe} in</b> of water on average, against a median of ${s.med} in for that day (NRCS SNOTEL).</div></div>`
+    :`<div class="bignum"><div class="bignum-v">${s.swe} in</div>
+       <div class="bignum-lab">of water on average on ${when} (NRCS SNOTEL). The sites’ median for that day is ${s.med!=null?s.med+' in':'not known'}, so no percent is given.</div></div>`;
+  return sec('snowtoday','Snow so far','Water year '+s.wy+', snow so far',
+    `${big}
+     <ul class="lr-list lr-cap">
+       <li>${s.reporting} of the ${s.panel} panel sites reported on ${fmtDay(s.asOf)}. A site with no reading that day is left out, not estimated.</li>
+       ${s.years?`<li>Median: each site’s own reading on that calendar day, water years ${s.years[0]} to ${s.years[1]}.</li>`:''}
+       <li>The panel: the same ${s.panel} long-record sites as <a href="long-view.html#lr-snowdecades">the snowpack by decade</a>.</li>
+     </ul>`);
+}
+/* Lake Powell's newest daily record, 30 September and a year earlier
+   (data/live.json `powell`, USBR Upper Colorado hydrodata). Recorded rows
+   and their differences only; a missing row says "no reading". */
+function secPowellToday(){
+  const P=LIVE_META.powell; if(!P||!P.now)return '';
+  const M=v=>(v/1e6).toFixed(2)+'M';
+  const ft=v=>v!=null?v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ft':'no elevation reading';
+  const n=P.now;
+  const diff=(a,b,unit)=>{const d=a-b;return (d>=0?'up ':'down ')+(unit==='ft'?Math.abs(d).toFixed(2)+' ft':af(Math.abs(d))+' acre-feet');};
+  const vs=(o,label)=>{
+    if(!o)return `<li>${label}: no reading.</li>`;
+    const e=n.elev!=null&&o.elev!=null?`, ${diff(n.elev,o.elev,'ft')}`:'';
+    return `<li>${label}, ${fmtDay(o.date)}: ${M(o.sto)} acre-feet at ${ft(o.elev)}. Since then: <b>${diff(n.sto,o.sto)}</b>${e}.</li>`;
+  };
+  return sec('powelltoday','Lake Powell','Lake Powell, '+fmtDay(n.date,true),
+    `<div class="bignum"><div class="bignum-v">${M(n.sto)}</div>
+       <div class="bignum-lab">${W(`acre-feet in {{Lake Powell}} on ${fmtDay(n.date)}, water surface at ${ft(n.elev)} (USBR daily record).`)}</div></div>
+     <ul class="lr-list lr-cap">
+       ${vs(P.sep30,'End of water year 2026')}
+       ${vs(P.yearAgo,'A year earlier')}
+       <li>Every September since 1963: <a href="long-view.html">the long view</a>.</li>
+     </ul>`);
+}
 function renderToday(){
   const home=curTap?curTap.hb:null;
   const el=document.getElementById('today-body');
-  el.innerHTML=heroToday()+(LIVE_META.day?secBasinsToday(home)+secBlueMesa():'');
+  el.innerHTML=heroToday()+(LIVE_META.day?secBasinsToday(home)+secSnowToday()+secPowellToday()+secBlueMesa():'');
   if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
   wireBasinExplorer(home);
 }

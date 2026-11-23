@@ -73,6 +73,16 @@
   <div class="tablewrap"><table class="dtable" id="restable"></table></div>
 
   <section class="prose">
+    <h2>Snow and Lake Powell, daily</h2>
+    <p>Collected each day with the reservoir readings, in <span style="font-family:var(--mono)">data/live.json</span> (keys <span style="font-family:var(--mono)">snow</span> and <span style="font-family:var(--mono)">powell</span>). Each carries its own date.</p>
+  </section>
+  <div class="tablewrap"><table class="dtable" id="dailytable">
+    <tr><th>Series</th><th>Source</th><th>What it gives</th><th>As of</th></tr>
+    <tr><td><b>Snow so far</b></td><td><a href="https://wcc.sc.egov.usda.gov/awdbRestApi/" rel="noopener">NRCS AWDB</a>, SNOTEL snow-water equivalent, daily</td><td>This water year's snow on the fixed panel of 43 sites (the snowpack-by-decade panel), against each reporting site's median for that day, water years 1981 to 2026. Panel and medians: <a href="data/snow_panel.json">data/snow_panel.json</a>, built by <span style="font-family:var(--mono)">scripts/build_snow_panel.py</span></td><td id="asof-snow">not loaded</td></tr>
+    <tr><td><b>Lake Powell</b></td><td><a href="https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/dashboard.html" rel="noopener">USBR Upper Colorado hydrodata</a>, reservoir 919, daily</td><td>Storage and pool elevation on the newest day, on 30 September and on the same day a year earlier</td><td id="asof-powell">not loaded</td></tr>
+  </table></div>
+
+  <section class="prose">
     <h2>How every number is graded</h2>
     <p>Each displayed value carries a <b>method</b>, which says how much to trust it and where it came from:</p>
     <ul class="grades">
@@ -186,7 +196,14 @@ document.getElementById('dl-live').addEventListener('click',()=>{
   a.click();
   URL.revokeObjectURL(a.href);
 });
+function renderDaily(){
+  const S=LIVE_META.snow, P=LIVE_META.powell;
+  const s=document.getElementById('asof-snow'), p=document.getElementById('asof-powell');
+  if(S)s.textContent=fmtDay(S.asOf)+' · '+S.reporting+' of '+S.panel+' sites';
+  if(P)p.textContent=fmtDay(P.now.date);
+}
 window.addEventListener('cw-live',renderTable);
+window.addEventListener('cw-live',renderDaily);
 renderTable();
 });
 </script>

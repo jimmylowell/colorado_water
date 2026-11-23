@@ -177,6 +177,70 @@ console.log('Today, half the reservoirs last reported three days earlier');
   noErrors(p,'still no script errors');
 }
 
+/* ---------------- Today: snow so far and Lake Powell ---------------- */
+console.log('Today, snow so far and Lake Powell');
+{
+  const S=LIVE.snow, P=LIVE.powell;
+  ok(S&&S.asOf&&S.panel===43,'live.json has the snow block on the 43-site panel');
+  ok(P&&P.now&&P.now.sto>0,'live.json has the Lake Powell block');
+  const p=await load('index.html',{live:LIVE});
+  noErrors(p);
+  const el=p.document.getElementById('today-body');
+  noNaN(el,'Today with snow and Powell');
+  const sn=el.querySelector('#lr-snowtoday');
+  ok(!!sn,'snow section shown');
+  if(sn&&S.pct!=null)ok(sn.textContent.includes(S.pct+'%')&&sn.textContent.includes(S.swe+' in')
+    &&sn.textContent.includes(S.med+' in'),`snow figure is ${S.pct}% (${S.swe} in against ${S.med} in)`);
+  if(sn)ok(new RegExp(`${S.reporting} of the ${S.panel} panel sites reported`).test(sn.textContent),'snow says how many sites reported');
+  /* the percent is the reporting sites' sum over their medians' sum, checked here from the files */
+  const panel=JSON.parse(fs.readFileSync(path.join(ROOT,'data/snow_panel.json'),'utf8'));
+  ok(panel.sites.length===S.panel&&panel.days.length===366,'snow_panel.json has the panel and 366 days');
+  const rawF=path.join(ROOT,'data/raw/nrcs_snotel_panel.json');
+  if(fs.existsSync(rawF)){
+    const raw=JSON.parse(fs.readFileSync(rawF,'utf8')), k=panel.days.indexOf(S.asOf.slice(5));
+    const med=Object.fromEntries(panel.sites.map(x=>[x.triplet,x.med[k]]));
+    let sv=0,sm=0,nr=0;
+    raw.forEach(st=>((st.data||[{}])[0].values||[]).forEach(r=>{
+      if(r.date.slice(0,10)===S.asOf&&typeof r.value==='number'&&r.value>=0&&st.stationTriplet in med){
+        nr++; if(med[st.stationTriplet]!=null){sv+=r.value;sm+=med[st.stationTriplet];}}}));
+    ok(nr===S.reporting&&(S.pct==null||Math.round(sv/sm*100)===S.pct),
+      `snow ${S.pct}% from ${nr} sites recomputed from the saved NRCS response`);
+  }
+  const pw=el.querySelector('#lr-powelltoday');
+  ok(!!pw,'Lake Powell section shown');
+  if(pw){
+    ok(pw.textContent.includes((P.now.sto/1e6).toFixed(2)+'M'),'Powell storage is the newest daily row');
+    if(P.sep30){const d=P.now.sto-P.sep30.sto;
+      ok(pw.textContent.includes((d>=0?'up ':'down ')+Math.abs(d).toLocaleString('en-US')+' acre-feet'),'change since 30 September is the plain difference');}
+    if(P.yearAgo)ok(/A year earlier, \d+ \w+ \d{4}/.test(pw.textContent),'the same day a year earlier, dated');
+  }
+  noErrors(p,'still no script errors');
+}
+console.log('Today, snow and Powell not refreshed, rows missing');
+{
+  const OLD=JSON.parse(JSON.stringify(LIVE));
+  OLD.snow.asOf=back(OLD.snow.asOf); OLD.snow.reporting=30; OLD.snow.pct=null;
+  OLD.powell.now.date=back(OLD.powell.now.date); OLD.powell.now.elev=null; OLD.powell.yearAgo=null;
+  const p=await load('index.html',{live:OLD});
+  noErrors(p);
+  const el=p.document.getElementById('today-body');
+  noNaN(el,'Today with older snow and Powell');
+  const sn=el.querySelector('#lr-snowtoday'), pw=el.querySelector('#lr-powelltoday');
+  const fd=d=>new Date(d+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  ok(sn&&sn.textContent.includes(fd(OLD.snow.asOf)),'an older snow reading shows its own date');
+  ok(sn&&/no percent is given/.test(sn.textContent),'no median percent: says so, fills nothing in');
+  ok(sn&&/30 of the 43 panel sites reported/.test(sn.textContent),'a short count is shown as it is');
+  ok(pw&&pw.textContent.includes(fd(OLD.powell.now.date)),'an older Powell reading shows its own date');
+  ok(pw&&/A year earlier: no reading/.test(pw.textContent),'a missing year-earlier row says no reading');
+  ok(pw&&/no elevation reading/.test(pw.textContent),'a missing elevation says so');
+  const NONE=JSON.parse(JSON.stringify(LIVE)); delete NONE.snow; delete NONE.powell;
+  const q=await load('index.html',{live:NONE});
+  noErrors(q);
+  const e2=q.document.getElementById('today-body');
+  ok(!e2.querySelector('#lr-snowtoday')&&!e2.querySelector('#lr-powelltoday'),'a file without the blocks leaves both sections out');
+  ok(e2.querySelectorAll('.sbasin').length===7,'the basins still render');
+}
+
 /* ---------------- old links ---------------- */
 console.log('Old links');
 for(const h of ['#80302','#zip=80302']){
@@ -288,6 +352,21 @@ console.log('About');
   const t=fs.readFileSync(path.join(ROOT,'about.html'),'utf8');
   ok(!/<h2>Water year 2026<\/h2>/.test(t),'about no longer holds Water year 2026');
   ok(/<h2>Since September<\/h2>/.test(t),'about keeps Since September');
+}
+
+/* ---------------- Data page: the daily series and their dates ---------------- */
+console.log('Data page');
+{
+  const p=await load('data.html',{live:LIVE});
+  noErrors(p);
+  const d=p.document;
+  const fd=s=>new Date(s+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  ok(d.getElementById('asof-snow').textContent===fd(LIVE.snow.asOf)+' · '+LIVE.snow.reporting+' of '+LIVE.snow.panel+' sites','snow series listed with its date');
+  ok(d.getElementById('asof-powell').textContent===fd(LIVE.powell.now.date),'Lake Powell series listed with its date');
+  ok(d.querySelectorAll('#restable tr').length>40,'reservoir table renders');
+  const q=await load('data.html');
+  noErrors(q,'offline: no script errors');
+  ok(q.document.getElementById('asof-snow').textContent==='not loaded','offline: the snow date says not loaded');
 }
 
 if(failures){console.error('\n'+failures+' FAILURES');process.exit(1);}

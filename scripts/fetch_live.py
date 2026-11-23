@@ -19,7 +19,7 @@ Sources (both keyless, public domain):
     South Platte at Denver and the Poudre at the canyon mouth are DWR-operated;
     CDSS carries them under their own abbrevs with the USGS site id attached)
 """
-import json, re, os, sys, urllib.request, datetime
+import json, re, os, sys, urllib.request, urllib.parse, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_JS = os.path.join(ROOT, 'js', 'data.js')
@@ -169,6 +169,100 @@ print(f'got {len(gages)} gages, {len(res)} reservoirs, {len(delta)} deltas')
 if not gages and not res:
     sys.exit('nothing fetched — refusing to bake an empty file')
 
+# A failed snow or Powell fetch keeps yesterday's block, which carries its
+# own date, so the page shows the last reading with that date; nothing is
+# filled in.
+try:
+    PREV = json.load(open(OUT, encoding='utf-8'))
+except Exception:
+    PREV = {}
+
+WY_START = datetime.date(NOW.year if NOW.month >= 10 else NOW.year - 1, 10, 1)
+
+# ---- this winter's snow on the fixed SNOTEL panel (NRCS AWDB) ----
+# The 43 sites of the snowpack-by-decade chart, from data/snow_panel.json
+# (scripts/build_snow_panel.py), which also holds each site's median for
+# every day of the water year. The day used is the newest one on which at
+# least 85% of the panel reported (the decade chart's rule), or failing that
+# the newest day with any reading. Sites with no reading that day are left
+# out of both the sum and its median.
+snow = PREV.get('snow')
+try:
+    panel = json.load(open(os.path.join(ROOT, 'data', 'snow_panel.json'), encoding='utf-8'))
+    trips = [s['triplet'] for s in panel['sites']]
+    j = fetch_json('https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data'
+                   '?stationTriplets=' + ','.join(urllib.parse.quote(t) for t in trips)
+                   + '&elements=WTEQ&duration=DAILY&beginDate=' + WY_START.isoformat()
+                   + '&endDate=' + NOW.date().isoformat(), timeout=120, raw='nrcs_snotel_panel.json')
+    by_day = {}                                         # date -> {triplet: SWE}
+    for st in j:
+        for row in (st.get('data') or [{}])[0].get('values') or []:
+            v = row.get('value')
+            if isinstance(v, (int, float)) and v >= 0:
+                by_day.setdefault(row['date'][:10], {})[st['stationTriplet']] = float(v)
+    days = sorted(by_day)
+    if days:
+        full = [d for d in days if len(by_day[d]) >= 0.85 * len(trips)]
+        day = full[-1] if full else days[-1]
+        k = panel['days'].index(day[5:])
+        med = {s['triplet']: s['med'][k] for s in panel['sites']}
+        rep = {t: v for t, v in by_day[day].items() if t in med}
+        withmed = [t for t in rep if med[t] is not None]
+        sv, sm = sum(rep[t] for t in withmed), sum(med[t] for t in withmed)
+        snow = {
+            'asOf': day, 'wy': WY_START.year + 1, 'panel': len(trips), 'reporting': len(rep),
+            'swe': round(sum(rep.values()) / len(rep), 1) if rep else None,
+            'med': round(sm / len(withmed), 1) if withmed else None,
+            'pct': round(sv / sm * 100) if sm > 0 else None,
+            'withMedian': len(withmed), 'years': panel['years'],
+        }
+        print(f'  snow {day}: {len(rep)}/{len(trips)} sites, {snow["swe"]} in, '
+              f'{snow["pct"]}% of median {snow["med"]} in')
+except Exception as e:
+    print('  (NRCS snow fetch failed -', str(e)[:80], ') keeping', (snow or {}).get('asOf'))
+
+# ---- Lake Powell daily storage and elevation (USBR Upper Colorado) ----
+# The same daily record the Powell chart cites (reservoir 919; 17 = storage,
+# 49 = pool elevation). Recorded rows only: the 30 September that opened
+# this water year and the same calendar day a year before the newest row.
+powell = PREV.get('powell')
+try:
+    rec = {}
+    for p, key in (('17', 'sto'), ('49', 'elev')):
+        url = f'https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/{p}.csv'
+        req = urllib.request.Request(url, headers={'User-Agent': 'colorado-water-refresh/1.0'})
+        txt = urllib.request.urlopen(req, timeout=90).read().decode('utf-8', 'ignore')
+        with open(os.path.join(RAW, f'usbr_powell_{key}_last400.csv'), 'w', encoding='utf-8') as f:
+            lines = txt.splitlines()
+            f.write('\n'.join(lines[:1] + lines[-400:]) + '\n')
+        for line in lines[1:]:
+            try:
+                ds, vs = line.split(',')
+                datetime.date.fromisoformat(ds)
+                rec.setdefault(ds, {})[key] = float(vs)
+            except ValueError:
+                continue
+
+    def row(ds):
+        r = rec.get(ds) or {}
+        if 'sto' not in r:
+            return None
+        return {'date': ds, 'sto': round(r['sto']),
+                'elev': round(r['elev'], 2) if 'elev' in r else None}
+    newest = max(ds for ds, r in rec.items() if 'sto' in r)
+    nd = datetime.date.fromisoformat(newest)
+    try:
+        ago = nd.replace(year=nd.year - 1).isoformat()
+    except ValueError:                                 # 29 February
+        ago = None
+    powell = {'now': row(newest),
+              'sep30': row((WY_START - datetime.timedelta(days=1)).isoformat()),
+              'yearAgo': row(ago) if ago else None}
+    print(f'  Powell {newest}: {powell["now"]["sto"]:,} AF, {powell["now"]["elev"]} ft')
+except Exception as e:
+    print('  (USBR Powell fetch failed -', str(e)[:80], ') keeping',
+          ((powell or {}).get('now') or {}).get('date'))
+
 out = {
     'generated': NOW.strftime('%Y-%m-%dT%H:%M:%SZ'),
     'attribution': {
@@ -188,12 +282,24 @@ out = {
         'res.sto': 'acre-feet, latest telemetered storage (asOf = reading date)',
         'delta': 'cfs equivalent of the past week’s storage trend; positive = drawing down '
                  '(1 acre-foot/day ≈ 0.50417 cfs)',
+        'snow': 'inches of water: swe = mean of the panel sites that reported on asOf, med = mean '
+                'of those sites\' medians for that day, pct = their sum over the sum of their '
+                'medians (sites with a median that day only)',
+        'powell': 'acre-feet (sto) and feet above sea level (elev), recorded daily values',
     },
     'gages': dict(sorted(gages.items())),
     'gage_src': dict(sorted(gage_src.items())),
     'res': dict(sorted(res.items())),
     'delta': dict(sorted(delta.items())),
+    'snow': snow,
+    'powell': powell,
 }
+out['attribution']['snow'] = ('Snowpack: USDA NRCS Air and Water Database (wcc.sc.egov.usda.gov/awdbRestApi), '
+                              'SNOTEL snow-water equivalent, daily, on the fixed panel in data/snow_panel.json. '
+                              'Public domain; provisional data subject to revision.')
+out['attribution']['powell'] = ('Lake Powell: US Bureau of Reclamation, Upper Colorado Basin hydrodata '
+                                '(usbr.gov/uc/water/hydrodata, reservoir 919), daily storage and pool '
+                                'elevation. Provisional data subject to revision.')
 with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(out, f, separators=(',', ':'))
     f.write('\n')

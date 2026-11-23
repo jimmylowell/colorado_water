@@ -130,7 +130,7 @@ const LIVE_DELTA={};
 /* LIVE_META.day is the newest reading date in data/live.json (YYYY-MM-DD),
    set by live.js. A figure is called "today's" only when its own reading is
    from that day; any other reading carries its own date. */
-const LIVE_META={day:null,generated:null};
+const LIVE_META={day:null,generated:null,snow:null,powell:null};
 /* "2026-11-22" -> "22 Nov 2026" (or "22 November 2026" with long=true);
    a date already written out ("16 Jul 2026") is returned as it is */
 function fmtDay(s,long){
