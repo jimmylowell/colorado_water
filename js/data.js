@@ -127,6 +127,24 @@ const FLOWPCT=(typeof FLOWPCT_DERIVED!=='undefined'&&FLOWPCT_DERIVED.length===MO
    LIVE_DELTA holds the week's storage trend as cfs (+ = drawing down). */
 const LIVE_STO={};
 const LIVE_DELTA={};
+/* LIVE_META.day is the newest reading date in data/live.json (YYYY-MM-DD),
+   set by live.js. A figure is called "today's" only when its own reading is
+   from that day; any other reading carries its own date. */
+const LIVE_META={day:null,generated:null};
+/* "2026-11-22" -> "22 Nov 2026" (or "22 November 2026" with long=true);
+   a date already written out ("16 Jul 2026") is returned as it is */
+function fmtDay(s,long){
+  if(!s)return '';
+  if(!/^\d{4}-\d\d-\d\d$/.test(s))return s;
+  return new Date(s+'T12:00:00').toLocaleDateString('en-GB',
+    {day:'numeric',month:long?'long':'short',year:'numeric'});
+}
+/* the water year a date falls in, and its day number (1 October = day 1) */
+function wyDay(s){
+  const d=new Date(s+'T12:00:00');
+  const y=d.getMonth()>=9?d.getFullYear():d.getFullYear()-1;
+  return {wy:y+1,day:Math.floor((d-new Date(y,9,1,12))/864e5)+1};
+}
 function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][SNAP_MI]:1); }
 /* week-of-year index 0..51, matching the baked weekly medians in normals.js */
 function weekIdx(d){ d=d||new Date();
@@ -155,6 +173,46 @@ function pmAt(r,mi){
   return Math.round(r.pm*pmFactor(r.b,mi));
 }
 function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[SNAP_MI]; }
+/* What can honestly be said about a reservoir now: its newest reading and
+   that reading's date. kind 'reading' = DWR telemetry from data/live.json
+   (today = from the newest day); 'obs' = the published reading of the July
+   snapshot, with its date; 'est' = the snapshot's basin-scaled estimate.
+   Nothing is scaled forward to another month here. */
+function readingOf(r){
+  const L=LIVE_STO[r.id];
+  if(L){
+    const nr=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+    const med=nr?nr[weekIdx(new Date(L.asOf+'T12:00:00'))]:null;
+    let pm=null;
+    if(med>0)pm=Math.round(L.sto/med*100);
+    else if(r.pm>0&&r.sto>0)pm=Math.round(L.sto/(r.sto/(r.pm/100))*100);
+    return {sto:Math.min(r.cap*1.05,L.sto),pm,date:L.asOf,
+      today:!!LIVE_META.day&&L.asOf===LIVE_META.day,kind:'reading'};
+  }
+  if(r.c==='obs'&&r.d)return {sto:r.sto,pm:r.pm,date:r.d,today:false,kind:'obs'};
+  return {sto:r.sto,pm:r.pm,date:SNAP_DATE,today:false,kind:'est'};
+}
+/* how a reading's date is said beside its figure */
+function readingWhen(rd){
+  if(rd.today)return 'today';
+  return rd.kind==='est'?'estimate for '+fmtDay(rd.date):'on '+fmtDay(rd.date);
+}
+/* One basin from the newest day's readings only: storage summed over the
+   reservoirs that reported that day, against the sum of their medians for
+   that week. Reservoirs with no reading that day are left out and counted. */
+function basinToday(bid){
+  const inb=RES.filter(r=>(bid==='all'||r.b===bid)&&!r.fc);
+  let sto=0,med=0,n=0;
+  if(LIVE_META.day)inb.forEach(r=>{
+    const L=LIVE_STO[r.id]; if(!L||L.asOf!==LIVE_META.day)return;
+    const nr=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+    const m=nr?nr[weekIdx(new Date(L.asOf+'T12:00:00'))]:null;
+    if(!(m>0))return;
+    sto+=L.sto; med+=m; n++;
+  });
+  const cap=inb.reduce((s,r)=>s+r.cap,0);
+  return {pct:med>0?Math.round(sto/med*100):null,n,count:inb.length,sto,med,cap};
+}
 /* one basin summary — story.js (Act 1 panel, Act 2 stats) and the map's
    basin sheet each used to recompute this with subtly different fallbacks */
 function basinStats(bid,mi){

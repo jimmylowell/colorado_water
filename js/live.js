@@ -26,6 +26,11 @@ function ingest(j){
     if(o&&isFinite(o.sto)&&o.sto>0){LIVE_STO[id]={sto:o.sto,asOf:o.asOf};nR++;}
   });
   Object.entries(j.delta||{}).forEach(([id,v])=>{if(isFinite(v))LIVE_DELTA[id]=v;});
+  /* the newest reading date: "today" on any page means this day */
+  if(typeof LIVE_META!=='undefined'){
+    LIVE_META.day=Object.values(LIVE_STO).map(o=>o.asOf).filter(Boolean).sort().pop()||null;
+    LIVE_META.generated=j.generated||null;
+  }
   return {nG,nR,at:new Date(Date.parse(j.generated))};
 }
 function status(html){

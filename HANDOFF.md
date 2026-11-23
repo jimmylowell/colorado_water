@@ -1,73 +1,56 @@
 # Handoff
 
+- **State, the story rework** — The one long front page is split into pages,
+  one kind of content each: Today (`index.html`), Water year 2026
+  (`water-year-2026.html`), The long view (`long-view.html`) and How it works
+  (`how-it-works.html`). The design is [docs/design.md](docs/design.md). It is
+  built on branch `next` and deployed to next.colorado-water.pages.dev only;
+  the live site is unchanged. Steps 2 to 4 of the rework (words as bullets,
+  Today's own snow and Lake Powell data, Reports with the autumn check-in)
+  follow on `next`, then it goes live in one step.
+- **State, "today"** — "Today", "right now" and "live" appear only on a figure
+  from the newest day's readings (`LIVE_META.day`, the newest `asOf` in
+  `data/live.json`). `readingOf(r)` in `js/data.js` gives each reservoir its
+  newest reading and that reading's date; `basinToday(bid)` sums the
+  reservoirs that reported that day against their medians for that week. The
+  map page (`viz.js`) still uses `stoAt`/`pmAt`, which scale the July snapshot
+  to September where there is no reading; it labels readings with their date
+  but was not reworked.
 - **State, hosting** — water.myjimmycloud.com is Cloudflare Pages project
   `colorado-water` (`colorado-water.pages.dev`), a direct upload, with the
-  domain a proxied CNAME to that address. GitHub Pages no longer serves it,
-  so a merge or the daily data commit goes live only when main is deployed
-  by hand. The deploy is the pages, `css/`, `js/`, `img/`, `data/` and the two
-  icons, nothing else:
-  `npx wrangler pages deploy <that folder> --project-name colorado-water --branch main`.
-- **Decided, hosting** — The daily refresh commits and does not deploy, and
-  this repo holds no Cloudflare token. Reason: the owner chose not to make
-  another token, so the live readings lag the commits until the next deploy.
-  A token with Cloudflare Pages Edit only, in the repo secrets, plus a
-  `cloudflare/wrangler-action@v3` step pinned to `wranglerVersion: "4.42.0"`,
-  would make it daily again.
-- **Over to you, hosting** — GitHub Pages is still switched on in the repo
-  Settings and serves nothing now; switching it off is harmless and optional.
-  `README.md` still describes GitHub Pages hosting.
-- **State** — The story spans the whole water year (Oct 2025 – Sep 2026,
-  `MONTHS` has 12 entries, `NOW=11`). Snapshot scaling is anchored to July via
-  `SNAP_MI`. Basin storage (`PMH_DERIVED`) and statewide streamflow
-  (`FLOWPCT_DERIVED`) are derived by `scripts/build_normals.py`. Live readings
-  overlay "today" only. The about page's 80% line now cites the Colorado Water
-  Plan, chapter 4 (70% of surface water west of the Divide, about 80% with the
-  Rio Grande, which is the figure usually quoted). The about page's "Water
-  year 2026" section is now a finished-year narrative. Every streamflow and
-  basin-storage figure in it comes from `data/basin_history.csv` (rebuilt
-  2026-11-04), and the section links that CSV. The one other number, 91% of
-  SNOTEL sites bare by 1 June, is the NRCS figure already on the stat strip.
-- **State** — Every page's footer links the source on GitHub, and the repo
-  carries an MIT `LICENSE` (2026-11-10, Jimmy's approved line: "I want people
-  to be able to take this in the free and open source software ideology").
-  Vendored libraries under `js/vendor/` keep their own licences.
-- **State** — The about page has a *Since September* section (2026-11-11):
-  Lake Powell's low of 15 September, its rise to 10 November (USBR daily
-  record, linked) and the reservoirs and gages of 10 November from
-  `data/live.json` against the weekly medians. Its figures are typed by hand
-  and dated; they do not update. The Powell chart's 2022 "lowest on record"
-  mark is gone, since September 2026 ended lower; the last year's mark is now
-  computed from `POWELL_ANNUAL` ("2026 lowest since 1964").
-- **Decided** — The headline strip (`STATEWIDE`, `renderStrip`, `statSeries`,
-  `deriveStats` in live.js, the `.strip`/`.stat` CSS) was removed
-  (2026-11-11). Reason: no page has had a `#strip` element since f375bd9, so
-  its June and July figures were never shown, only read in the source.
-- **Next** — Before any later rebuild, check
-  the about page's figures against the new CSV: the prose quotes it by hand.
-  A fresh fetch takes more than ten minutes; it caches under
-  `/tmp/cw_normals_cache`, so a second run resumes.
-- **Decided** — The old prose's "75% statewide storage" (NRCS, 1 June) and
-  "Blue Mesa visibly draining" were cut from the year summary (2026-11-04).
-  Reason: there is no derived statewide storage series to give a final
-  figure, and nothing on the page sources the Blue Mesa claim.
+  domain a proxied CNAME to that address. A merge or the daily data commit
+  goes live only when main is deployed by hand. The deploy is the pages
+  (`*.html`), `css/`, `js/`, `img/`, `data/` and the two icons, nothing else:
+  `npx wrangler pages deploy <that folder> --project-name colorado-water --branch main`
+  (`--branch next` for the preview).
+- **Decided, hosting** — The daily refresh commits and does not deploy until
+  the owner adds a token with Cloudflare Pages Edit only to the repo secrets;
+  then a `cloudflare/wrangler-action@v3` step pinned to
+  `wranglerVersion: "4.42.0"` makes it daily.
+- **Decided** — The water year 2026 report loads no daily readings
+  (2026-11-23). Reason: with them loaded, the September month of the player and
+  the snow-in charts showed November readings as September.
 - **Decided** — The snow-decade panel (`SNOW_DECADES`) stays on the year just
   closed until the new water year is 250 days in (2026-11-04). Reason: in
-  November no station had 250 days of WY2027, so the panel came out empty and
-  the smoke test failed.
-- **Decided** — The site is a retrospective of water year 2026 plus the new
-  year's carryover, not a rolling dashboard (2026-09-07). Reason: the live
-  overlay was overwriting parts of a story that stopped in July, and the two
-  layers could not be told apart. The year charts, timeline and narrative stay
-  pinned to the closed year.
-- **Decided** — 70%/80% wording (2026-11-04): the plan's own analysis says 70%
-  and footnotes 80% as the traditional figure that counts the Rio Grande; a
-  state reviewer may know the footnote, so the page gives both.
-- **Open** — The *Since September* figures date from 10 November. Refresh
-  them by hand if the about page is shown to a reviewer much later.
-- **Open** — The Methods list still says the timeline is a reconstruction
-  from NRCS reports, while the water-year section says the months are
-  derived from CDSS and gage records. Not checked which is current.
+  November no station had 250 days of WY2027, so the panel came out empty.
+- **Decided** — The headline strip (`STATEWIDE`, `renderStrip`) was removed
+  (2026-11-11): no page had an element for it.
+- **Decided** — 70%/80% wording (2026-11-04): the Colorado Water Plan says
+  70% and footnotes 80% as the figure that counts the Rio Grande; About gives
+  both.
+- **Next** — Step 2: the words as bullets on every page, each figure checked
+  again against `data/basin_history.csv` and `js/normals.js`. Before any later
+  rebuild of the normals, check the report's figures against the new CSV: its
+  prose quotes it by hand. A fresh fetch takes more than ten minutes and
+  caches under `/tmp/cw_normals_cache`.
+- **Open** — About's *Since September* figures date from 10 November; step 4
+  moves them into the autumn check-in, re-read on the day.
+- **Open** — About's Methods list says the timeline is a reconstruction from
+  NRCS reports, while the report says the months are derived from CDSS and
+  gage records. Not checked which is current.
 - **Open** — The `~80% of water supply arrives as snowpack` stat in
-  `js/data.js` is cited "NRCS / NOAA" with no link.
-- **Over to you** — Reviewers and the email are drafted in the private project
-  notes; sending is Jimmy's.
+  `js/data.js` is cited "NRCS / NOAA" with no link; step 2 sources it or cuts
+  it.
+- **Over to you** — `README.md` still describes the single story page,
+  `timeline.html` and GitHub Pages hosting. GitHub Pages is still switched on
+  in the repo Settings and serves nothing; switching it off is optional.

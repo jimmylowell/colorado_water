@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Colorado Water — water year 2026</title>
+<meta name="description" content="Water year 2026 in Colorado, 1 October 2025 to 30 September 2026: the snow that peaked early, the streamflow month by month, and where each river basin ended.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body data-page="report">
+<div class="wrap">
+
+  <nav class="nav" aria-label="Site">
+    <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Today</a>
+    <a href="long-view.html">Long view</a>
+    <a href="how-it-works.html">How it works</a>
+    <a href="map.html">Map</a>
+    <a href="data.html">Data</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <main id="story">
+    <article class="longread" id="report-body"></article>
+
+    <section class="player" id="player" aria-label="Water year 2026, month by month">
+      <div class="longread"><section class="lr-sec">
+        <p class="lr-kicker">Month by month</p>
+        <h2 class="lr-h2">Watch the drought arrive</h2>
+        <p class="lr-p">Press play, or drag the slider. Each step rescales every reservoir by its basin's monthly percent of the median, so you can watch the <b>Rio Grande's October surplus drain</b> and the <b>Gunnison sink through spring</b>. This is a reconstruction of the shape of the year. For a single reservoir's daily record, open it on the <a href="map.html">map</a>.</p>
+      </section></div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="View">
+      <button id="btn-map" aria-pressed="true">Geographic</button>
+      <button id="btn-flow" aria-pressed="false">Flow &amp; mixing</button>
+    </div>
+    <div id="modewrap" style="display:none;align-items:center;gap:10px">
+      <span class="seglab">Color</span>
+      <div class="seg" role="group" aria-label="Color mode">
+        <button id="btn-blend" aria-pressed="true">Blend</button>
+        <button id="btn-braid" aria-pressed="false">Braid</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="timeline">
+    <button class="playbtn" id="play" aria-label="Play timeline">▶</button>
+    <input type="range" id="tslider" min="0" max="11" step="1" value="11" aria-label="Month">
+    <div class="month" id="monthlbl"><small>storage timeline</small>Sep 2026</div>
+  </div>
+
+  <div class="stage">
+    <div class="chart" id="chartbox">
+      <svg id="viz" data-z="1"></svg>
+      <div class="zoomctl" role="group" aria-label="Zoom">
+        <button id="z-in" aria-label="Zoom in">+</button>
+        <button id="z-out" aria-label="Zoom out">−</button>
+        <button id="z-rst" aria-label="Reset view" style="font-size:11px">⌂</button>
+      </div>
+      <div class="viewnote" id="viewnote"></div>
+    </div>
+    <aside class="sheet" id="sheet"></aside>
+  </div>
+
+    </section>
+
+    <article class="longread" id="report-after"></article>
+  </main>
+
+  <footer class="foot">
+    An educational project on drought and where your water comes from ·
+    <a href="about.html">about &amp; methods</a> · <a href="data.html">raw data (CSV)</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a><br>
+    Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
+    <p class="mjc-foot">This site is brought to you by <a href="mailto:jimmy@myjimmycloud.com">Jimmy@MyJimmyCloud.com</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a> · <a href="https://myjimmycloud.com">more projects</a></p>
+  </footer>
+</div>
+
+<script defer src="js/vendor/d3.v7.min.js"></script>
+<script defer src="js/normals.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/zipcodes.js"></script>
+<script defer src="js/basins_geo.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/history.js"></script>
+<script defer src="js/viz.js"></script>
+<script defer src="js/hydro.js"></script>
+<script defer src="js/story.js"></script>
+</body>
+</html>

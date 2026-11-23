@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Colorado Water — how it works</title>
+<meta name="description" content="How Colorado’s water works: snow, reservoirs, the seven river basins, the tunnels under the Continental Divide, and the trace from your ZIP to your tap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body data-page="how">
+<div class="wrap">
+
+  <nav class="nav" aria-label="Site">
+    <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Today</a>
+    <a href="long-view.html">Long view</a>
+    <a href="how-it-works.html" aria-current="page">How it works</a>
+    <a href="map.html">Map</a>
+    <a href="data.html">Data</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <div class="livestat" id="livestat" aria-live="polite"></div>
+
+  <main id="story">
+    <article class="longread" id="how-body"></article>
+
+    <section class="zip-gate" id="zip-gate" aria-label="Find your water">
+      <p class="zg-kicker">Now make it yours</p>
+      <h2 class="zg-h2">Which of it ends up in <em>your</em> tap?</h2>
+      <p class="zg-sub">Enter a ZIP code and the rest of this page becomes about your basin, your reservoirs and your utility.</p>
+      <div class="zip-entry">
+        <input id="zip" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="ZIP code" aria-label="ZIP code" autocomplete="postal-code">
+        <button id="zipgo">Show me</button>
+      </div>
+      <div class="zipmsg" id="zipmsg" aria-live="polite"></div>
+      <p class="orpick">or pick a city</p>
+      <div class="citychips" id="citychips"></div>
+    </section>
+
+    <!-- your basin, then your tap. Empty until a place is chosen. -->
+    <article class="longread" id="local-body" hidden></article>
+  </main>
+
+  <footer class="foot">
+    An educational project on drought and where your water comes from ·
+    <a href="about.html">about &amp; methods</a> · <a href="data.html">raw data (CSV)</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a><br>
+    Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
+    <p class="mjc-foot">This site is brought to you by <a href="mailto:jimmy@myjimmycloud.com">Jimmy@MyJimmyCloud.com</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a> · <a href="https://myjimmycloud.com">more projects</a></p>
+  </footer>
+</div>
+
+<script defer src="js/vendor/d3.v7.min.js"></script>
+<script defer src="js/normals.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/zipcodes.js"></script>
+<script defer src="js/basins_geo.js"></script>
+<script defer src="js/charts.js"></script>
+<script defer src="js/live.js"></script>
+<script defer src="js/history.js"></script>
+<script defer src="js/basinmap.js"></script>
+<script defer src="js/story.js"></script>
+</body>
+</html>

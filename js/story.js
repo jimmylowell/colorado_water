@@ -1,20 +1,23 @@
 "use strict";
 /* =====================================================================
-   THE STORY — one page in three acts, widening then narrowing:
+   THE PAGES — one script builds four pages from shared pieces; the page
+   is named by <body data-page>. docs/design.md says what goes where.
 
-     ACT 1  COLORADO   snowpack, the water year, what reservoirs do,
-                       the seven basins as they stand, the long view
-       ── the ZIP gate sits here, once the reader knows what they're
-          looking at and has a reason to want their own ──
-     ACT 2  YOUR BASIN basin stats, a basin-focused map with its rivers,
-                       reservoirs and live gage flows, and its plumbing
-     ACT 3  YOUR TAP   the utility, its reservoirs, and what you can do
+     today     (index.html)            the newest day's readings only: the
+                                       seven basins, Blue Mesa, your
+                                       reservoirs by ZIP
+     report    (water-year-2026.html)  the closed year, frozen: snow, where
+                                       each basin ended on 30 September,
+                                       the month-by-month player, snow in
+                                       and water out
+     longview  (long-view.html)        the record year by year: Lake Powell
+                                       and the snowpack by decade
+     how       (how-it-works.html)     snow, reservoirs, basins, tunnels,
+                                       the megadrought, and the ZIP trace
 
-   Act 1 renders on load; Acts 2-3 render once a place is chosen. The
-   statewide reservoir-by-reservoir map is deliberately NOT used here — it
-   is offered once, at the very end, as a detail view.
-
-   Year-specific numbers are never hard-coded in prose beside a live figure
+   "Today", "right now" and "live" are said only of a figure from the newest
+   day's readings (LIVE_META.day); every other figure carries its own date.
+   Year-specific numbers are never hard-coded in prose beside a figure
    (see BASININFO) — the derived value is the single source.
    ===================================================================== */
 (function(){
@@ -26,7 +29,8 @@ const poss=n=>n+(/s$/i.test(n)?'’':'’s');
 /* "Res." is fine on a cramped map label, but reads badly mid-sentence */
 const proseName=n=>n.replace(/ Res\.$/,' Reservoir');
 const FULLMON={Oct:'October',Nov:'November',Dec:'December',Jan:'January',Feb:'February',
-  Mar:'March',Apr:'April',May:'May',Jun:'June',Jul:'July'};
+  Mar:'March',Apr:'April',May:'May',Jun:'June',Jul:'July',Aug:'August',Sep:'September'};
+const PAGE=document.body.dataset.page||'today';
 const monthName=mi=>FULLMON[MONTHS[mi].split(' ')[0]]||MONTHS[mi];
 const W=n=>wikify(n);
 let curTap=null, curZip=null;
@@ -40,8 +44,9 @@ function sec(id,kicker,title,body){
 const cite=s=>`<span class="lr-cite">${s}</span>`;
 
 function glassMini(r){
-  const frac=Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap));
-  const col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
+  const rd=readingOf(r);
+  const frac=Math.max(0,Math.min(1,rd.sto/r.cap));
+  const col=r.fc?PAL.GLASS.fc:ramp(rd.pm);
   /* shared geometry core: same silhouette, and the fill is now solved by
      AREA like every other glass on the site — a half-full mini really is
      half-full, not half-tall */
@@ -54,16 +59,17 @@ function glassMini(r){
 function resYearSpark(r){
   const nrm=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
   if(!nrm||!r.cap)return '';
-  const w=104,h=26,wi=Math.min(51,weekIdx());
+  const rd=readingOf(r);
+  const w=104,h=26,wi=Math.min(51,weekIdx(/^\d{4}-/.test(rd.date)?new Date(rd.date+'T12:00:00'):new Date(rd.date)));
   /* Scale to the curve itself, NOT to capacity: against a full-pool top, a
      reservoir that swings between 40% and 70% draws as a flat line and the
      seasonal shape — the whole point of this mark — disappears. */
-  const top=Math.max(...nrm,stoAt(r,NOW))*1.08;
+  const top=Math.max(...nrm,rd.sto)*1.08;
   const X=i=>i/51*w, Y=v=>h-1-(v/top)*(h-2);
   const d=sparkPath(nrm,X,Y);
-  const now=stoAt(r,NOW), col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
+  const now=rd.sto, col=r.fc?PAL.GLASS.fc:ramp(rd.pm);
   return `<svg class="resspark" viewBox="0 0 ${w} ${h}" role="img"
-      aria-label="A normal year at ${cleanName(r.n)} peaks in early summer; today's level is marked.">
+      aria-label="A normal year at ${cleanName(r.n)} peaks in early summer; the latest reading is marked.">
     <path d="${d} L${w},${h} L0,${h} Z" fill="#8FA6B2" opacity="0.10"/>
     <path d="${d}" fill="none" stroke="#7C93A1" stroke-width="1" vector-effect="non-scaling-stroke"/>
     <line x1="${X(wi).toFixed(1)}" y1="0" x2="${X(wi).toFixed(1)}" y2="${h}" stroke="#54798C" stroke-width="0.8"/>
@@ -73,9 +79,9 @@ function resYearSpark(r){
    this reservoir's slice of everything the provider stores, which is the piece
    that makes a single-reservoir group meaningful. */
 function resRow(r,share){
-  const pm=pmAt(r,NOW), col=r.fc?'#8DA4B0':ramp(pm);
-  const live=LIVE_STO[r.id];
-  const now=stoAt(r,NOW);
+  const rd=readingOf(r), pm=rd.pm, col=r.fc?'#8DA4B0':ramp(pm);
+  const live=rd.today;
+  const now=rd.sto;
   return `<div class="rrow">
     <div class="rr-glass">${glassMini(r)}</div>
     <div class="rr-main">
@@ -88,7 +94,7 @@ function resRow(r,share){
     <div class="rr-val">
       <div class="rr-pct" style="color:${col}">${r.fc?'flood':pm+'%'}</div>
       <div class="rr-of">${r.fc?'control pool':'of normal'}</div>
-      <div class="rr-af">${r.fc?'':`${af(now)} AF today`}</div>
+      <div class="rr-af">${r.fc?'':`${af(now)} AF ${readingWhen(rd)}`}</div>
     </div>
   </div>`;
 }
@@ -108,12 +114,11 @@ function glassGroup(title,arr,totCap){
    ===================================================================== */
 
 /* §1 snowpack + the water year.
-   These used to be two sections, and the calendar had a band chart of its own
-   that did nothing but restate its own labels. The seasons are now the
-   BACKGROUND of the snowpack chart, where the snow curve visibly does what
-   they claim — so the calendar earns its place instead of occupying a figure. */
+   The explainer (How it works) and the charts are on different pages now:
+   the season chart with water year 2026 on it is in the 2026 report, the
+   decade bars and table are on the long view. */
 const LATE_MAY_WK=33;    /* water-year week index covering ~20–26 May */
-function decadeLine(){
+function decadeTrend(){
   const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
   if(!D||!D.dec)return '';
   const keys=Object.keys(D.dec).sort();
@@ -123,7 +128,6 @@ function decadeLine(){
   /* the late-spring gap: where the decades pull apart fastest */
   const wk=LATE_MAY_WK, ga=a.wk[wk], gz=z.wk[wk];
   const springDrop=(ga>0&&gz!=null)?Math.round((1-gz/ga)*100):null;
-  const cur=D.curStats;
   return `<p class="lr-p">${W(`Stack the decades on one chart and the trend is plain. Across a
      <b>fixed</b> panel of ${D.n} long-record {{SNOTEL}} sites, the same stations in every decade so the
      comparison does not depend on which sites happened to be running, the median peak snowpack has
@@ -132,29 +136,44 @@ function decadeLine(){
      ${springDrop!=null?`<p class="lr-p">${W(`The loss is concentrated in spring. The
        decades barely separate in midwinter. They fan apart through <b>spring</b>, and by late May the
        ${keys[keys.length-1]} hold roughly <b>${springDrop}% less</b> water than the ${keys[0]} did. Less
-       snow falls, and what does fall leaves sooner, ahead of the summer that needs it.`)}</p>`:''}
-     ${cur?`<p class="lr-p">${W(`This water year sits below all of them: a peak of
-       <b>${cur.peak}″</b>${cur.apr1!=null?`, and <b>${cur.apr1}″</b> left on April 1`:''}, well under
-       half a normal year and the lowest line on the chart by a wide margin.`)}</p>`:''}`;
+       snow falls, and what does fall leaves sooner, ahead of the summer that needs it.`)}</p>`:''}`;
 }
-function secSnow(){
+function decadeYearLine(){
+  const D=(typeof SNOW_DECADES!=='undefined')&&SNOW_DECADES;
+  const cur=D&&D.curStats;
+  if(!cur)return '';
+  return `<p class="lr-p">${W(`Water year ${D.curWY} sits below all of them: a peak of
+       <b>${cur.peak}″</b>${cur.apr1!=null?`, and <b>${cur.apr1}″</b> left on April 1`:''}, well under
+       half a normal year and the lowest line on the chart by a wide margin.`)}</p>`;
+}
+function secSnowHow(){
   const facts=COLORADO_FACTS.map(f=>
     `<div class="fact"><div class="fact-stat">${f.stat}</div>`
     +`<div class="fact-lab">${W(f.lab)} ${cite(f.cite)}</div></div>`).join('');
-  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowChart()
-    ?'<div class="cw-mount" data-cw="snowState"></div>':'';
-  const bars=window.CW_HISTORY&&CW_HISTORY.hasDecades()
-    ?'<div class="cw-mount" data-cw="snowBars"></div>':'';
-  const table=window.CW_HISTORY&&CW_HISTORY.hasDecades()?CW_HISTORY.snowDecadeTable():'';
   return sec('snow','Where it begins','Colorado’s water starts as snow',
     `<p class="lr-p">${W(`Most of the water Colorado uses falls first as snow. Winter storms stack {{snowpack|snow}} on the high country, and that frozen reservoir, measured all season as {{snow water equivalent|snow-water equivalent}} (the depth of water it would melt into), is the state’s largest store of water. The lakes below are where it goes afterward.`)}</p>
      <div class="fact-grid">${facts}</div>
      <h3 class="lr-h3">A year that begins in October</h3>
-     <p class="lr-p">${W(`Hydrology does not use the calendar year. The {{water year}} starts on <b>October 1</b>, when the snow that will feed next summer begins to fall, and that is how the chart below reads, left to right. Snow piles up until about April. It melts through spring, and that {{snowmelt}} fills the reservoirs, with most of a year’s inflow arriving in a few weeks. From summer into fall the releases run and the levels fall, until the first snows start the cycle again.`)}</p>
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">A 1980s snow season against a 2020s one, with this year on top · statewide snow-water equivalent from a fixed panel of NRCS SNOTEL sites, median across each decade’s water years. The shaded season is when the melt reaches the reservoirs.</div></div>`:''}
-     ${decadeLine()}
-     ${bars?`<div class="lr-chart">${bars}<div class="lr-chart-cap">Median peak snowpack, decade by decade, from the same fixed panel of sites. No decade has peaked higher than the one before it, and the 2000s and 2010s tied. The dashed rule carries the 1980s level across for comparison.</div>${table}</div>`:''}
-     <p class="lr-p">${W(`Because the snow is the storage, a warm early spring can undo a decent winter. The mountains can hold a fair snowpack and still come up short if it melts too fast to catch. That is roughly what happened in 2026. By the last week of May, the long-record SNOTEL sites were already bare.`)}</p>`);
+     <p class="lr-p">${W(`Hydrology does not use the calendar year. The {{water year}} starts on <b>October 1</b>, when the snow that will feed next summer begins to fall. Snow piles up until about April. It melts through spring, and that {{snowmelt}} fills the reservoirs, with most of a year’s inflow arriving in a few weeks. From summer into fall the releases run and the levels fall, until the first snows start the cycle again.`)}</p>
+     <p class="lr-p">${W(`Because the snow is the storage, a warm early spring can undo a decent winter. The mountains can hold a fair snowpack and still come up short if it melts too fast to catch.`)}</p>
+     <p class="lr-p lr-aside">The snow season drawn week by week, with 2026 on it, is in the <a href="water-year-2026.html#lr-snow">water year 2026 report</a>. The decades side by side are on <a href="long-view.html#lr-snowdecades">the long view</a>.</p>`);
+}
+function secSnowReport(){
+  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowChart()
+    ?'<div class="cw-mount" data-cw="snowState" data-closed="1"></div>':'';
+  return sec('snow','Snow','The snow that peaked early',
+    `${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">A 1980s snow season against a 2020s one, with water year 2026 on top · statewide snow-water equivalent from a fixed panel of NRCS SNOTEL sites, median across each decade’s water years. The shaded season is when the melt reaches the reservoirs.</div></div>`:''}
+     ${decadeYearLine()}
+     <p class="lr-p">${W(`A warm early spring can undo a decent winter, and that is roughly what happened in 2026. By the last week of May, the long-record SNOTEL sites were already bare.`)}</p>
+     <p class="lr-p lr-aside">How 2026 compares with every decade since the 1980s: <a href="long-view.html#lr-snowdecades">the long view</a>.</p>`);
+}
+function secSnowDecades(){
+  const bars=window.CW_HISTORY&&CW_HISTORY.hasDecades()
+    ?'<div class="cw-mount" data-cw="snowBars"></div>':'';
+  const table=window.CW_HISTORY&&CW_HISTORY.hasDecades()?CW_HISTORY.snowDecadeTable():'';
+  return sec('snowdecades','Snowpack by decade','The snowpack, decade by decade',
+    `${decadeTrend()}
+     ${bars?`<div class="lr-chart">${bars}<div class="lr-chart-cap">Median peak snowpack, decade by decade, from the same fixed panel of sites, with water year 2026 at the end. No decade has peaked higher than the one before it, and the 2000s and 2010s tied. The dashed rule carries the 1980s level across for comparison.</div>${table}</div>`:''}`);
 }
 
 /* §3 what reservoirs actually do (education) */
@@ -176,38 +195,58 @@ function secReservoirs(){
      <p class="lr-p lr-aside">${W(`A strong monsoon eases a drought summer. It does not end a drought. The snowpack decides the year.`)}</p>`);
 }
 
-/* §4 the seven basins — the state as it stands right now */
+/* §4 the seven basins. One map, two sources of figures:
+     'today'   — the newest day's readings only (basinToday); a basin where no
+                 reservoir reported that day is drawn blank and says so
+     'yearend' — 30 September 2026, the derived monthly series (basinStats) */
 const BMW=700,BMH=400, BGW=-109.05,BGE=-102.05,BGN=41,BGS=37;
 const bmx=lon=>(lon-BGW)/(BGE-BGW)*BMW, bmy=lat=>(BGN-lat)/(BGN-BGS)*BMH;
+const NOREAD='#33434D';
 function basinPathD(rings){
   return rings.map(r=>'M'+r.map(p=>bmx(p[0]).toFixed(1)+','+bmy(p[1]).toFixed(1)).join('L')+'Z').join(' ');
+}
+function basinFig(bid,mode){
+  if(mode==='today'){
+    const t=basinToday(bid);
+    const day=fmtDay(LIVE_META.day);
+    return {pct:t.pct,count:t.count,cap:t.cap,
+      tip:t.pct!=null
+        ?`<b>${t.pct}%</b> of the median for this week<br>${t.n} of ${t.count} reservoirs reported today (${day})`
+        :`No reservoir reported today (${day})<br>${t.count} reservoirs here`,
+      aria:t.pct!=null?`${t.pct}% of the median for this week, ${t.n} of ${t.count} reservoirs reporting today`
+        :`no reservoir reporting today`};
+  }
+  const st=basinStats(bid);
+  return {pct:st.pct,count:st.count,cap:st.cap,
+    tip:`<b>${st.pct}%</b> of normal storage on 30 September 2026<br>${st.count} reservoirs · ${kaf(st.cap)} KAF when full`,
+    aria:`${st.pct}% of normal storage on 30 September 2026`};
 }
 /* Choropleth: fill encodes storage vs that basin's own normal (ramp), at a
    CONSTANT opacity — selection/hover live on the stroke only, because varying
    fill-opacity would read as a different storage value. */
-function stateBasinsSVG(home,sel){
+function stateBasinsSVG(home,sel,mode){
   if(typeof BASIN_GEO==='undefined')return '';
-  let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage against each basin's own normal">`;
+  const figs={};
+  Object.keys(BASIN_GEO).forEach(bid=>{figs[bid]=basinFig(bid,mode);});
+  let s=`<svg class="basinmap" viewBox="0 0 ${BMW} ${BMH}" role="group" aria-label="Colorado's seven river basins, shaded by storage against each basin's own normal, ${mode==='today'?'from today’s readings':'on 30 September 2026'}">`;
   s+=`<image href="img/co-relief.webp" x="0" y="0" width="${BMW}" height="${BMH}" preserveAspectRatio="none" opacity="0.3"/>`;
   Object.keys(BASIN_GEO).forEach(bid=>{
-    const st=basinStats(bid);
+    const f=figs[bid];
     const bn=BASINS.find(x=>x.id===bid).n;
     s+=`<path class="sbasin${bid===home?' home':''}${bid===sel?' sel':''}" data-basin="${bid}" `
-      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${ramp(st.pct)}" tabindex="0" role="button" `
-      +`aria-pressed="${bid===sel}" aria-label="${bn} basin, ${st.pct}% of normal storage" `
-      +`data-tip="<div class=&quot;tt-h&quot;>${bn}</div><div class=&quot;tt-d&quot;>`
-      +`<b>${st.pct}%</b> of normal storage<br>${st.count} reservoirs · ${kaf(st.cap)} KAF when full`
-      +`<br>${st.below} below normal</div>"></path>`;
+      +`d="${basinPathD(BASIN_GEO[bid])}" fill="${f.pct!=null?ramp(f.pct):NOREAD}" tabindex="0" role="button" `
+      +`aria-pressed="${bid===sel}" aria-label="${bn} basin, ${f.aria}" `
+      +`data-tip="<div class=&quot;tt-h&quot;>${bn}</div><div class=&quot;tt-d&quot;>${f.tip}</div>"></path>`;
   });
   Object.keys(BASIN_GEO).forEach(bid=>{
     const a=BASIN_LABEL[bid]; if(!a)return;
     const x=bmx(a[0]).toFixed(0), y=bmy(a[1]).toFixed(0);
-    const bb=BASINS.find(x2=>x2.id===bid), pct=Math.round(PMH[bid]?PMH[bid][NOW]:100);
+    const bb=BASINS.find(x2=>x2.id===bid), f=figs[bid];
     /* neutral, not ramp-coloured: the fill beneath already carries the value */
     s+=`<text class="sbasin-lab" x="${x}" y="${y}" text-anchor="middle" pointer-events="none">${bb.n.toUpperCase()}</text>`;
-    s+=`<text class="sbasin-pct" x="${x}" y="${y}" dy="1.1em" text-anchor="middle" pointer-events="none">${pct}%</text>`;
+    s+=`<text class="sbasin-pct" x="${x}" y="${y}" dy="1.1em" text-anchor="middle" pointer-events="none">${f.pct!=null?f.pct+'%':'no reading'}</text>`;
   });
-  return s+'</svg>'+basinLegend();
+  return s+'</svg>'+basinLegend(mode);
 }
 /* The old legend showed five evenly-spaced swatches sampled at 55/70/85/100/112%
    — but `ramp()` is a piecewise scale with UNEVEN stops, so a swatch's position
@@ -216,11 +255,11 @@ function stateBasinsSVG(home,sel){
    true position on a 0–120% scale, so the legend and the map are the same scale.
    Ticks are labelled, and 100% is called out as the thing being compared to. */
 const BXL_MAX=120;
-function basinLegend(){
+function basinLegend(mode){
   const grad=RAMPS.map(([v,c])=>`${c} ${(Math.min(v,BXL_MAX)/BXL_MAX*100).toFixed(1)}%`).join(',');
   const ticks=[0,25,50,75,100,BXL_MAX];
   return `<div class="bx-legend">
-    <div class="bxl-cap">Storage vs this basin’s own normal</div>
+    <div class="bxl-cap">Storage vs this basin’s own normal${mode==='today'?' · today':' · 30 September 2026'}</div>
     <div class="bxl-scale">
       <div class="bxl-bar" style="background:linear-gradient(90deg,${grad})"></div>
       <div class="bxl-ticks">${ticks.map(v=>
@@ -229,44 +268,75 @@ function basinLegend(){
     </div>
     <p class="bxl-note">100% is normal: the median storage for this week of the year across the
       record, not full. Below 100% the basin holds less than it usually does at this point in the
-      year. Basins are shaded against their <i>own</i> normal, so they can be read side by side.</p>
+      year. Basins are shaded against their <i>own</i> normal, so they can be read side by side.${
+      mode==='today'?' A basin drawn dark had no reservoir reporting today.':''}</p>
   </div>`;
 }
-function basinSummaryHTML(bid,home){
-  const b=BASINS.find(x=>x.id===bid), st=basinStats(bid);
+function basinSummaryHTML(bid,home,mode){
+  const b=BASINS.find(x=>x.id===bid);
+  const slope=`<span>${WEST.includes(bid)?'West slope':'East slope'}</span>`;
+  if(mode==='today'){
+    const t=basinToday(bid);
+    return `<div class="bx-head"><span class="bx-name">${b.n}${bid===home?' · your basin':''}</span>`
+      +`<span class="bx-pct"${t.pct!=null?` style="color:${rampText(t.pct)}"`:''}>${t.pct!=null?t.pct+'% of normal today':'no reading today'}</span></div>`
+      +`<p class="bx-blurb">${BASININFO[bid]||''}</p>`
+      +`<div class="bx-stats">${slope}<span>${t.n} of ${t.count} reservoirs reported today</span>`
+      +`<span>${kaf(t.cap)} KAF full</span></div>`;
+  }
+  const st=basinStats(bid);
   return `<div class="bx-head"><span class="bx-name">${b.n}${bid===home?' · your basin':''}</span>`
-    +`<span class="bx-pct" style="color:${rampText(st.pct)}">${st.pct}% of normal</span></div>`
+    +`<span class="bx-pct" style="color:${rampText(st.pct)}">${st.pct}% of normal on 30 September</span></div>`
     +`<p class="bx-blurb">${BASININFO[bid]||''}</p>`
-    +`<div class="bx-stats"><span>${WEST.includes(bid)?'West slope':'East slope'}</span><span>${st.count} reservoirs</span>`
+    +`<div class="bx-stats">${slope}<span>${st.count} reservoirs</span>`
     +`<span>${kaf(st.cap)} KAF full</span><span>${st.below} below normal</span>`
     +`${st.largest?`<span>largest: ${cleanName(st.largest.n)}</span>`:''}</div>`;
 }
-function secBasinsState(home){
-  return sec('basins','The state right now','Seven basins, seven different years',
-    `<p class="lr-p">${W(`Colorado drains into seven river basins, four west of the {{Continental Divide}} and three east, matching the state’s seven water divisions. They do not share a fate. Each lives on its own snowpack, so in the same year one can be near normal while another is deep in drought. Each is colored below by how much water it holds against its <i>own</i> normal. Tap any basin for its details.`)}</p>
-     <div class="basinmap-wrap" id="basin-explorer">${stateBasinsSVG(home,curSel||home||'colorado')}
-       <div class="bx-panel" id="basin-sel">${basinSummaryHTML(curSel||home||'colorado',home)}</div></div>
-     <p class="lr-p lr-cap">Boundaries from the public-domain USGS Watershed Boundary Dataset; storage derived from Colorado DWR telemetry against each basin’s own record.</p>`);
+function basinExplorer(home,mode){
+  const sel=curSel||home||'colorado';
+  return `<div class="basinmap-wrap" id="basin-explorer" data-mode="${mode}">${stateBasinsSVG(home,sel,mode)}
+       <div class="bx-panel" id="basin-sel">${basinSummaryHTML(sel,home,mode)}</div></div>`;
+}
+/* The seven basins as a plain list, newest day only: the table view of the
+   today map, and the first thing a phone reader sees below it */
+function basinTodayList(){
+  const ids=Object.keys(typeof BASIN_GEO!=='undefined'?BASIN_GEO:{});
+  const rows=ids.map(bid=>({bid,n:BASINS.find(x=>x.id===bid).n,t:basinToday(bid)}))
+    .sort((a,b)=>(b.t.pct==null?-1:b.t.pct)-(a.t.pct==null?-1:a.t.pct));
+  return `<ul class="tb-list">${rows.map(r=>`<li><span class="tb-name">${r.n}</span>`
+    +`<span class="tb-n">${r.t.n} of ${r.t.count} reporting</span>`
+    +`<span class="tb-pct"${r.t.pct!=null?` style="color:${rampText(r.t.pct)}"`:''}>${r.t.pct!=null?r.t.pct+'%':'–'}</span></li>`).join('')}</ul>`;
+}
+function secBasinsHow(){
+  return sec('basins','The basins','Seven basins, seven different years',
+    `<p class="lr-p">${W(`Colorado drains into seven river basins, four west of the {{Continental Divide}} and three east, matching the state’s seven water divisions. They do not share a fate. Each lives on its own snowpack, so in the same year one can be near normal while another is deep in drought.`)}</p>
+     <p class="lr-p lr-aside">Each basin against its own normal: <a href="index.html">today</a>, from the day’s readings, and on <a href="water-year-2026.html#lr-basins">30 September 2026</a>, where water year 2026 ended.</p>`);
+}
+function secBasinsReport(home){
+  return sec('basins','Where each basin ended','Seven basins on 30 September 2026',
+    `<p class="lr-p">${W(`Each basin is colored by how much water it held on 30 September 2026 against its <i>own</i> normal. That is the carryover water year 2027 starts from. Tap any basin for its details.`)}</p>
+     ${basinExplorer(home,'yearend')}
+     <p class="lr-p lr-cap">Boundaries from the public-domain USGS Watershed Boundary Dataset; storage derived from Colorado DWR telemetry against each basin’s own record, as monthly figures in the <a href="data.html">basin history CSV</a>.</p>`);
 }
 
-/* §5 the long view */
-function secLongView(){
-  const bm=RESBY['bluemesa'];
-  const bmLive=bm&&LIVE_STO[bm.id];
-  const bmPct=bm?pmAt(bm,NOW):null;
+/* §5 the long view: Lake Powell year by year */
+function secPowell(){
   const powell=window.CW_HISTORY&&CW_HISTORY.hasPowell()
     ?'<div class="cw-mount" data-cw="powell"></div>':'';
   const powellTable=window.CW_HISTORY&&CW_HISTORY.hasPowell()&&CW_HISTORY.powellTable
     ?CW_HISTORY.powellTable():'';
   const pk=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL.reduce((a,b)=>b[1]>a[1]?b:a):null;
   const last=(typeof POWELL_ANNUAL!=='undefined')?POWELL_ANNUAL[POWELL_ANNUAL.length-1]:null;
-  return sec('longview','The long view','A drought, and a drier baseline',
+  return sec('powell','Lake Powell','Every September since 1963',
+    `<p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s savings account, shows the long trend plainly: full through the 1980s, drawn toward dead pool over two decades.`)}</p>
+     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}`);
+}
+/* the megadrought: the explainer, on How it works */
+function secMegadrought(){
+  return sec('longview','A drier baseline','A drought, and a drier baseline',
     `<p class="lr-p">${W(`One dry year is weather. A falling baseline is something else. Since 2000 the Colorado River basin has been in what scientists call a {{megadrought}}, the driest stretch in at least twelve centuries, and warming is making the dryness structural. That shift has its own name: {{aridification}}.`)}</p>
-     ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}
-     <p class="lr-p">${W(`{{Lake Powell}}, the Colorado River’s savings account, shows it plainly: full through the 1980s, drawn toward dead pool over two decades. Colorado’s own {{Blue Mesa Reservoir}}, the largest in the state, is the next account upstream. When the river runs short, Blue Mesa is released to prop Powell up.`)}</p>
-     ${bm?`<div class="bignum"><div class="bignum-v" style="color:${rampText(bmPct)}">${bmPct}%</div>
-        <div class="bignum-lab">${W(`of normal: {{Blue Mesa Reservoir}} today${bmLive?`, holding ${af(bmLive.sto)} acre-feet (live, Colorado DWR)`:''}.`)}</div></div>`:''}
-     <p class="lr-p">${W(`The hard part of {{aridification}} is that warming shifts precipitation from snow toward rain, melts the snow earlier, and evaporates more from every reservoir surface. Even a <i>normal</i> snow year now yields less usable water than it did a generation ago.`)}</p>`);
+     <p class="lr-p">${W(`Colorado’s own {{Blue Mesa Reservoir}}, the largest in the state, is the next account upstream of {{Lake Powell}}. When the river runs short, Blue Mesa is released to prop Powell up.`)}</p>
+     <p class="lr-p">${W(`The hard part of {{aridification}} is that warming shifts precipitation from snow toward rain, melts the snow earlier, and evaporates more from every reservoir surface. Even a <i>normal</i> snow year now yields less usable water than it did a generation ago.`)}</p>
+     <p class="lr-p lr-aside">Lake Powell’s every September since 1963 is on <a href="long-view.html">the long view</a>.</p>`);
 }
 
 /* =====================================================================
@@ -303,15 +373,18 @@ function splitBar(sp,hb){
   }).join('');
   return `<div class="splitbar"><div class="sb-track" aria-hidden="true">${seg}</div><div class="sb-keys">${key}</div></div>`;
 }
+/* from the newest day's readings only; with none, the cell says so */
 function basinStatPanel(bid){
-  const st=basinStats(bid);
+  const t=basinToday(bid);
+  const rep=RES.filter(r=>r.b===bid&&!r.fc).map(readingOf).filter(rd=>rd.today&&rd.pm!=null);
+  const below=rep.filter(rd=>rd.pm<95).length;
   return `<div class="basin-panel">
-       <div class="bp-cell"><div class="bp-num" style="color:${rampText(st.pct)}">${st.pct}%</div>
-         <div class="bp-lab">of normal storage<br>right now</div></div>
-       <div class="bp-cell"><div class="bp-num">${st.count}</div>
-         <div class="bp-lab">reservoirs here holding<br>${kaf(st.cap)} KAF when full</div></div>
-       <div class="bp-cell"><div class="bp-num" style="color:${st.below?'#EF9A1B':'#2FD94F'}">${st.below}</div>
-         <div class="bp-lab">of them sitting<br>below normal</div></div>
+       <div class="bp-cell"><div class="bp-num"${t.pct!=null?` style="color:${rampText(t.pct)}"`:''}>${t.pct!=null?t.pct+'%':'–'}</div>
+         <div class="bp-lab">${t.pct!=null?`of normal storage today,<br>${t.n} of ${t.count} reporting`:`no reservoir here<br>reported today`}</div></div>
+       <div class="bp-cell"><div class="bp-num">${t.count}</div>
+         <div class="bp-lab">reservoirs here holding<br>${kaf(t.cap)} KAF when full</div></div>
+       <div class="bp-cell"><div class="bp-num" style="color:${below?'#EF9A1B':'#2FD94F'}">${rep.length?below:'–'}</div>
+         <div class="bp-lab">${rep.length?`of those reporting today<br>below normal`:`below normal:<br>no reading today`}</div></div>
      </div>`;
 }
 /* The drop across a basin, in prose. Gravity is the whole plumbing system —
@@ -350,8 +423,9 @@ function flowBlock(bid,bo,svg,opts){
        DWR pool elevations, USGS gage datums, or the national elevation model where it clearly resolves the lake).
        Reservoirs without one are placed by their position on the river and carry no number.
        <a href="data.html#elevation">How that is worked out →</a>
-       Ribbon width tracks how much water each reach carries (typical late-July flows). ◆ gages show live readings
-       where available. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water reaches:
+       A reservoir’s percent is its newest reading; one marked * did not report today, and the table gives its date.
+       Ribbon width tracks how much water each reach carries (typical late-July flows). ◆ gages show the newest
+       reading where there is one. <b>Dashed ribbons are tunnels</b>, and they run to whichever edge their water reaches:
        on the West Slope the river leaves to the left, toward Utah, while the tunnels break away to the right,
        east under the Divide. A schematic of the order things happen in, not a channel map.</div>${
          window.CW_BASINMAP&&CW_BASINMAP.flowTable?CW_BASINMAP.flowTable(bid):''}</div>`;
@@ -375,19 +449,6 @@ function secMyBasin(tap){
      that left a Denver reader with no South Platte at all — the river running
      through their own city was missing from the page. */
   const homeFlow=cross&&window.CW_BASINMAP&&CW_BASINMAP.flow?CW_BASINMAP.flow(hb,tap):'';
-  const hasSnow=typeof SNOW_BASIN!=='undefined'&&SNOW_BASIN[sb];
-  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowStore(sb)
-    ?`<div class="cw-mount" data-cw="snowStore" data-basin="${sb}"></div>`:'';
-  const chartTable=chart&&CW_HISTORY.snowStoreTable?CW_HISTORY.snowStoreTable(sb):'';
-  const snowLine=hasSnow?(()=>{
-    const sn=SNOW_BASIN[sb];
-    const iMax=a=>a.reduce((bi,v,i)=>(v!=null&&(a[bi]==null||v>a[bi]))?i:bi,0);
-    const ic=iMax(sn.cur), inr=iMax(sn.nrm);
-    const pkc=sn.cur[ic], pkn=sn.nrm[inr];
-    if(!(pkn>0)||pkc==null)return '';
-    const rel=Math.round(pkc/pkn*100);
-    return `<p class="lr-p">${W(`The ${poss(b.n)} snowpack topped out at roughly <b>${rel}% of a normal peak</b>${ic<inr?`, and it peaked in ${monthName(ic)} rather than the usual ${monthName(inr)}`:''}, then melted away. The storage line beneath it never recovers: <b>low snow in, low water out</b>.`)}</p>`;
-  })():'';
   const tuns=(tap.tun||[]).map(n=>TUNNELS[n]?[n,TUNNELS[n]]:null).filter(Boolean);
   const plumbing=tuns.length
     ? `<h3 class="lr-h3">The plumbing that made it livable</h3>
@@ -397,7 +458,7 @@ function secMyBasin(tap){
       +`</ul>`
     : `<h3 class="lr-h3">No tunnel feeds this one</h3>
        <p class="lr-p">${W(`Your basin lives on its own snowmelt. Nothing crosses the {{Continental Divide}} to top it up, so the size of the winter snowpack is everything.`)}</p>`;
-  const capCommon=`Reservoirs are drawn as glasses (size = capacity, fill = storage, color = against normal), rivers in their headwater colors, ◆ streamgages show live flow. <b>Your own reservoirs are outlined in white.</b>`;
+  const capCommon=`Reservoirs are drawn as glasses (size = capacity, fill = storage, color = against normal), rivers in their headwater colors, ◆ streamgages show their newest flow reading. Each glass shows its newest reading, dated in the table below. <b>Your own reservoirs are outlined in white.</b>`;
   return sec('mybasin','Act two · your basin',
     cross?'Two basins, one tap':`The ${b.n}`,
     (cross
@@ -421,9 +482,39 @@ function secMyBasin(tap){
          its own snow plus, near the top, whatever arrives through the tunnel.`})}
      <h3 class="lr-h3">Snow in, water out</h3>
      ${cross?`<p class="lr-p">${W(`This is why the crossing matters. The snow that fills your largest reservoirs falls in the <b>${b.n}</b>, not where you live. A dry winter there shows up in your summer.`)}</p>`:''}
-     ${snowLine}
-     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin · two panels sharing the water year: snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, and storage as a share of its telemetered <i>supply</i> capacity (flood-control pools excluded on both sides). <b>The shaded band and dashed median are measured</b>, from CDSS daily basin totals since 2005, weekly. <b>This year’s storage is a monthly reconstruction</b> (the July snapshot scaled by the basin’s derived factors, live where telemetered), which is why it is drawn as one dot per month rather than a continuous curve. The two panels are not on one axis, because that would imply an exchange rate between inches of snow and percent full that does not exist.</div>${chartTable}</div>`:''}
+     ${window.CW_HISTORY&&CW_HISTORY.hasSnowStore(sb)?`<p class="lr-p lr-aside">The ${poss(b.n)} snow and storage through water year 2026, month by month: <a href="water-year-2026.html#snowin-${sb}">the 2026 report</a>.</p>`:''}
      ${plumbing}`);
+}
+
+/* Snow in, water out, for one basin, water year 2026 (the report) */
+function snowLineFor(bid){
+  if(typeof SNOW_BASIN==='undefined'||!SNOW_BASIN[bid])return '';
+  const b=BASINS.find(x=>x.id===bid);
+  const sn=SNOW_BASIN[bid];
+  const iMax=a=>a.reduce((bi,v,i)=>(v!=null&&(a[bi]==null||v>a[bi]))?i:bi,0);
+  const ic=iMax(sn.cur), inr=iMax(sn.nrm);
+  const pkc=sn.cur[ic], pkn=sn.nrm[inr];
+  if(!(pkn>0)||pkc==null)return '';
+  const rel=Math.round(pkc/pkn*100);
+  return `<p class="lr-p">${W(`The ${poss(b.n)} snowpack topped out at roughly <b>${rel}% of a normal peak</b>${ic<inr?`, and it peaked in ${monthName(ic)} rather than the usual ${monthName(inr)}`:''}, then melted away. The storage line beneath it never recovers: <b>low snow in, low water out</b>.`)}</p>`;
+}
+function snowInOutBlock(bid){
+  const b=BASINS.find(x=>x.id===bid);
+  const chart=window.CW_HISTORY&&CW_HISTORY.hasSnowStore(bid)
+    ?`<div class="cw-mount" data-cw="snowStore" data-basin="${bid}"></div>`:'';
+  const chartTable=chart&&CW_HISTORY.snowStoreTable?CW_HISTORY.snowStoreTable(bid):'';
+  return `${snowLineFor(bid)}
+     ${chart?`<div class="lr-chart">${chart}<div class="lr-chart-cap">${b.n} basin, water year 2026 · two panels sharing the water year: snowpack as snow-water equivalent over the basin’s long-record SNOTEL sites, and storage as a share of its telemetered <i>supply</i> capacity (flood-control pools excluded on both sides). <b>The shaded band and dashed median are measured</b>, from CDSS daily basin totals since 2005, weekly. <b>The 2026 storage is a monthly reconstruction</b> (the July snapshot scaled by the basin’s derived factors), which is why it is drawn as one dot per month rather than a continuous curve. The two panels are not on one axis, because that would imply an exchange rate between inches of snow and percent full that does not exist.</div>${chartTable}</div>`:''}`;
+}
+function secSnowInOut(){
+  const ids=BASINS.map(x=>x.id).filter(id=>id!=='all'&&window.CW_HISTORY&&CW_HISTORY.hasSnowStore(id));
+  if(!ids.length)return '';
+  const pick=(location.hash.match(/^#snowin-(\w+)/)||[])[1];
+  const cur=ids.includes(pick)?pick:(ids.includes('colorado')?'colorado':ids[0]);
+  return sec('snowin','Snow in, water out','Each basin through the year',
+    `<div class="seg seg-wrap" role="group" aria-label="Basin" id="snowin-pick">${ids.map(id=>
+      `<button data-basin="${id}" aria-pressed="${id===cur}">${BASINS.find(x=>x.id===id).n}</button>`).join('')}</div>
+     <div id="snowin-body">${snowInOutBlock(cur)}</div>`);
 }
 
 /* =====================================================================
@@ -455,7 +546,7 @@ function secTap(tap){
      <p class="lr-p">${tap.desc}</p>
      ${reveal}
      ${totCap?`<p class="lr-p">${W(`Between them, the reservoirs below hold <b>${kaf(totCap)} thousand acre-feet</b>
-        when full. Each row shows its share of your provider’s stored supply, how much is in it today, and
+        when full. Each row shows its share of your provider’s stored supply, its newest reading with that reading’s date, and
         where that sits against the <i>shape</i> of a normal year at that reservoir. Storage is meant to fall
         through the summer. What matters is whether it is falling faster than usual.`)}</p>`:''}
      ${glassGroup('Across the Divide: West Slope',across,totCap)}
@@ -488,27 +579,146 @@ function secAction(tap,zip){
        <p class="xb-sub">The detailed map plots all ${RES.length} reservoirs, every gage and every tunnel at once. It is dense and best on a large screen.</p>
        <div class="xb-links">
          <a class="story-cta" href="map.html#zip=${zip}">Open the detailed map →</a>
-         <a class="xb-alt" href="timeline.html">or watch the water year month by month →</a>
+         <a class="xb-alt" href="water-year-2026.html#player">or watch water year 2026 month by month →</a>
        </div>
      </div>`);
 }
 
 /* =====================================================================
-   RENDER
+   TODAY — the newest day's readings only
    ===================================================================== */
-function renderState(){
+let liveState='loading';     /* loading | ok | failed: what Today can say */
+function heroToday(){
+  const day=LIVE_META.day;
+  const head=`<p class="lr-eyebrow">Colorado water · today</p><h1 class="lr-title">Colorado water today</h1>`;
+  if(!day)return `<header class="lr-hero">${head}<p class="lr-servedby">${liveState==='failed'
+    ?'The daily readings could not be loaded, so nothing on this page can be called today’s. (Normal when the page is opened offline or as a saved file.)'
+    :'Loading the daily readings…'}</p></header>`;
+  const w=wyDay(day), all=basinToday('all');
+  return `<header class="lr-hero">${head}
+    <p class="lr-servedby">${fmtDay(day,true)} · water year ${w.wy}, day ${w.day}</p>
+    ${all.pct!=null?`<p class="lr-sub today-head">The reservoirs that reported today hold <b>${all.pct}%</b> of what is usual for this week.</p>`:''}</header>`;
+}
+function secBasinsToday(home){
+  const all=basinToday('all');
+  return sec('basins','Today','Seven basins, from today’s readings',
+    `${basinExplorer(home,'today')}
+     ${basinTodayList()}
+     <p class="lr-p lr-cap">Storage against the median for this week of the year. ${all.n} of ${all.count} supply reservoirs reported today (Colorado DWR telemetry, ${fmtDay(LIVE_META.day)}); a reservoir with no reading today is left out of these figures, not estimated. Boundaries from the public-domain USGS Watershed Boundary Dataset.</p>`);
+}
+function secBlueMesa(){
+  const bm=RESBY['bluemesa']; if(!bm)return '';
+  const rd=readingOf(bm);
+  if(rd.pm==null)return '';
+  const src=rd.kind==='reading'?'Colorado DWR telemetry':rd.kind==='obs'?(bm.s||'published reading'):'estimate';
+  return sec('bluemesa','The state’s largest reservoir','Blue Mesa',
+    `<div class="bignum"><div class="bignum-v" style="color:${rampText(rd.pm)}">${rd.pm}%</div>
+       <div class="bignum-lab">${W(`of normal for the week: {{Blue Mesa Reservoir}} ${readingWhen(rd)}, holding ${af(rd.sto)} acre-feet (${src}).`)}</div></div>
+     <p class="lr-p lr-aside">Why Blue Mesa matters downstream: <a href="how-it-works.html#lr-longview">How it works</a>. Lake Powell year by year: <a href="long-view.html">the long view</a>.</p>`);
+}
+function renderToday(){
   const home=curTap?curTap.hb:null;
-  document.getElementById('state-body').innerHTML=
-    `<header class="lr-hero"><p class="lr-eyebrow">Colorado water · a drought story</p>
-       <h1 class="lr-title">The water year</h1>
-       <p class="lr-servedby">Where Colorado’s water comes from, where it is stored, and how much of it there is right now</p>
-       <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins holding what is left. Then find your own. Bold terms link to sources.`)}</p></header>`
-    +secSnow()+secReservoirs()+secBasinsState(home)+secLongView();
-  if(window.CW_HISTORY)CW_HISTORY.mountAll(document.getElementById('state-body'));
+  const el=document.getElementById('today-body');
+  el.innerHTML=heroToday()+(LIVE_META.day?secBasinsToday(home)+secBlueMesa():'');
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
   wireBasinExplorer(home);
 }
+/* Your reservoirs, newest reading each, dated where it is not today's */
+function secTapToday(tap,zip){
+  const home=slopeOf(tap.hb);
+  const across=[], same=[];
+  (tap.res||[]).forEach(id=>{const r=RESBY[id]; if(!r)return; (slopeOf(r.b)!==home?across:same).push(r);});
+  const sup=across.concat(same).filter(r=>!r.fc);
+  const totCap=sup.reduce((s,r)=>s+r.cap,0);
+  const nToday=sup.filter(r=>readingOf(r).today).length;
+  const approx=tap._approx
+    ? `<p class="lr-p lr-aside">${W(`ZIP ${tap.zip||zip}’s exact provider is not mapped yet, so this shows the nearest system that is, <b>${tap.prov}</b>, for the regional picture. Your provider, and near the Divide sometimes the basin, may differ.`)}</p>`
+    : '';
+  const fc=(tap.fcres&&tap.fcres.length)
+    ? `<p class="fc-note">${W(`The big lakes you see nearby (${tap.fcres.map(id=>cleanName(RESBY[id].n)).join(', ')}) are flood-control reservoirs, not your supply.`)}</p>`
+    : '';
+  return sec('tap','Your reservoirs','Your reservoirs today',
+    approx+`<p class="lr-p">${LIVE_META.day?`<b>${nToday} of ${sup.length}</b> of ${tap.prov}’s supply reservoirs reported today (${fmtDay(LIVE_META.day)}).`
+        :`The daily readings are not loaded, so none of these is today’s.`}
+       A reservoir with no reading today shows its last one, with its date.</p>
+     ${glassGroup('Across the Divide: West Slope',across,totCap)}
+     ${glassGroup(home==='w'?'From your own basin':'From your side of the mountains',same,totCap)}
+     ${fc}
+     <p class="lr-p lr-aside"><a href="how-it-works.html#${zip}">Follow it from your tap to its basin and its tunnels →</a><br>
+       <a href="map.html#zip=${zip}">See it on the detailed map →</a></p>`);
+}
+function localHero(tap,zip){
+  const b=BASINS.find(x=>x.id===tap.hb);
+  return `<header class="lr-hero lr-hero2"><p class="lr-eyebrow">Your water · ZIP ${zip}</p>
+       <h1 class="lr-title">${tap._approx?'Near '+tap.city:tap.city}</h1>
+       <p class="lr-servedby">${tap._approx?'Nearest mapped system: ':'Served by '}<b>${tap.prov}</b> · ${b.n} basin</p></header>`;
+}
+
+/* =====================================================================
+   HOW IT WORKS — the explainer and the ZIP trace
+   ===================================================================== */
+function renderHow(){
+  const el=document.getElementById('how-body');
+  el.innerHTML=`<header class="lr-hero"><p class="lr-eyebrow">Colorado water · how it works</p>
+       <h1 class="lr-title">How it works</h1>
+       <p class="lr-servedby">Where Colorado’s water comes from, where it is stored, and how it reaches your tap</p>
+       <p class="lr-sub">${W(`Start with the whole state: the snow that makes the water, the calendar it runs on, and the seven basins. Then find your own. Bold terms link to sources.`)}</p></header>`
+    +secSnowHow()+secReservoirs()+secBasinsHow()+secMegadrought();
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
+}
+
+/* =====================================================================
+   WATER YEAR 2026 — the closed year, frozen. This page loads no daily
+   readings, so nothing on it can drift into the new year.
+   ===================================================================== */
+function secYear2026(){
+  return sec('year','The year','1 October 2025 to 30 September 2026',
+    `<p class="lr-p">The winter looked survivable on paper: statewide streamflow held between <b>76% and 79% of the median</b> from November through February, and basin storage ranged from 69% of median in the Gunnison to 116% in the South Platte. Then March turned warm early. Flow jumped to <b>93%</b> that month as the snow started melting, and by the first of June <b>91% of the state’s SNOTEL snow-measurement sites were bare</b> (NRCS). The melt that should have carried rivers through summer had already come and gone. Statewide streamflow fell to <b>34% in May</b> and bottomed at <b>27% in June</b>, then recovered only partway, to <b>59% in September</b>.</p>
+     <p class="lr-p">The reservoirs show where it hurt. At the end of September the <b>Gunnison basin stood at 23% of its median storage</b>, down from 83% in March, and the <b>Colorado headwaters at 52%</b>, down from 93% in April. East of the Divide the year ended close to normal: the <b>South Platte at 97%</b>, the <b>Arkansas at 86%</b>, and the <b>Rio Grande at 87%</b>. The San Juan and Dolores ended at 91%. The Yampa and White has no reservoir still reporting telemetry, so its 78% is an estimate.</p>
+     <p class="lr-p">That end-of-September storage is the <b>carryover</b> water year 2027 starts from. <a href="index.html">Today</a> shows the new year’s readings, with its day count. The <a href="#player">month-by-month player</a> below plays water year 2026 from October to September.</p>
+     <p class="lr-p lr-aside">Monthly figures are this site’s own derivation: reservoir storage from Colorado DWR’s CDSS telemetry against each reservoir’s median for the week, and streamflow from the mapped USGS and DWR gages against theirs. Every month, basin by basin, is in the <a href="data.html">basin history CSV</a>.</p>`);
+}
+function renderReport(){
+  const el=document.getElementById('report-body');
+  el.innerHTML=`<header class="lr-hero"><p class="lr-eyebrow">Report · water year 2026</p>
+       <h1 class="lr-title">Water year 2026</h1>
+       <p class="lr-servedby">1 October 2025 to 30 September 2026 · a finished year; this page is not updated</p></header>`
+    +secYear2026()+secSnowReport()+secBasinsReport(null);
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
+  wireBasinExplorer(null);
+  const after=document.getElementById('report-after');
+  if(after){
+    after.innerHTML=secSnowInOut()
+      +sec('record','2026 against the record','The long view',
+        `<p class="lr-p">Lake Powell’s every September since 1963, and the snowpack decade by decade since the 1980s, are on <a href="long-view.html">the long view</a>.</p>`);
+    if(window.CW_HISTORY)CW_HISTORY.mountAll(after);
+    const pk=document.getElementById('snowin-pick'), body=document.getElementById('snowin-body');
+    if(pk&&body)pk.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+      pk.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+      body.innerHTML=snowInOutBlock(b.dataset.basin);
+      if(window.CW_HISTORY)CW_HISTORY.mountAll(body);
+    }));
+  }
+}
+
+/* =====================================================================
+   THE LONG VIEW — the record, year by year
+   ===================================================================== */
+function renderLongView(){
+  const el=document.getElementById('longview-body');
+  el.innerHTML=`<header class="lr-hero"><p class="lr-eyebrow">Colorado water · the long view</p>
+       <h1 class="lr-title">The long view</h1>
+       <p class="lr-servedby">The record, year by year. Each October the year just closed is added.</p></header>`
+    +secPowell()+secSnowDecades();
+  if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
+}
+
+/* =====================================================================
+   SHARED WIRING
+   ===================================================================== */
 function wireBasinExplorer(home){
   const bx=document.getElementById('basin-explorer'); if(!bx)return;
+  const mode=bx.dataset.mode;
   const sel=document.getElementById('basin-sel');
   bx.querySelectorAll('.sbasin').forEach(p=>{
     const pick=()=>{
@@ -517,22 +727,24 @@ function wireBasinExplorer(home){
         x.classList.toggle('sel',x===p);
         x.setAttribute('aria-pressed',String(x===p));
       });
-      if(sel)sel.innerHTML=basinSummaryHTML(curSel,home);};
+      if(sel)sel.innerHTML=basinSummaryHTML(curSel,home,mode);};
     p.addEventListener('click',pick);
     p.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pick();}});
   });
   const svg=bx.querySelector('svg.basinmap');
   if(svg&&window.CW_CHARTS)CW_CHARTS.markHover(svg,{container:bx});
 }
+function renderMain(){
+  if(PAGE==='today')renderToday();
+  else if(PAGE==='how')renderHow();
+}
 function renderLocal(tap,zip){
-  const b=BASINS.find(x=>x.id===tap.hb);
   const el=document.getElementById('local-body');
+  if(!el)return;
   el.hidden=false;
-  el.innerHTML=
-    `<header class="lr-hero lr-hero2"><p class="lr-eyebrow">Your water · ZIP ${zip}</p>
-       <h1 class="lr-title">${tap._approx?'Near '+tap.city:tap.city}</h1>
-       <p class="lr-servedby">${tap._approx?'Nearest mapped system: ':'Served by '}<b>${tap.prov}</b> · ${b.n} basin</p></header>`
-    +secMyBasin(tap)+secTap(tap)+secAction(tap,zip);
+  el.innerHTML=localHero(tap,zip)+(PAGE==='how'
+    ?secMyBasin(tap)+secTap(tap)+secAction(tap,zip)
+    :secTapToday(tap,zip));
   if(window.CW_HISTORY)CW_HISTORY.mountAll(el);
   /* on a phone the maps are wider than the screen: open each one centred */
   el.querySelectorAll('.mapscroll').forEach(m=>{m.scrollLeft=(m.scrollWidth-m.clientWidth)/2;});
@@ -544,11 +756,11 @@ function renderLocal(tap,zip){
   });
 }
 
-/* ---------- entry wiring ---------- */
+/* ---------- entry wiring (Today and How it works) ---------- */
 function msg(t){const el=document.getElementById('zipmsg');if(el)el.textContent=t;}
 function choosePlace(tap,zip,scroll){
   curTap=tap; curZip=zip;
-  renderState();                 /* re-render so the map marks the home basin */
+  renderMain();                  /* re-render so the map marks the home basin */
   renderLocal(tap,zip);
   history.replaceState(null,'','#'+zip);
   if(scroll!==false){
@@ -566,23 +778,28 @@ function submitZip(){
   msg('');
   choosePlace(t,z);
 }
-document.getElementById('zipgo').addEventListener('click',submitZip);
-document.getElementById('zip').addEventListener('keydown',e=>{if(e.key==='Enter')submitZip();});
-
-const cc=document.getElementById('citychips');
-cc.innerHTML=STORY_CITIES.map(c=>{
-  const bn=(BASINS.find(x=>x.id===c.b)||{}).n||'';
-  const hue=(typeof BASIN_HUE!=='undefined'&&BASIN_HUE[c.b])||'#8FA6B2';
-  return `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}" title="${c.label} · ${bn} basin">`
-    +`<span class="cc-city">${c.label}</span>`
-    +`<span class="cc-basin"><i style="background:${hue}"></i>${bn}</span></button>`;
-}).join('');
-cc.querySelectorAll('.citychip').forEach(b=>b.addEventListener('click',()=>{
-  const t=TAPS.find(x=>x.id===b.dataset.tap);
-  if(t){document.getElementById('zip').value=b.dataset.zip;msg('');choosePlace(t,b.dataset.zip);}
-}));
+function wireZip(){
+  const go=document.getElementById('zipgo'), zi=document.getElementById('zip');
+  if(!go||!zi)return;
+  go.addEventListener('click',submitZip);
+  zi.addEventListener('keydown',e=>{if(e.key==='Enter')submitZip();});
+  const cc=document.getElementById('citychips');
+  if(!cc)return;
+  cc.innerHTML=STORY_CITIES.map(c=>{
+    const bn=(BASINS.find(x=>x.id===c.b)||{}).n||'';
+    const hue=(typeof BASIN_HUE!=='undefined'&&BASIN_HUE[c.b])||'#8FA6B2';
+    return `<button class="citychip" data-tap="${c.tap}" data-zip="${c.zip}" title="${c.label} · ${bn} basin">`
+      +`<span class="cc-city">${c.label}</span>`
+      +`<span class="cc-basin"><i style="background:${hue}"></i>${bn}</span></button>`;
+  }).join('');
+  cc.querySelectorAll('.citychip').forEach(b=>b.addEventListener('click',()=>{
+    const t=TAPS.find(x=>x.id===b.dataset.tap);
+    if(t){document.getElementById('zip').value=b.dataset.zip;msg('');choosePlace(t,b.dataset.zip);}
+  }));
+}
 
 /* ---------- history + boot ---------- */
+/* #80302 and #zip=80302 open that ZIP's water, as old links always did */
 function syncFromHash(){
   const h=location.hash.replace(/^#/,'');
   const zip=/^\d{5}$/.test(h)?h:((h.match(/(?:^|&)zip=(\d{5})/)||[])[1]);
@@ -590,24 +807,42 @@ function syncFromHash(){
     const t=zipLookup(zip);
     if(t){curTap=t;curZip=zip;
       const zi=document.getElementById('zip'); if(zi)zi.value=zip;
-      renderState();renderLocal(t,zip);return;}
+      renderMain();renderLocal(t,zip);return;}
   }
   curTap=null;curZip=null;
-  renderState();
+  renderMain();
   const el=document.getElementById('local-body'); if(el){el.hidden=true;el.innerHTML='';}
 }
-window.addEventListener('popstate',syncFromHash);
-window.addEventListener('cw-live',ev=>{
-  /* a refresh that brought nothing new must not repaint the page under the
-     reader — no re-render, no lost place */
-  const d=(ev&&ev.detail)||{};
-  if(!d.gages&&!d.reservoirs)return;
-  /* remember which table views the reader opened, restore them after */
-  const open=[...document.querySelectorAll('details.lr-table[open]')]
-    .map(x=>x.id).filter(Boolean);
-  renderState();
-  if(curTap)renderLocal(curTap,curZip);
-  open.forEach(id=>{const x=document.getElementById(id);if(x)x.setAttribute('open','');});
-});
-syncFromHash();
+/* an anchor into JS-built content (#lr-snow, #snowin-colorado) can only be
+   honoured once that content exists */
+function scrollToHashOnce(){
+  const h=location.hash.replace(/^#/,'');
+  if(PAGE==='report'&&/(^|&)m=/.test(h)){const p=document.getElementById('player');if(p&&p.scrollIntoView)p.scrollIntoView({block:'start'});return;}
+  if(!h||/^\d{5}$/.test(h)||/=/.test(h))return;
+  const t=document.getElementById(h)||(h.startsWith('snowin-')&&document.getElementById('lr-snowin'));
+  if(t&&t.scrollIntoView)t.scrollIntoView({block:'start'});
+}
+if(PAGE==='today'||PAGE==='how'){
+  wireZip();
+  window.addEventListener('popstate',syncFromHash);
+  window.addEventListener('cw-live',ev=>{
+    const d=(ev&&ev.detail)||{};
+    if(!d.gages&&!d.reservoirs){
+      /* nothing came: Today says so instead of showing yesterday as today */
+      liveState='failed';
+      if(PAGE==='today')renderToday();
+      return;
+    }
+    liveState='ok';
+    /* remember which table views the reader opened, restore them after */
+    const open=[...document.querySelectorAll('details.lr-table[open]')]
+      .map(x=>x.id).filter(Boolean);
+    renderMain();
+    if(curTap)renderLocal(curTap,curZip);
+    open.forEach(id=>{const x=document.getElementById(id);if(x)x.setAttribute('open','');});
+  });
+  syncFromHash();
+}else if(PAGE==='report')renderReport();
+else if(PAGE==='longview')renderLongView();
+scrollToHashOnce();
 })();

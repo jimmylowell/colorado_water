@@ -848,7 +848,7 @@ function renderSheet(){
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
       <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond for the flow it carries. Pick a <b>basin</b> chip — or its dashed outline on the map — for a basin overview.
-      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap. Or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
+      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap. Or open the <a href="water-year-2026.html#player" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
     return;
   }
   const r=RESBY[state.selected];
@@ -1025,7 +1025,7 @@ d3.select('#btn-meas').on('click',function(){
   draw();
 });
 
-/* timeline — present only on timeline.html; guarded elsewhere */
+/* timeline — present only on the water year 2026 report; guarded elsewhere */
 const slider=document.getElementById('tslider'), monthlbl=document.getElementById('monthlbl');
 function setMonth(mi){
   state.mi=mi;
