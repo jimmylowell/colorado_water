@@ -81,6 +81,15 @@ const navOk=(doc,cur)=>{
 };
 /* "today", "right now", "live" only where the newest day's readings are */
 const TODAYWORD=/\b(today|right now|live)\b/i;
+/* the words are bullets: a paragraph of the story opens a section in one
+   short sentence at most (chart captions and tunnel lines aside) */
+const PROSE_MAX=30;
+function shortProse(root,what){
+  const long=[...root.querySelectorAll('p.lr-p:not(.tap-desc), p.co-p, p.bx-blurb')]
+    .map(p=>p.textContent.trim().split(/\s+/).filter(Boolean).length>PROSE_MAX?p.textContent.trim().slice(0,60):null)
+    .filter(Boolean);
+  ok(long.length===0,`${what}: no paragraph over ${PROSE_MAX} words`+(long.length?'\n    '+long.join('\n    '):''));
+}
 async function zip(p,z){
   p.document.getElementById('zip').value=z;
   p.document.getElementById('zipgo').dispatchEvent(new p.window.MouseEvent('click',{bubbles:true}));
@@ -142,6 +151,7 @@ console.log('Today, with the daily readings of '+LIVE_DAY);
   const bad=rows.filter(r=>/today/.test(r.textContent)&&!/rr-live/.test(r.innerHTML));
   ok(bad.length===0,'only rows with a reading that day say today');
   ok(!!local.querySelector('a[href="how-it-works.html#80302"]'),'links on to the full trace');
+  shortProse(p.document.querySelector('main'),'Today');
   noErrors(p,'still no script errors');
 }
 
@@ -189,8 +199,8 @@ console.log('How it works (with readings), ZIP 80302');
   const el=p.document.getElementById('how-body');
   noNaN(el,'How it works');
   ['lr-snow','lr-reservoirs','lr-basins','lr-longview'].forEach(id=>ok(!!el.querySelector('#'+id),'section '+id));
-  ok(!TODAYWORD.test(el.textContent.replace(/Coloradans live east/g,'')
-    .replace(/today, from the day’s readings/,'')),'explainer claims nothing as today’s');
+  {const t=el.textContent.replace(/today, from the day’s readings/,''), m=t.match(TODAYWORD);
+   ok(!m,'explainer claims nothing as today’s'+(m?` ("…${t.slice(Math.max(0,m.index-50),m.index+20)}…")`:''));}
   const local=await zip(p,'80302');
   ok(local&&!local.hidden&&local.children.length>0,'trace rendered');
   noNaN(local,'trace');
@@ -201,6 +211,9 @@ console.log('How it works (with readings), ZIP 80302');
     `table views in the trace (${local.querySelectorAll('.lr-table').length})`);
   ok(!local.querySelector('[data-cw="snowStore"]'),'the 2026 snow-in chart is not in the trace');
   ok(!/right now/i.test(local.textContent),'no "right now" in the trace');
+  shortProse(p.document.querySelector('main'),'How it works');
+  ok(!/NRCS \/ NOAA/.test(el.textContent),'the unsourced snowpack share is gone');
+  ok(!!el.querySelector('a[href*="Southwestern_North_American_megadrought"]'),'megadrought links to its article');
   const mark=local.querySelector('.bm-res[data-tip]');
   if(mark){
     mark.dispatchEvent(new p.window.FocusEvent('focusin',{bubbles:true}));
@@ -234,7 +247,11 @@ console.log('Water year 2026 report');
   btn[btn.length-1].dispatchEvent(new p.window.MouseEvent('click',{bubbles:true}));
   await wait(50);
   ok(!!after.querySelector('[data-cw="snowStore"] svg'),'picking a basin redraws');
-  ok(/Gunnison basin stood at 23%/.test(el.textContent),'the about page’s Water year 2026 section moved here');
+  ok(/Gunnison 23% \(83% in March\)/.test(el.textContent),'30 September storage given as bullets');
+  ok(/June 27%, the low/.test(el.textContent),'streamflow given as bullets');
+  ok(/5\.16M acre-feet, the lowest end of a water year since 1964/.test(after.textContent),'Lake Powell against the record');
+  ok(!!after.querySelector('#lr-method li'),'method listed at the foot');
+  shortProse(p.document.querySelector('main'),'report');
   noErrors(p,'still no script errors');
 }
 
@@ -250,6 +267,8 @@ console.log('The long view');
   ok(!!el.querySelector('#tbl-powell'),'Lake Powell table');
   ok(!!el.querySelector('[data-cw="snowBars"] svg'),'snow by decade chart drawn');
   ok(!!el.querySelector('#tbl-decades'),'snow by decade table');
+  ok(/the lowest since 1964/.test(el.textContent),'Lake Powell 2026 against the record');
+  shortProse(el,'long view');
   console.log('interaction layer');
   const kbCharts=[...el.querySelectorAll('svg.histchart[tabindex]')];
   ok(kbCharts.length>=1,`crosshair-enabled charts present (${kbCharts.length})`);

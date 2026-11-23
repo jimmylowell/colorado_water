@@ -697,13 +697,13 @@ function zipLookup(zip){
 /* Character of each basin — deliberately free of year-specific numbers, because
    the live derived percentage renders directly beside this text. */
 const BASININFO={
- colorado:'The Colorado River rises here in the high country along the Divide, and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream.',
- gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa, Colorado’s largest reservoir and a key piece of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell.',
- yampa:'The Yampa is one of the last largely free-flowing rivers in the West, running through northwest Colorado with few dams. Ranching, Steamboat, and the sage country all depend on its snowmelt, and no tunnel brings in water from anywhere else.',
- sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan, rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and on to Lake Powell. It is dry country that depends on the snowpack.',
- rio:'The Rio Grande rises in the San Juans and crosses the San Luis Valley, where three states share every drop by compact and farmers pump a shrinking aquifer between deliveries.',
- arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it: Fryingpan–Arkansas imports from the West Slope ride it downstream to Pueblo and the plains.',
- platte:'The South Platte drains the Front Range, where most of Colorado lives, and much of its water is imported. Denver, Boulder, and the northern cities pull a large share of their supply across the Divide through tunnels.'
+ colorado:'The headwaters of the {{Colorado River}}, whose water is shared by seven US states and Mexico. Tunnels under the Divide carry part of it east to the Front Range.',
+ gunnison:'The {{Gunnison River}}, one of the largest tributaries of the Colorado. Holds {{Blue Mesa Reservoir}}, the largest lake entirely in Colorado.',
+ yampa:'The {{Yampa River}} and the White, in northwest Colorado. The Yampa is one of the few free-flowing rivers in the western United States. No tunnel brings water in.',
+ sw:'The {{San Juan River}}, the {{Animas River|Animas}} and the {{Dolores River|Dolores}}, tributaries of the Colorado. Holds McPhee and Vallecito; Navajo sits at the New Mexico line.',
+ rio:'The {{Rio Grande}}, through the San Luis Valley. Shared with New Mexico and Texas under the {{Rio Grande Compact}} of 1938.',
+ arkansas:'The {{Arkansas River}}, from near Leadville east to Kansas. The {{Fryingpan–Arkansas Project}} adds West Slope water through the Boustead Tunnel.',
+ platte:'The {{South Platte River}}, along the Front Range, where most Coloradans live. Denver, Boulder and the northern cities bring part of their supply through tunnels under the Divide.'
 };
 /* Example places for the picker. Ordered by basin, and EVERY basin carries at
    least one — otherwise a reader in the Gunnison, Yampa or Rio Grande sees no
@@ -741,7 +741,15 @@ const WIKI={
  'prior appropriation':'Prior_appropriation_water_rights',
  'acre-foot':'Acre-foot',
  'aridification':'Aridification',
- 'megadrought':'2000s_Southwestern_North_American_megadrought',
+ 'megadrought':'Southwestern_North_American_megadrought',
+ 'Gunnison River':'Gunnison_River',
+ 'Yampa River':'Yampa_River',
+ 'San Juan River':'San_Juan_River_(Colorado_River_tributary)',
+ 'Dolores River':'Dolores_River',
+ 'Rio Grande':'Rio_Grande',
+ 'Rio Grande Compact':'Rio_Grande_Compact',
+ 'Arkansas River':'Arkansas_River',
+ 'South Platte River':'South_Platte_River',
  'North American Monsoon':'North_American_Monsoon',
  'soil moisture':'Soil_moisture',
  'evapotranspiration':'Evapotranspiration',
@@ -770,7 +778,7 @@ const TUNNELS={
  'Adams Tunnel':{year:1947,mi:13.1,proj:'Colorado–Big Thompson Project',
    note:'carries Lake Granby water east beneath Rocky Mountain National Park to the northern Front Range',wiki:'Alva_B._Adams_Tunnel'},
  'Roberts Tunnel':{year:1962,mi:23.3,proj:'Denver Water',
-   note:'moves Blue River water banked in Dillon east to the North Fork of the South Platte, Colorado’s longest water tunnel',wiki:'Harold_D._Roberts_Tunnel'},
+   note:'carries water from Dillon Reservoir east to the North Fork of the South Platte; one of the world’s longest water tunnels',wiki:'Harold_D._Roberts_Tunnel'},
  'Moffat Tunnel':{year:1936,mi:6.2,proj:'Denver Water',
    note:'skims Fraser and Williams Fork water under the Divide to South Boulder Creek and Gross Reservoir',wiki:'Moffat_Tunnel'},
  'Boustead Tunnel':{year:1972,mi:5.4,proj:'Fryingpan–Arkansas Project',
@@ -788,10 +796,10 @@ const TUNNELS={
    of the Divide, and the whole Southwest is downstream. Deliberately short —
    no two facts should lead with the same number. */
 const COLORADO_FACTS=[
- {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}}. The snow, not the reservoirs, is the main storage',cite:'NRCS / NOAA'},
- {stat:'Oct 1',lab:'the {{water year}} begins. Hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
- {stat:'~9 in 10',lab:'Coloradans live east of the {{Continental Divide}}, while most of the state’s water starts west of it. That mismatch is why the tunnels exist',cite:'Colorado Water Plan (CWCB)'},
- {stat:'40M',lab:'people across seven states and Mexico drink from the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'}
+ {stat:'Up to 90%',lab:'of the {{Colorado River}}’s flow starts as snowmelt; most of Colorado’s water supply falls as snow in the Rocky Mountains',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado_River" target="_blank" rel="noopener">Colorado River</a>, <a href="https://en.wikipedia.org/wiki/Water_in_Colorado" target="_blank" rel="noopener">Water in Colorado</a>'},
+ {stat:'Oct 1',lab:'the {{water year}} begins; it ends 30 September',cite:'USGS, via <a href="https://en.wikipedia.org/wiki/Water_year" target="_blank" rel="noopener">Wikipedia</a>'},
+ {stat:'~80% / ~80%',lab:'of Colorado’s precipitation falls west of the {{Continental Divide}}; about 80% of its population lives along the eastern slope',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado%E2%80%93Big_Thompson_Project" target="_blank" rel="noopener">Colorado–Big Thompson Project</a>'},
+ {stat:'40M',lab:'people are supplied by {{Colorado River}} water, in seven US states and Mexico',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado_River" target="_blank" rel="noopener">Colorado River</a>'}
 ];
 
 /* Provider → official conservation / current-status page. We link to the

@@ -44,7 +44,8 @@ forward to the map.
 
 ## The words
 
-Mostly bullets, so a water professional can check each claim (step 2):
+Mostly bullets, so a water professional can check each claim. The smoke test
+fails any story paragraph over 30 words (the provider descriptions aside):
 
 - One claim to a bullet: the figure, what it is measured against, its date,
   its source.
@@ -87,7 +88,8 @@ before it is public.
 ## Roadmap
 
 1. The pages above, made from what exists. (done)
-2. The words as bullets, every claim sourced.
+2. The words as bullets, every claim sourced. (done; the provider
+   descriptions remain)
 3. Today's own data: snow so far against the median for the date, and Lake
    Powell daily with its change since 30 September and the same day a year
    earlier. The readings publish daily (needs a Cloudflare Pages token in the

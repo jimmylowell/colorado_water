@@ -407,6 +407,7 @@ body.fs-on{overflow:hidden}
 .wikilink:hover{border-bottom-color:var(--aqua)}
 .wikilink:hover b{color:var(--aqua)}
 .lr-cite{display:inline;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--dim);white-space:nowrap}
+.fact .lr-cite{white-space:normal;display:block}
 
 /* fact grid (§ snow) */
 /* 240px floor so the four facts land as a clean 2x2 in the 640px column
