@@ -716,3 +716,9 @@ svg:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
 .seg.seg-wrap button{border-left:0;border-right:1px solid var(--silt-2);border-bottom:1px solid var(--silt-2)}
 .player{padding:0 0 30px;border-bottom:1px solid var(--silt)}
 .player .lr-sec{border-bottom:0;padding-bottom:12px}
+
+/* a check-in fits about one phone screen: tighter sections, smaller heads */
+.checkin .lr-sec{padding:18px 0}
+.checkin .lr-h2{font-size:clamp(21px,3.6vw,27px);margin-bottom:8px}
+.checkin .lr-list li{margin-bottom:6px}
+.checkin #lr-method{padding-top:28px}
