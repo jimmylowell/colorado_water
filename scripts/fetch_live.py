@@ -60,11 +60,23 @@ try:
     j = fetch_json('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='
                    + ','.join(GAGES) + '&parameterCd=00060&siteStatus=all',
                    raw='usgs_iv.json')
+    # siteStatus=all also returns retired gages, whose newest value can be
+    # decades old (Rio Grande near Del Norte: 30 April 2003). A value older
+    # than the staleness rule is dropped, so CDSS fills the gage or it shows
+    # no reading.
+    iv_cutoff = NOW - datetime.timedelta(days=14)
     for ts in (j.get('value', {}).get('timeSeries') or []):
         try:
             site = ts['sourceInfo']['siteCode'][0]['value']
-            v = float(ts['values'][0]['value'][0]['value'])
+            last = ts['values'][0]['value'][0]
+            v = float(last['value'])
+            t = datetime.datetime.fromisoformat(str(last['dateTime']))
         except (KeyError, IndexError, TypeError, ValueError):
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=datetime.timezone.utc)
+        if t <= iv_cutoff:
+            print(f'  USGS {site}: newest value is {t.date()}, too old; left out')
             continue
         if v >= 0:  # USGS uses -999999 for missing
             gages[site] = round(v, 1)

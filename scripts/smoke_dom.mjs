@@ -74,7 +74,7 @@ const noErrors=(p,what)=>ok(p.errors.length===0,(what||'no script errors')
   +(p.errors.length?'\n    '+p.errors.join('\n    '):''));
 const navOk=(doc,cur)=>{
   const links=[...doc.querySelectorAll('nav.nav a:not(.brand)')].map(a=>a.textContent.trim());
-  ok(links.join('|')==='Today|Long view|How it works|Map|Data|About','nav is Today, Long view, How it works, Map, Data, About');
+  ok(links.join('|')==='Today|Reports|Long view|How it works|Map|Data|About','nav is Today, Reports, Long view, How it works, Map, Data, About');
   const c=doc.querySelector('nav.nav a[aria-current="page"]');
   ok(cur?c&&c.getAttribute('href')===cur:!c,'nav marks the current page'+(cur?' ('+cur+')':' (none)'));
   ok(!!doc.querySelector('link[rel="icon"][href="favicon.ico"]'),'favicon linked');
@@ -294,7 +294,7 @@ console.log('Water year 2026 report');
 {
   const p=await load('water-year-2026.html');
   noErrors(p);
-  navOk(p.document,null);
+  navOk(p.document,'reports.html');
   const el=p.document.getElementById('report-body');
   noNaN(el,'report');
   ok(/30 September 2026/.test(el.textContent),'basin map labelled 30 September 2026');
@@ -351,7 +351,39 @@ console.log('About');
 {
   const t=fs.readFileSync(path.join(ROOT,'about.html'),'utf8');
   ok(!/<h2>Water year 2026<\/h2>/.test(t),'about no longer holds Water year 2026');
-  ok(/<h2>Since September<\/h2>/.test(t),'about keeps Since September');
+  ok(!/Since September/.test(t),'about no longer holds Since September (it is the autumn check-in)');
+  ok(/href="reports\.html"/.test(t),'about points to Reports');
+}
+
+/* ---------------- Reports and the check-ins ---------------- */
+console.log('Reports');
+{
+  const p=await load('reports.html');
+  noErrors(p);
+  navOk(p.document,'reports.html');
+  const list=[...p.document.querySelectorAll('#report-list a')].map(a=>a.getAttribute('href'));
+  ok(list.join('|')==='check-in-2026-autumn.html|water-year-2026.html','newest first: the autumn check-in, then the yearly report');
+  ok(list.every(h=>fs.existsSync(path.join(ROOT,h))),'every listed report exists');
+  ok(/next check-in comes in early January/i.test(p.document.getElementById('reports-body').textContent),'says when the next one comes');
+  shortProse(p.document.querySelector('main'),'reports');
+}
+console.log('Autumn 2026 check-in');
+{
+  const p=await load('check-in-2026-autumn.html');
+  noErrors(p);
+  navOk(p.document,'reports.html');
+  const el=p.document.getElementById('checkin-body');
+  noNaN(el,'check-in');
+  ok(/^Written 23 November 2026 · this page is not updated$/.test(p.document.getElementById('checkin-written').textContent.trim()),'head says the day it was written and that it is not updated');
+  ok(!p.document.querySelector('script[src]'),'frozen: loads no scripts, so no figure can move');
+  const secs=[...el.querySelectorAll('section.lr-sec')].filter(s=>s.id!=='lr-method');
+  ok(secs.length>=3&&secs.every(s=>/\b\d{1,2} November( 2026)?\b/.test(s.textContent)),'every section carries its date');
+  ok(!/Del Norte at 875/.test(el.textContent.replace(/Correction:.*$/m,'')),'the 2003 Del Norte value is not used as a figure');
+  ok(!!el.querySelector('#lr-method li'),'method listed at the foot');
+  ok(!TODAYWORD.test(el.textContent.replace(/on Today\./,'').replace(/data\/live\.json/g,'')),'calls nothing today’s');
+  shortProse(p.document.querySelector('main'),'check-in');
+  const idx=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+  ok(/href="check-in-2026-autumn\.html"/.test(idx),'Today links to the newest check-in');
 }
 
 /* ---------------- Data page: the daily series and their dates ---------------- */

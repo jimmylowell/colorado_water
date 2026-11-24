@@ -3,11 +3,24 @@
 - **State, the story rework** — The one long front page is split into pages,
   one kind of content each: Today (`index.html`), Water year 2026
   (`water-year-2026.html`), The long view (`long-view.html`) and How it works
-  (`how-it-works.html`). The design is [docs/design.md](docs/design.md). It is
-  built on branch `next` and deployed to next.colorado-water.pages.dev only;
-  the live site is unchanged. Steps 2 (the words as bullets) and 3 (Today's
-  own snow and Lake Powell data) are on `next` too. Step 4, Reports with the
-  autumn check-in, follows on `next`, then it goes live in one step.
+  (`how-it-works.html`), plus Reports (`reports.html`) with the autumn 2026
+  check-in (`check-in-2026-autumn.html`). The design is
+  [docs/design.md](docs/design.md). All four steps are built on branch `next`
+  and deployed to next.colorado-water.pages.dev only; the live site is
+  unchanged until the owner says go.
+- **State, check-ins** — A check-in is a frozen page with its figures typed
+  in from the day it was written; it loads no scripts. Due early January,
+  April and July; October's is the yearly report. How one is made, step by
+  step: [docs/design.md](docs/design.md), *Check-ins*. The next is early
+  January 2027 (how is the snow starting?); `reports.html` names that date.
+  The autumn 2026 check-in was written 23 November 2026 from `data/live.json`
+  generated 24 November 00:03 UTC and USBR's rows of 22 November.
+- **State, stale gages** — USGS's newest value for Rio Grande near Del Norte
+  (08220000) is from 30 April 2003 and for South Platte at Kersey (06754000)
+  from 23 May 2000; `fetch_live.py` took them as current. It now drops a USGS
+  value over 14 days old, and CDSS fills both (RIODELCO, PLAKERCO). Their
+  weekly medians in `js/normals.js` still come from USGS daily values, which
+  for these two end in 2003 and 2000.
 - **State, snow and Lake Powell on Today** — `scripts/fetch_live.py` adds
   `snow` and `powell` blocks to `data/live.json` each day (method in
   [docs/design.md](docs/design.md), *Today means today*), and saves the NRCS
@@ -73,19 +86,18 @@
   daily storage against weekly medians (`PMH_DERIVED`); the Yampa & White's
   are a hand-anchored estimate. About's Methods now says so (it said NRCS
   reports).
-- **Next** — Step 4, Reports and the autumn check-in, on `next`. At go-live,
+- **Next** — Go live, once the owner says yes. At go-live,
   `data/live.json`, `data/hydro.json` and `data/raw/` on `next` and on main
   will both have moved: run `scripts/fetch_live.py` on the merge (main's
   file lacks the snow and Powell blocks), then check Today shows both
-  sections. Steps
-  1 to 3 are up as the preview, checked at 390 and 1280 px in light and dark
+  sections. After any fetch, check `data/hydro.json` still
+  holds 43 series: when the USGS daily-values call times out it is written
+  with 31, and the committed one should be kept. Steps
+  1 to 4 are up as the preview, checked at 390 and 1280 px in light and dark
   with no console errors and no sideways scroll. Before any later rebuild of the normals,
   check the report's figures against the new CSV: they are typed by hand. A
   fresh fetch takes more than ten minutes and caches under
   `/tmp/cw_normals_cache`.
-- **Open** — About's *Since September* is still prose, figures from
-  10 November; step 4 moves it into the autumn check-in as bullets, re-read
-  on the day.
 - **Open** — Not yet bullets or sourced: the provider descriptions (`desc` in
   `TAPS`, `js/data.js`, about 35 of them, class `tap-desc`, left out of the
   paragraph-length test) and the Moffat Tunnel note (Wikipedia's text does

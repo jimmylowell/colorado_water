@@ -1,6 +1,6 @@
 # Design
 
-Colorado water is four pages plus the map, the data page and About. Each page
+Colorado water is five pages plus the map, the data page and About. Each page
 holds one kind of content and changes at its own pace, so a reader can tell a
 finished story from the day's readings.
 
@@ -10,14 +10,14 @@ finished story from the day's readings.
 |---|---|---|---|
 | **Today** | `index.html` | The date of the newest readings and the water-year day. The seven basins from that day's readings only, as a map and a list. This winter's snow so far against the median for the date. Lake Powell on its newest day. Blue Mesa. The ZIP box, which opens your provider's reservoirs with their newest readings. Links to the other pages. | daily |
 | **Water year 2026** | `water-year-2026.html` | The finished year, 1 October 2025 to 30 September 2026: the year in brief, the snow season chart with 2026 on it, where each basin ended on 30 September, the month-by-month player, snow in and water out for each basin. It loads no daily readings. | never |
-| **Reports** | (step 4) | The check-ins and the yearly report, newest first. | four times a year |
+| **Reports** | `reports.html` | The check-ins and the yearly reports, newest first, the date of the next one, and the yearly rhythm. Each check-in is its own frozen page, `check-in-<year>-<season>.html` (`check-in-2026-autumn.html`). | four times a year |
 | **The long view** | `long-view.html` | The record, year by year: Lake Powell every September since 1963 (chart and table), the snowpack by decade since the 1980s (chart and table). Each October the closed year is added as one more value. | once a year |
 | **How it works** | `how-it-works.html` | Snow, reservoirs, the seven basins, the megadrought. The ZIP trace: your basin, its maps and step-down diagrams, the tunnels, your tap, what you can do. | rarely |
 | Map, Data, About | `map.html`, `data.html`, `about.html` | The detailed map, the CSV downloads and sources, the project and its methods. | as needed |
 
-Nav on every page: Today, Long view, How it works, Map, Data, About. Reports
-joins it in step 4. The water year 2026 report is reached from Today, How it
-works and the long view.
+Nav on every page: Today, Reports, Long view, How it works, Map, Data, About.
+The yearly report and the check-ins mark Reports as the current page. Today
+links to the newest check-in and to the water year 2026 report.
 
 `timeline.html` forwards to `water-year-2026.html#player` (keeping a `#m=`
 month). `index.html#80302` and `index.html#zip=80302` open that ZIP on Today;
@@ -87,12 +87,36 @@ written and that it is not updated.
 AI drafts each one from the site's data files; the owner reads it and says go
 before it is public.
 
+How one is made:
+
+1. Run `scripts/fetch_live.py` on the day, so `data/live.json` is that day's.
+   Read Lake Powell again from USBR's daily
+   [storage](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv)
+   and [elevation](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/49.csv)
+   files.
+2. Work the figures out with the site's own functions (`basinToday`,
+   `readingOf`, the weekly medians in `js/normals.js`, `LIVE_META.snow` and
+   `LIVE_META.powell`), by loading Today in jsdom with the day's file. Check
+   each gage's reading time in `data/raw/usgs_iv.json`: a value older than
+   the day is not used.
+3. Copy the last check-in's page to `check-in-<year>-<season>.html`. Type the
+   figures in: it loads no scripts, so nothing on it moves. The head says
+   "Written <day> · this page is not updated"; each section's kicker names its
+   source and date; the method list at the foot names the files and the time
+   `data/live.json` was generated.
+4. Put it first in `reports.html`'s list, change the next check-in's date
+   there, and point Today's first page link at it.
+5. Add its smoke test beside the autumn 2026 one in `scripts/smoke_dom.mjs`.
+
+The October report is a new `water-year-<year>.html` built like
+`water-year-2026.html`, and the long view gains the closed year.
+
 ## Data sources
 
 | Series | Source | Read |
 |---|---|---|
 | Reservoir storage, daily | Colorado DWR CDSS telemetry, [dwr.state.co.us](https://dwr.state.co.us/Rest/GET/Help) | daily, `scripts/fetch_live.py` |
-| Streamflow, daily | USGS NWIS, [waterservices.usgs.gov](https://waterservices.usgs.gov/); two DWR-operated gages from CDSS | daily, `scripts/fetch_live.py` |
+| Streamflow, daily | USGS NWIS, [waterservices.usgs.gov](https://waterservices.usgs.gov/); CDSS for the DWR-operated gages and for any gage whose newest USGS value is over 14 days old (Rio Grande near Del Norte and South Platte at Kersey, whose USGS records end in 2003 and 2000) | daily, `scripts/fetch_live.py` |
 | Weekly medians, monthly basin history | CDSS daily from 2005, USGS daily values from 1991 | on rebuild, `scripts/build_normals.py` |
 | Snowpack, by basin and by decade | NRCS AWDB SNOTEL snow-water equivalent, [wcc.sc.egov.usda.gov](https://wcc.sc.egov.usda.gov/); a fixed panel of 43 sites for the decades | on rebuild, `scripts/build_normals.py` |
 | Lake Powell, every September | USBR Upper Colorado daily storage, [usbr.gov/uc](https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv) | on rebuild, `scripts/build_normals.py` |
@@ -109,7 +133,7 @@ before it is public.
    Powell daily with its change since 30 September and the same day a year
    earlier. (done; publishing the readings daily needs a Cloudflare Pages
    token in the repo secrets)
-4. Reports and the autumn 2026 check-in, which moves About's *Since
-   September* section; then the reworked site goes live.
+4. Reports and the autumn 2026 check-in. (done; then the reworked site goes
+   live)
 5. Later, on the long view: one value per year for snow (the peak, 1981 on)
    and for storage (30 September, 2005 on), worked out from the same records.
