@@ -683,7 +683,7 @@ const WIKI={
  'prior appropriation':'Prior_appropriation_water_rights',
  'acre-foot':'Acre-foot',
  'aridification':'Aridification',
- 'megadrought':'2000s_Southwestern_North_American_megadrought',
+ 'megadrought':'Southwestern_North_American_megadrought',
  'North American Monsoon':'North_American_Monsoon',
  'soil moisture':'Soil_moisture',
  'evapotranspiration':'Evapotranspiration',
