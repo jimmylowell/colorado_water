@@ -125,6 +125,29 @@ def usgs_dv(site):
     return out
 
 
+def cdss_flow(usgs_id):
+    """DWR's published daily streamflow (CDSS surfacewatertsday) for the station
+    carrying this USGS id, from 1991. Approved and provisional values, the same
+    record USGS published while it ran the gage. Returns (abbrev, [(date, cfs)])."""
+    st = try_fetch_json(
+        'https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/'
+        f'?format=json&usgsSiteId={usgs_id}', f'cdss_swst_{usgs_id}.json')
+    rows = (st or {}).get('ResultList', [])
+    if not rows:
+        return None, []
+    ab = rows[0]['abbrev']
+    j = try_fetch_json(
+        'https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/'
+        f'?format=json&abbrev={ab}&min-measDate=01%2F01%2F1991&pageSize=50000',
+        f'cdss_swday_{ab}.json')
+    out = []
+    for r in (j or {}).get('ResultList', []):
+        v = r.get('value')
+        if isinstance(v, (int, float)) and v >= 0:
+            out.append((datetime.date.fromisoformat(r['measDate'][:10]), float(v)))
+    return ab, sorted(out)
+
+
 def cdss_daily(abbrev):
     j = try_fetch_json(
         'https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseriesday/'
@@ -141,6 +164,7 @@ def cdss_daily(abbrev):
 # ---- 1. gages: coords + weekly flow medians ----
 sites = get_gage_sites()
 GAGES, GAGE_NORMALS = {}, {}
+GAGE_NORMALS_SRC = {}  # gid -> {src, from, to}, only where the median is not USGS daily values
 gage_hist = {}  # gid -> [(date, cfs)], kept for the monthly statewide flow index
 for gid in sorted(GAGE_BASIN):
     s = sites.get(gid)
@@ -151,6 +175,15 @@ for gid in sorted(GAGE_BASIN):
     if s.get('elev') is not None:
         GAGES[gid]['elev'] = s['elev']
     hist = usgs_dv(gid)
+    if not hist or hist[-1][0] < TODAY - datetime.timedelta(days=14):
+        # USGS has stopped publishing this gage (08220000 ends 2003, 06754000
+        # 2000); DWR runs it now. Use DWR's published daily record from CDSS,
+        # the same 1991 start, so the median covers the same years as the rest.
+        ab, dwr = cdss_flow(gid)
+        if len(dwr) > 365:
+            hist = dwr
+            GAGE_NORMALS_SRC[gid] = {'src': f'CDSS {ab}', 'from': dwr[0][0].year,
+                                     'to': dwr[-1][0].isoformat()}
     if len(hist) > 365:
         GAGE_NORMALS[gid] = weekly_median(hist)
         gage_hist[gid] = hist
@@ -591,7 +624,9 @@ except Exception as e:
 prov = {
     'built': TODAY.isoformat(),
     'sources': {
-        'streamflow': 'USGS NWIS daily values (waterservices.usgs.gov), record from 1991',
+        'streamflow': ('USGS NWIS daily values (waterservices.usgs.gov), record from 1991; '
+                       'where USGS has stopped, Colorado DWR CDSS published daily streamflow '
+                       '(dwr.state.co.us), from 1991 (GAGE_NORMALS_SRC)'),
         'reservoir': 'Colorado DWR CDSS telemetry (dwr.state.co.us), daily from 2005',
         'snowpack': 'NRCS AWDB SNOTEL SWE (wcc.sc.egov.usda.gov), long-record stations',
         'snowDecades': ('NRCS AWDB SNOTEL SWE, a FIXED panel of stations installed by 1980 '
@@ -618,6 +653,7 @@ with open(OUT, 'w') as f:
     f.write(js('NORMALS_PROV', prov))
     f.write(js('GAGE_META', GAGES))       # coords/name/basin — not the live.js GAGES id-list
     f.write(js('GAGE_NORMALS', GAGE_NORMALS))
+    f.write(js('GAGE_NORMALS_SRC', GAGE_NORMALS_SRC))  # where a gage median is not USGS dv
     f.write(js('RES_NORMALS', RES_NORMALS))
     f.write(js('RES_BANDS', RES_BANDS))     # [minWeekly, maxWeekly] historical range
     f.write(js('BASIN_BANDS', BASIN_BANDS))  # basin -> [min, median, max] weekly totals (AF)

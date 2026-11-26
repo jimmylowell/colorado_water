@@ -786,7 +786,7 @@ function renderSheet(){
       </table>
       ${n.gage?'<div class="hydro" id="hydrobox"></div>':''}
       ${compBlockHTML(state.selectedNode,'What this water is')}
-      <div class="prov">${live&&gageMedianNow(n.gage)>0?`<b>Live · measured flow, derived %.</b> Flow is the latest instantaneous reading (USGS NWIS, or DWR telemetry at the DWR-operated gages). Percent of normal = that reading ÷ this gage's median for this week, built from the daily record since 1991 (<span style="font-family:var(--mono)">scripts/build_normals.py</span>). `:''}<b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice, a schematic model. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
+      <div class="prov">${live&&gageMedianNow(n.gage)>0?`<b>Live · measured flow, derived %.</b> Flow is the latest instantaneous reading (USGS NWIS, or DWR telemetry at the DWR-operated gages). Percent of normal = that reading ÷ this gage's median for this week, built from ${gageMedianSource(n.gage)} (<span style="font-family:var(--mono)">scripts/build_normals.py</span>). `:''}<b>Composition</b> is traced edge by edge from the headwaters, with diversions taking a proportional slice, a schematic model. Base flows are typical late-July 2026 values${past?', scaled by the statewide monthly flow index for '+MONTHS[mi]:''}.</div>`;
     if(n.gage&&window.CW_HYDRO)CW_HYDRO.mount(document.getElementById('hydrobox'),{kind:'gage',site:n.gage,label:n.l});
     return;
   }
