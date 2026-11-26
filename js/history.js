@@ -349,7 +349,10 @@ function snowStateFallback(el){
    two elevations that decide what the dam can still do, and the four
    years that changed the river.
    ===================================================================== */
-/* Storage at the dam's two hard elevations, in acre-feet.
+/* Storage at the dam's two hard elevations, in acre-feet. The elevations,
+   3,490 ft for power and 3,370 ft for dead pool ("the lowest point at which
+   water can be released through the dam"), are from Wikipedia, Glen Canyon
+   Dam, *Water storage and distribution*.
    - Minimum power pool, elev 3,490 ft: the reservoir sat there in Aug-Sep
      1964 while filling, holding 4.00 MAF (USBR daily record). Sedimentation
      has since cut capacity ~6.8% — the same record shows elev 3,525 ft at
@@ -457,7 +460,7 @@ function powellChart(el){
     .attr('y1',Y(POW_DEADPOOL)).attr('y2',Y(POW_DEADPOOL)).attr('stroke',PAL.POWELL.dead);
   svg.append('text').attr('class','hc-thr').attr('fill',PAL.POWELL.dead)
     .attr('x',W-padR-4).attr('y',Y(POW_DEADPOOL)+11).attr('text-anchor','end')
-    .text(nar?'dead pool · 3,370 ft':'dead pool · 3,370 ft · nothing flows downstream');
+    .text(nar?'dead pool · 3,370 ft':'dead pool · 3,370 ft · no water leaves the dam below this');
 
   /* today's end of the line — labelled out in the right margin, clear of the
      2022 marker it used to sit on top of */
@@ -501,7 +504,8 @@ function powellTable(){
     id:'tbl-powell',
     summary:'Every year in this chart',
     caption:`Lake Powell storage on (or nearest) September 30, in acre-feet · USBR. `
-      +`Minimum power pool ≈ ${fmtAF(POW_MINPOWER)} AF, dead pool ≈ ${fmtAF(POW_DEADPOOL)} AF.`,
+      +`Minimum power pool (3,490 ft) ≈ ${fmtAF(POW_MINPOWER)} AF, dead pool (3,370 ft) ≈ ${fmtAF(POW_DEADPOOL)} AF. `
+      +`Elevations: Wikipedia, Glen Canyon Dam.`,
     head:['Year','End-of-Sept storage (AF)','% of '+peak[0]+' peak'],
     rows:POWELL_ANNUAL.map(d=>[d[0],Math.round(d[1]).toLocaleString('en-US'),
       Math.round(d[1]/peak[1]*100)+'%'])

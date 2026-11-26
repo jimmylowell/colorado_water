@@ -100,11 +100,15 @@
   `/tmp/cw_normals_cache`.
 - **Open** — Not yet bullets or sourced: the provider descriptions (`desc` in
   `TAPS`, `js/data.js`, about 35 of them, class `tap-desc`, left out of the
-  paragraph-length test) and the Moffat Tunnel note (Wikipedia's text does
-  not name the Fraser or Gross Reservoir). The 91% of SNOTEL sites bare by
-  1 June is cited "NRCS" with no document; the NRCS Colorado water supply
-  outlook for June 2026 would be the link. The dead pool and power pool
-  elevations on the Powell chart are not in the Wikipedia text read.
+  paragraph-length test). That is the last unsourced text on the story
+  pages.
+- **Decided, sources (2026-11-26)** — Lake Powell's 3,490 ft power pool and
+  3,370 ft dead pool cite Wikipedia, Glen Canyon Dam, *Water storage and
+  distribution*. The Moffat Tunnel note says only what Wikipedia says:
+  Williams Fork water reaches it through the Fraser valley (Moffat Tunnel,
+  *Water tunnel*) and it feeds Gross Reservoir (Gross Reservoir). "By 1 June,
+  91% of SNOTEL sites were bare" was cut: it dates from the first build, and
+  no NRCS document for it was found (nrcs.usda.gov did not answer).
 - **Over to you** — `README.md` still describes the single story page,
   `timeline.html` and GitHub Pages hosting. GitHub Pages is still switched on
   in the repo Settings and serves nothing; switching it off is optional.

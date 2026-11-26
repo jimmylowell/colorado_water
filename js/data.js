@@ -780,7 +780,7 @@ const TUNNELS={
  'Roberts Tunnel':{year:1962,mi:23.3,proj:'Denver Water',
    note:'carries water from Dillon Reservoir east to the North Fork of the South Platte; one of the world’s longest water tunnels',wiki:'Harold_D._Roberts_Tunnel'},
  'Moffat Tunnel':{year:1936,mi:6.2,proj:'Denver Water',
-   note:'skims Fraser and Williams Fork water under the Divide to South Boulder Creek and Gross Reservoir',wiki:'Moffat_Tunnel'},
+   note:'carries Williams Fork water, which reaches it through the Fraser River valley, under the Divide for Denver; it feeds <a class="wikilink" href="https://en.wikipedia.org/wiki/Gross_Reservoir" target="_blank" rel="noopener">Gross Reservoir</a> (Wikipedia)',wiki:'Moffat_Tunnel'},
  'Boustead Tunnel':{year:1972,mi:5.4,proj:'Fryingpan–Arkansas Project',
    note:'brings Fryingpan headwaters under the Divide to Turquoise Lake for Pueblo and the plains',wiki:'Fryingpan-Arkansas_Project'},
  'Homestake Tunnel':{year:1967,mi:5.2,proj:'Homestake Project',

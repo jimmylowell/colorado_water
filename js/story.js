@@ -154,7 +154,6 @@ function decadeYearLine(){
        <li>Peak snowpack, water year ${D.curWY}: <b>${cur.peak} in</b> of water${cur.peakWk!=null?`, in ${peakWhen(cur.peakWk)}`:''}.</li>
        ${f?`<li>Median peak for the ${f.last} so far: ${f.z.peak} in. For the ${f.first}: ${f.a.peak} in.</li>`:''}
        ${cur.apr1!=null?`<li>Left on 1 April: <b>${cur.apr1} in</b>.</li>`:''}
-       <li>By 1 June, 91% of SNOTEL sites were bare (NRCS).</li>
        <li>Source: a fixed panel of ${D.n} long-record NRCS SNOTEL sites, the same sites in every decade.</li>
      </ul>`;
 }
@@ -358,6 +357,7 @@ function secPowell(){
        <li>Peak: <b>${(pk[1]/1e6).toFixed(1)}M acre-feet</b>, September ${pk[0]}.</li>
        <li>First filled to full pool (3,700 ft): 22 June 1980 (Wikipedia).</li>
        <li>September ${last[0]}: <b>${(last[1]/1e6).toFixed(2)}M acre-feet</b>${lowestSince(POWELL_ANNUAL)}.</li>
+       <li>Chart lines: power needs 3,490 ft; dead pool, the lowest water can leave the dam, is 3,370 ft (Wikipedia, <a href="https://en.wikipedia.org/wiki/Glen_Canyon_Dam#Water_storage_and_distribution" target="_blank" rel="noopener">Glen Canyon Dam</a>).</li>
        <li>Every year’s figure: the table under the chart.</li>
      </ul>`:''}
      ${powell?`<div class="lr-chart">${powell}<div class="lr-chart-cap">${W(`{{Lake Powell}} annual storage${pk&&last?`, from a peak near ${(pk[1]/1e6).toFixed(1)}M acre-feet (${pk[0]}) to ${(last[1]/1e6).toFixed(1)}M (${last[0]})`:''} · US Bureau of Reclamation`)}</div>${powellTable}</div>`:''}`);
