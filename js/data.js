@@ -160,6 +160,38 @@ function gageMedianNow(site){
   const s=(typeof GAGE_NORMALS!=='undefined')&&GAGE_NORMALS[site];
   return s?s[weekIdx()]:null;
 }
+/* The agency's flags on each gage's newest reading, from data/live.json
+   gage_flags: GAGE_FLAGS[site] = {src:'usgs'|'dwr', flags:[{code,text}]}.
+   A reading flagged anything but A (approved) or P (provisional) carries a
+   note in the agency's own words, linked to where the agency defines it.
+   Nothing is decided from a flag: the reading is shown as recorded. */
+const GAGE_FLAGS={};
+const FLAG_DEFS={
+  dwr:{who:'DWR',url:'https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?format=json&dataSource=DWR'},
+  usgs:{who:'USGS',url:'https://waterservices.usgs.gov/docs/instantaneous-values/instantaneous-values-details/'}};
+function gageFlagged(site){
+  const g=GAGE_FLAGS[site];
+  return g?(g.flags||[]).filter(f=>f&&f.code&&f.code!=='A'&&f.code!=='P'):[];
+}
+/* "DWR flag O", for tight labels */
+function gageFlagShort(site){
+  const fl=gageFlagged(site);
+  return fl.length?FLAG_DEFS[GAGE_FLAGS[site].src].who+' flag '+fl.map(f=>f.code).join(', '):'';
+}
+/* "DWR flag O: Original data as collected by the data collection platform" */
+function gageFlagText(site){
+  const fl=gageFlagged(site);
+  if(!fl.length)return '';
+  const who=FLAG_DEFS[GAGE_FLAGS[site].src].who;
+  return fl.map(f=>who+' flag '+f.code+(f.text?': '+f.text:'')).join('; ');
+}
+const escAttr=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+/* the same, as a link to the agency's definitions */
+function gageFlagNote(site){
+  const t=gageFlagText(site);
+  return t?`<a class="flagnote" href="${FLAG_DEFS[GAGE_FLAGS[site].src].url}" target="_blank" rel="noopener">${escAttr(t)}</a>`:'';
+}
+function gageFlagCount(){return Object.keys(GAGE_FLAGS).filter(s=>gageFlagged(s).length).length;}
 /* where a gage's weekly median comes from, and its years, in words */
 function gageMedianSource(site){
   const m=(typeof GAGE_NORMALS_SRC!=='undefined')&&GAGE_NORMALS_SRC[site];

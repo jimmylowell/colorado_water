@@ -26,6 +26,10 @@ function ingest(j){
     if(o&&isFinite(o.sto)&&o.sto>0){LIVE_STO[id]={sto:o.sto,asOf:o.asOf};nR++;}
   });
   Object.entries(j.delta||{}).forEach(([id,v])=>{if(isFinite(v))LIVE_DELTA[id]=v;});
+  /* each reading's agency flags, kept for the gages that have a reading */
+  if(typeof GAGE_FLAGS!=='undefined')Object.entries(j.gage_flags||{}).forEach(([site,fl])=>{
+    if(site in S.live&&Array.isArray(fl))GAGE_FLAGS[site]={src:(j.gage_src||{})[site]==='dwr'?'dwr':'usgs',flags:fl};
+  });
   /* the newest reading date: "today" on any page means this day */
   if(typeof LIVE_META!=='undefined'){
     LIVE_META.day=Object.values(LIVE_STO).map(o=>o.asOf).filter(Boolean).sort().pop()||null;
@@ -52,6 +56,7 @@ async function refresh(){
   }catch(e){}
   if(got&&(got.nG||got.nR)){
     const at=got.at.toLocaleDateString('en-US',{day:'numeric',month:'short'});
+    const flagged=typeof gageFlagCount==='function'?gageFlagCount():0;
     /* Once the water year the story covers has closed, the live readings are
        the NEW year's carryover — say so, with the day count, so the reader
        can tell the finished story from the running numbers. */
@@ -61,7 +66,8 @@ async function refresh(){
       ? `Water year ${wyStart.getFullYear()+1}, day ${dayN} · carryover: `
       : `Live: `;
     status(lead+`<b style="color:var(--bone)">${got.nR}</b> reservoirs (DWR telemetry) · `
-      +`<b style="color:var(--bone)">${got.nG}</b> gages (USGS, DWR) · readings gathered ${at}, `
+      +`<b style="color:var(--bone)">${got.nG}</b> gages (USGS, DWR)${flagged?`, <b style="color:var(--bone)">${flagged}</b> `
+        +`with an agency flag other than approved or provisional`:''} · readings gathered ${at}, `
       +`refreshed daily. Everything else shows the dated snapshot.`);
     /* the masthead date: pages that show "snapshot <date>" also get the
        readings date once it is known, so the first thing a reader sees is

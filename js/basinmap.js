@@ -115,13 +115,14 @@ function render(bid,tap){
     Object.keys(GAGE_META).forEach(site=>{
       const m=GAGE_META[site]; if(m.basin!==bid)return;
       const gx=P.x(m.lon),gy=P.y(m.lat), q=liveQ[site];
-      const gState=q!=null?Math.round(q).toLocaleString('en-US')+' cfs now (live)':'USGS '+site;
-      s+=`<g class="bm-gage" tabindex="0" role="img" aria-label="${esc(m.name)}, ${gState}"`
-        +` data-tip="<div class=&quot;tt-h&quot;>${esc(m.name)}</div><div class=&quot;tt-d&quot;>streamgage · ${gState}</div>">`
+      const fl=q!=null&&typeof gageFlagText==='function'?gageFlagText(site):'';
+      const gState=(q!=null?Math.round(q).toLocaleString('en-US')+' cfs now (live)':'USGS '+site)+(fl?' · '+fl:'');
+      s+=`<g class="bm-gage" tabindex="0" role="img" aria-label="${esc(m.name)}, ${escAttr(gState)}"`
+        +` data-tip="<div class=&quot;tt-h&quot;>${esc(m.name)}</div><div class=&quot;tt-d&quot;>streamgage · ${escAttr(gState)}</div>">`
         +`<path d="M${gx.toFixed(1)},${(gy-5).toFixed(1)} L${(gx+5).toFixed(1)},${gy.toFixed(1)} `
         +`L${gx.toFixed(1)},${(gy+5).toFixed(1)} L${(gx-5).toFixed(1)},${gy.toFixed(1)} Z"`
         +` fill="${q!=null?'#00D6E6':'#0A1620'}" stroke="#0A1620" stroke-width="1"/>`;
-      if(q!=null)s+=`<text class="bm-q" x="${gx.toFixed(1)}" y="${(gy+15).toFixed(1)}" text-anchor="middle">${Math.round(q).toLocaleString('en-US')} cfs</text>`;
+      if(q!=null)s+=`<text class="bm-q" x="${gx.toFixed(1)}" y="${(gy+15).toFixed(1)}" text-anchor="middle">${Math.round(q).toLocaleString('en-US')} cfs${fl?' · '+esc(gageFlagShort(site)):''}</text>`;
       s+=`</g>`;
     });
   }
@@ -377,7 +378,8 @@ function flow(bid,tap){
       const q=liveQ[n.gage];
       glyph=`<path d="M0,-6 L6,0 L0,6 L-6,0 Z" fill="${q!=null?'#00D6E6':'#0A1620'}" stroke="#0A1620" stroke-width="1"/>`;
       lab=(n.l||'').replace(/^.*? (nr|at|near) /i,'@ ');
-      if(q!=null)lab+=' · '+Math.round(q).toLocaleString('en-US')+' cfs';
+      if(q!=null)lab+=' · '+Math.round(q).toLocaleString('en-US')+' cfs'
+        +(typeof gageFlagShort==='function'&&gageFlagShort(n.gage)?' · '+gageFlagShort(n.gage):'');
     }else if(n.k==='src'){
       glyph=`<circle r="5" fill="${hueOf(n)}"/>`;
       lab=(n.l||'').replace(/ headwaters$/,'');
@@ -489,7 +491,8 @@ function flowTable(bid){
     }else if(n.k==='gage'){
       const q=liveQ[n.gage];
       today=q!=null?Math.round(q).toLocaleString('en-US')+' cfs (newest reading'
-        +(LIVE_META.day?', gathered '+fmtDay(LIVE_META.day):'')+')':'USGS '+n.gage;
+        +(LIVE_META.day?', gathered '+fmtDay(LIVE_META.day):'')+')'
+        +(typeof gageFlagNote==='function'&&gageFlagNote(n.gage)?' · '+gageFlagNote(n.gage):''):'USGS '+n.gage;
     }
     /* unmeasured heights stay blank — same doctrine as the diagram */
     return [esc(n.l||n.id),kind(n),measured[n.id]?ftLab(est[n.id]):'—',today];
@@ -504,5 +507,16 @@ function flowTable(bid){
     rows});
 }
 
-window.CW_BASINMAP={render,flow,drop,resTable,flowTable};
+/* Under a map or step-down: each gage in the basin whose newest reading the
+   agency flagged (anything but approved or provisional), with the flag in
+   the agency's words, linked to where it is defined. */
+function flagLines(bid){
+  if(typeof GAGE_META==='undefined'||typeof gageFlagNote!=='function')return '';
+  const liveQ=window.CW_LIVEQ||{};
+  const rows=Object.keys(GAGE_META).filter(site=>GAGE_META[site].basin===bid
+    &&liveQ[site]!=null&&gageFlagNote(site)).map(site=>
+    `<li><b>${esc(GAGE_META[site].name)}</b>, ${Math.round(liveQ[site]).toLocaleString('en-US')} cfs: ${gageFlagNote(site)}</li>`);
+  return rows.length?`<ul class="flaglines" aria-label="Readings flagged by the agency">${rows.join('')}</ul>`:'';
+}
+window.CW_BASINMAP={render,flow,drop,resTable,flowTable,flagLines};
 })();

@@ -445,7 +445,7 @@ function drawMap(){
         .attr('fill',live!=null?'#00D6E6':'#0A1620')
         .attr('stroke',live!=null?'#0A1620':'#4E7488').attr('stroke-width',1.1);
       const short=m.name.split(/,| At | Near | Below | Nr /i)[0].trim();
-      node.append('title').text(`${short} · USGS ${site}${live!=null?' · '+Math.round(live)+' cfs live':''}`);
+      node.append('title').text(`${short} · USGS ${site}${live!=null?' · '+Math.round(live)+' cfs live'+(gageFlagText(site)?' · '+gageFlagText(site):''):''}`);
       const lab=node.append('g').attr('class','lab');
       lab.append('text').attr('x',8).attr('y',3).attr('class','lbl2').text(short);
       LABELS.push({el:lab.node(),x:cx,y:cy,pri:40000,minK:2.2,
@@ -694,7 +694,8 @@ function drawFlow(){
       lab.append('text').attr('x',0).attr('y',-17).attr('class','lbl').attr('text-anchor','middle').text(n.l);
       lab.append('text').attr('x',0).attr('y',-6).attr('class','gval').attr('text-anchor','middle')
         .attr('fill',live!=null?'#00D6E6':null)
-        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live':''):'');
+        .text(q!=null?fmt(q)+' cfs'+(live!=null?' · live'+(gageFlagShort(n.gage)?' · '+gageFlagShort(n.gage):''):''):'');
+      if(live!=null&&gageFlagText(n.gage))grp.append('title').text(n.l+' · '+gageFlagText(n.gage));
       if(faded)lab.attr('opacity',.35);
       LABELS.push({el:lab.node(),x:n.x,y:n.y,pri:250000,
         bx0:-n.l.length*3.4,by0:-26,bx1:n.l.length*3.4,by1:-1});
@@ -782,6 +783,7 @@ function renderSheet(){
           if(live&&med>0){const p=Math.round(live/med*100);
             return `<tr><td class="lab">Percent of normal</td><td style="color:${rampText(p,'paper')}">${p}%</td></tr>`;}
           return '';})()}
+        ${live&&gageFlagNote(n.gage)?`<tr><td class="lab">Agency flag</td><td class="flagcell">${gageFlagNote(n.gage)}</td></tr>`:''}
         <tr><td class="lab">Headwaters upstream</td><td>${sortedParts(COMP[state.selectedNode]).length}</td></tr>
       </table>
       ${n.gage?'<div class="hydro" id="hydrobox"></div>':''}
@@ -972,7 +974,7 @@ function renderZipList(){
     const pct=(live!=null&&med>0)?Math.round(live/med*100):null;
     const nm=GAGE_META[s].name.split(/,| At | Near | Below | Nr /i)[0].trim();
     return `<button class="zl-row zl-gage" data-node="${nid||''}"><span class="zl-g zl-dia">◆</span>`
-      +`<span class="zl-n">${nm}</span>`
+      +`<span class="zl-n">${nm}${live!=null&&gageFlagShort(s)?`<span class="zl-flag" title="${escAttr(gageFlagText(s))}">${gageFlagShort(s)}</span>`:''}</span>`
       +`<span class="zl-p" style="color:${pct!=null?rampText(pct):'#7E96A3'}">`
       +`${pct!=null?pct+'%':(live!=null?Math.round(live)+' cfs':'gage')}</span></button>`;};
   el.innerHTML=`<div class="zl-head">${head}</div>`

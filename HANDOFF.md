@@ -31,9 +31,20 @@
   winter (Del Norte, January and February 1998: telemetry median 2,050 cfs,
   published 230 cfs; USGS gave the same 170 cfs as the published record on
   1 January 1991).
-- **Open** — Del Norte's live readings run 770 to 1,170 cfs from 16 to 25
-  November 2026, four to six times its late-November median, flagged `O` in
-  CDSS (not yet reviewed). Whether they are real or ice is unknown.
+- **State, agency flags** — `fetch_live.py` keeps each gage reading's flags
+  in `data/live.json` (`gage_flags`, with the agency's words in
+  `flag_words`). A reading flagged anything but `A` or `P` carries a note in
+  the agency's words, linked to its definition, on How it works (basin map,
+  step-down, its table) and the map page (sheet, list, hover); the readings
+  line counts them. Method: [docs/design.md](docs/design.md), *Today means
+  today*. Rio Grande near Del Norte (782 cfs on 26 November 2026) and the
+  other three DWR-operated gages carry CDSS `flagA` `O`, which CDSS's station
+  flags table defines as "Original data as collected by the data collection
+  platform" (`P` is "Provisional ... final processing has not been
+  completed", `A` "Approved - Processing and review completed."). No `flagB`
+  (such as `Ice`, "Ice affected") is on them; every USGS reading is `P`. The
+  site shows the readings as recorded and says nothing about whether they
+  are right.
 - **Open, next rebuild** — On a full rebuild these two gages join
   `FLOWPCT_DERIVED`, the statewide monthly flow index, which they are not in
   now (USGS had no 2026 days for them). Check `secFlow2026` in `js/story.js`

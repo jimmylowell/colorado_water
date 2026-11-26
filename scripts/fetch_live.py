@@ -55,6 +55,31 @@ def dstr(d):
 
 gages, res, delta = {}, {}, {}
 
+# Yesterday's file: a failed snow, Powell or flag-table fetch keeps its block.
+try:
+    PREV = json.load(open(OUT, encoding='utf-8'))
+except Exception:
+    PREV = {}
+
+# ---- the agency's flag on each reading, in the agency's own words ----
+# gage_flags[site] = [{'code', 'text'}]: USGS qualifiers on the value used
+# (their words come in the same NWIS response); DWR flagA then flagB on the
+# CDSS row used (their words from CDSS's station flags table). Kept as
+# recorded; nothing is decided from them here.
+gage_flags = {}
+flag_words = {'usgs': {}, 'dwr': dict((PREV.get('flag_words') or {}).get('dwr') or {})}
+try:
+    j = fetch_json('https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/'
+                   '?format=json&dataSource=DWR', raw='cdss_stationflags.json')
+    got = {}
+    for row in (j.get('ResultList') or []):
+        if row.get('dataSource') == 'DWR' and row.get('flag') and row.get('description'):
+            got[row['flag']] = ' '.join(str(row['description']).split())
+    if got:
+        flag_words['dwr'] = got
+except Exception as e:
+    print('  (CDSS station flags fetch failed -', str(e)[:80], ') keeping', len(flag_words['dwr']), 'words')
+
 # ---- USGS instantaneous streamflow ----
 try:
     j = fetch_json('https://waterservices.usgs.gov/nwis/iv/?format=json&sites='
@@ -69,6 +94,7 @@ try:
         try:
             site = ts['sourceInfo']['siteCode'][0]['value']
             last = ts['values'][0]['value'][0]
+            quals = ts['values'][0].get('qualifier') or []
             v = float(last['value'])
             t = datetime.datetime.fromisoformat(str(last['dateTime']))
         except (KeyError, IndexError, TypeError, ValueError):
@@ -80,6 +106,11 @@ try:
             continue
         if v >= 0:  # USGS uses -999999 for missing
             gages[site] = round(v, 1)
+            for q in quals:
+                if q.get('qualifierCode') and q.get('qualifierDescription'):
+                    flag_words['usgs'][q['qualifierCode']] = q['qualifierDescription']
+            gage_flags[site] = [{'code': c, 'text': flag_words['usgs'].get(c)}
+                                for c in (last.get('qualifiers') or []) if c]
 except Exception as e:
     print('  (USGS fetch failed -', str(e)[:80], ')')
 
@@ -119,6 +150,8 @@ if missing:
         gages[site] = round(v, 1)
         gage_src[site] = 'dwr'
         gage_dwr[site] = row.get('abbrev')
+        gage_flags[site] = [{'code': c, 'text': flag_words['dwr'].get(c)}
+                            for c in (row.get('flagA'), row.get('flagB')) if c]
     print(f'  CDSS filled {len(gage_dwr)} of {len(missing)} gages USGS left empty: '
           + ', '.join(f'{k}={v}' for k, v in gage_dwr.items()))
 
@@ -181,14 +214,9 @@ print(f'got {len(gages)} gages, {len(res)} reservoirs, {len(delta)} deltas')
 if not gages and not res:
     sys.exit('nothing fetched — refusing to bake an empty file')
 
-# A failed snow or Powell fetch keeps yesterday's block, which carries its
-# own date, so the page shows the last reading with that date; nothing is
-# filled in.
-try:
-    PREV = json.load(open(OUT, encoding='utf-8'))
-except Exception:
-    PREV = {}
-
+# A failed snow or Powell fetch keeps yesterday's block (PREV, above), which
+# carries its own date, so the page shows the last reading with that date;
+# nothing is filled in.
 WY_START = datetime.date(NOW.year if NOW.month >= 10 else NOW.year - 1, 10, 1)
 
 # ---- this winter's snow on the fixed SNOTEL panel (NRCS AWDB) ----
@@ -298,9 +326,13 @@ out = {
                 'of those sites\' medians for that day, pct = their sum over the sum of their '
                 'medians (sites with a median that day only)',
         'powell': 'acre-feet (sto) and feet above sea level (elev), recorded daily values',
+        'gage_flags': 'the codes the agency put on each gage reading, with the agency\'s words: '
+                      'USGS NWIS qualifiers, or CDSS telemetry flagA then flagB',
     },
     'gages': dict(sorted(gages.items())),
     'gage_src': dict(sorted(gage_src.items())),
+    'gage_flags': {k: gage_flags[k] for k in sorted(gage_flags) if k in gages},
+    'flag_words': flag_words,
     'res': dict(sorted(res.items())),
     'delta': dict(sorted(delta.items())),
     'snow': snow,
@@ -312,6 +344,9 @@ out['attribution']['snow'] = ('Snowpack: USDA NRCS Air and Water Database (wcc.s
 out['attribution']['powell'] = ('Lake Powell: US Bureau of Reclamation, Upper Colorado Basin hydrodata '
                                 '(usbr.gov/uc/water/hydrodata, reservoir 919), daily storage and pool '
                                 'elevation. Provisional data subject to revision.')
+out['attribution']['gage_flags'] = ('Flags: USGS qualifiers as given in the NWIS response; DWR flags as defined in '
+                                    'CDSS\'s station flags table (dwr.state.co.us/Rest/GET/api/v2/referencetables/'
+                                    'stationflags/?dataSource=DWR).')
 with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(out, f, separators=(',', ':'))
     f.write('\n')

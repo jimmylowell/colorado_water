@@ -462,6 +462,7 @@ function flowBlock(bid,bo,svg,opts){
        A reservoir’s percent is its newest reading; * = no reading today (the table gives its date).
        Ribbon width: typical late-July flow. ◆ gages: newest reading. <b>Dashed ribbons: tunnels</b>, drawn to the
        edge their water reaches. A schematic of order, not a channel map.</div>${
+         window.CW_BASINMAP&&CW_BASINMAP.flagLines?CW_BASINMAP.flagLines(bid):''}${
          window.CW_BASINMAP&&CW_BASINMAP.flowTable?CW_BASINMAP.flowTable(bid):''}</div>`;
 }
 function secMyBasin(tap){
@@ -505,14 +506,14 @@ function secMyBasin(tap){
          <h3 class="lr-h3">Where your water is stored: the ${b.n}</h3>
          <p class="lr-p">${W(BASININFO[sb]||'')}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
+         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin, holding ${shareOut}% of your stored water. ${capCommon}`)}</div>${CW_BASINMAP.flagLines?CW_BASINMAP.flagLines(sb):''}${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}
          <div class="crossnote">${W(`↓ crosses the {{Continental Divide}}${tap.tun&&tap.tun.length?` through the <b>${tap.tun.join('</b> and <b>')}</b>`:''} ↓`)}</div>
          <h3 class="lr-h3">Where you live: the ${homeB.n}</h3>
          <p class="lr-p">${W(BASININFO[hb]||'')}</p>
-         ${homeMap?`<div class="lr-chart cw-hover"><div class="mapscroll">${homeMap}</div><div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
+         ${homeMap?`<div class="lr-chart cw-hover"><div class="mapscroll">${homeMap}</div><div class="lr-chart-cap">${W(`The ${homeB.n} basin, where you live and where the remaining ${homeShare}% is stored. ${capCommon}`)}</div>${CW_BASINMAP.flagLines?CW_BASINMAP.flagLines(hb):''}${CW_BASINMAP.resTable?CW_BASINMAP.resTable(hb):''}</div>`:''}`
       : `<p class="lr-p">${W(BASININFO[sb]||'')}</p>
          ${basinStatPanel(sb)}
-         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin. ${capCommon}`)}</div>${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
+         ${map?`<div class="lr-chart cw-hover"><div class="mapscroll">${map}</div><div class="lr-chart-cap">${W(`The ${b.n} basin. ${capCommon}`)}</div>${CW_BASINMAP.flagLines?CW_BASINMAP.flagLines(sb):''}${CW_BASINMAP.resTable?CW_BASINMAP.resTable(sb):''}</div>`:''}`)
     +`
      ${flowBlock(sb,b,flowSVG,{suffix:cross?' in the '+b.n:'',tunnel:cross})}
      ${flowBlock(hb,homeB,homeFlow,{suffix:' in the '+homeB.n,
