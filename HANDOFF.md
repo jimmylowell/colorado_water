@@ -126,16 +126,28 @@
   the new CSV: they are typed by hand. A fresh fetch takes more than ten
   minutes and caches under `/tmp/cw_normals_cache`.
 - **Decided, provider descriptions (2026-11-26)** — Each `desc` in `TAPS`
-  (`js/data.js`) says only what a Wikipedia article says, cited as
-  `(Wikipedia: …)` through `wp(article,label)`; claims with no source were
-  cut. 28 providers keep a cited line; 8 show name and figures only (empty
-  `desc`): Highlands Ranch, Arvada, Broomfield group, Golden, Steamboat,
-  Craig, Longmont, Trinidad. Wikipedia's Ralston Dam says Ralston supplies
-  Denver, not Arvada. The smoke test holds every `desc` to 30 words with a
-  Wikipedia link in each sentence.
-- **Open** — The 8 empty providers need a published source for their supply
-  (their own water pages refused automated reads), and Arvada's reservoir
-  list (`ralston`) should be checked against Arvada's own water page.
+  (`js/data.js`) says only what its source says, at most 30 words. 28 cite
+  Wikipedia through `wp(article,label)`. 8 cite the provider's own water
+  page through `own(who,url,label)`, because no Wikipedia article says where
+  their water comes from: Highlands Ranch Water, City of Arvada, City and
+  County of Broomfield, City of Golden, Mount Werner Water (Steamboat), City
+  of Craig, City of Longmont, City of Trinidad. The rule is in
+  [docs/design.md](docs/design.md), *The words*; the smoke test holds every
+  sentence to a Wikipedia link or a named `srclink`, and no provider is left
+  empty. Those pages refuse a plain fetch and open in headless Chrome.
+- **Decided, provider lists (2026-11-26)** — `res` and `tun` hold only what
+  the cited source ties to the provider. Arvada's page names Ralston
+  Reservoir, filled by Denver Water's North System including Gross
+  Reservoir, so Arvada lists Ralston and Gross and no tunnel (the Moffat
+  Tunnel is not named). Steamboat's source is Fish Creek Reservoir and
+  Trinidad's North Lake and Monument Lake, none of them in `RES`, so
+  Stagecoach and Trinidad Lake came off and both list no reservoir.
+  Longmont's page names the Adams Tunnel and Carter Lake, so Carter was
+  added. Broomfield's page names the Colorado–Big Thompson and Windy Gap
+  projects, not a reservoir; its Granby, Carter and Adams Tunnel stand as
+  the project's, as Boulder's do.
+- **Open** — The Broomfield group's line is Broomfield's own; Lafayette's and
+  Louisville's supply pages were not read.
 - **Decided, sources (2026-11-26)** — Lake Powell's 3,490 ft power pool and
   3,370 ft dead pool cite Wikipedia, Glen Canyon Dam, *Water storage and
   distribution*. The Moffat Tunnel note says only what Wikipedia says:

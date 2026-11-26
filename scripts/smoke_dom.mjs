@@ -281,8 +281,15 @@ console.log('How it works (with readings), ZIP 80302');
   const words=h=>h.replace(/<[^>]+>/g,'').trim().split(/\s+/).filter(Boolean).length;
   const longTap=taps.filter(t=>t.desc&&words(t.desc)>PROSE_MAX).map(t=>t.id);
   ok(longTap.length===0,`provider descriptions at most ${PROSE_MAX} words`+(longTap.length?': '+longTap.join(', '):''));
-  const uncited=taps.filter(t=>t.desc&&t.desc.split(/\.(?:\s|$)/).filter(s=>s.trim()).some(s=>!/\(Wikipedia: <a [^>]*href="https:\/\/en\.wikipedia\.org\/wiki\//.test(s))).map(t=>t.id);
-  ok(uncited.length===0,'every provider sentence cites Wikipedia'+(uncited.length?': '+uncited.join(', '):''));
+  /* Wikipedia, or (design.md) where it says nothing, the provider's own page, named */
+  const cites=s=>/\(Wikipedia: <a [^>]*href="https:\/\/en\.wikipedia\.org\/wiki\//.test(s)
+    ||/\([A-Z][^():<]+: <a class="wikilink srclink" href="https:\/\/[^"]+"/.test(s);
+  const uncited=taps.filter(t=>t.desc&&t.desc.split(/\.(?:\s|$)/).filter(s=>s.trim()).some(s=>!cites(s))).map(t=>t.id);
+  ok(uncited.length===0,'every provider sentence cites Wikipedia or its own named page'+(uncited.length?': '+uncited.join(', '):''));
+  const ownWp=taps.filter(t=>/srclink/.test(t.desc||'')&&/en\.wikipedia\.org/.test(t.desc)).map(t=>t.id);
+  ok(ownWp.length===0,'a provider page is cited only where Wikipedia is not'+(ownWp.length?': '+ownWp.join(', '):''));
+  const empty=taps.filter(t=>!t.desc).map(t=>t.id);
+  ok(empty.length===0,'every provider has a sourced line'+(empty.length?': '+empty.join(', '):''));
   ok(!/NRCS \/ NOAA/.test(el.textContent),'the unsourced snowpack share is gone');
   ok(!!el.querySelector('a[href*="Southwestern_North_American_megadrought"]'),'megadrought links to its article');
   const mark=local.querySelector('.bm-res[data-tip]');
