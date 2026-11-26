@@ -107,6 +107,13 @@ fails any story paragraph over 30 words (the provider descriptions aside):
 Every claim cites a published source (Wikipedia first, the agency where the
 number is theirs) or is cut.
 
+A provider description (`desc` in `TAPS`, `js/data.js`) cites Wikipedia
+through `wp()`. Only where Wikipedia says nothing about a provider's supply
+does it cite the provider's own water page, or its plan on file with the
+state, through `own()`, which names the provider:
+`(City of Craig: Water Quality)`. Its `res` and `tun` lists hold only what
+that source, or Wikipedia, ties to the provider.
+
 ## Check-ins
 
 One phone screen: a few bullets and three to five figures, each from a named
