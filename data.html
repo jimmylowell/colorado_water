@@ -20,6 +20,11 @@
 
   <nav class="nav" aria-label="Site">
     <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Today</a>
+    <a href="reports.html">Reports</a>
+    <a href="long-view.html">Long view</a>
+    <a href="how-it-works.html">How it works</a>
+    <a href="map.html">Map</a>
     <a href="data.html" aria-current="page">Data</a>
     <a href="about.html">About</a>
   </nav>
@@ -67,6 +72,16 @@
     <p>Rows marked <b>live</b> carry Colorado DWR telemetry from the daily refresh. <b>Observed</b> rows carry a published, dated reading; <b>basin estimate</b> rows are scaled to their basin's NRCS percent of median because no same-day public reading was available.</p>
   </section>
   <div class="tablewrap"><table class="dtable" id="restable"></table></div>
+
+  <section class="prose">
+    <h2>Snow and Lake Powell, daily</h2>
+    <p>Collected each day with the reservoir readings, in <span style="font-family:var(--mono)">data/live.json</span> (keys <span style="font-family:var(--mono)">snow</span> and <span style="font-family:var(--mono)">powell</span>). Each carries its own date.</p>
+  </section>
+  <div class="tablewrap"><table class="dtable" id="dailytable">
+    <tr><th>Series</th><th>Source</th><th>What it gives</th><th>As of</th></tr>
+    <tr><td><b>Snow so far</b></td><td><a href="https://wcc.sc.egov.usda.gov/awdbRestApi/" rel="noopener">NRCS AWDB</a>, SNOTEL snow-water equivalent, daily</td><td>This water year's snow on the fixed panel of 43 sites (the snowpack-by-decade panel), against each reporting site's median for that day, water years 1981 to 2026. Panel and medians: <a href="data/snow_panel.json">data/snow_panel.json</a>, built by <span style="font-family:var(--mono)">scripts/build_snow_panel.py</span></td><td id="asof-snow">not loaded</td></tr>
+    <tr><td><b>Lake Powell</b></td><td><a href="https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/dashboard.html" rel="noopener">USBR Upper Colorado hydrodata</a>, reservoir 919, daily</td><td>Storage and pool elevation on the newest day, on 30 September and on the same day a year earlier</td><td id="asof-powell">not loaded</td></tr>
+  </table></div>
 
   <section class="prose">
     <h2>How every number is graded</h2>
@@ -118,7 +133,7 @@
     <p>For the rest there is no telemetered stage, so the script samples the USGS 3DEP elevation model around the point and accepts a value only when the samples show a <i>dominant</i> flat surface, meaning it is looking at a lake. That threshold matters: the coordinates in the dataset are label anchors for the map, not survey points, and a few sit up to two kilometers off the water. A permissive version of this test put Homestake 1,160 feet too low by measuring a hillside. A wrong height would mis-order the diagram while looking authoritative, so the rule is strict. Where the test passes, checked against the reservoirs CDSS <i>does</i> report a stage for, it lands within about 60 feet.</p>
     <p>That gives a verified surface elevation for <b>34 of the 52</b> reservoirs, plus all 18 streamgages. The remaining reservoirs appear in the step-down <b>with no elevation printed beside them</b>. They are still positioned by river order: a reservoir sits below everything upstream of it and above everything downstream. Their placement is an inference from the river's shape. Every printed figure is a measurement.</p>
     <p class="aside">Note that the two measured sources are not quite the same quantity. A CDSS stage is today's pool, which moves through the season; a 3DEP surface is where the water stood when the elevation model was flown. Both are the water surface, and the difference is far smaller than the gaps between reservoirs, which is all the ordering depends on. The vertical spacing in that diagram is not to scale. Only the order is exact.</p>
-    <p>The two Lake Powell thresholds are elevations, converted to storage: <b>minimum power pool</b> (3,490 ft) from Reclamation's own daily record, which shows the reservoir holding 4.00 MAF at that elevation while filling in 1964, less the roughly 6.8% of capacity since lost to sediment (the same record reads 5.91 MAF at 3,525 ft in 1965 against 5.51 MAF in 2026), giving about 3.7 MAF today. <b>Dead pool</b> (3,370 ft) is total capacity 25.16 MAF (USGS 2018 survey) less ~23.3 MAF of live capacity, ≈1.9 MAF.</p>
+    <p>The two Lake Powell thresholds are elevations, 3,490 ft for power and 3,370 ft for dead pool, from Wikipedia's <a href="https://en.wikipedia.org/wiki/Glen_Canyon_Dam#Water_storage_and_distribution">Glen Canyon Dam</a> article, converted to storage: <b>minimum power pool</b> (3,490 ft) from Reclamation's own daily record, which shows the reservoir holding 4.00 MAF at that elevation while filling in 1964, less the roughly 6.8% of capacity since lost to sediment (the same record reads 5.91 MAF at 3,525 ft in 1965 against 5.51 MAF in 2026), giving about 3.7 MAF today. <b>Dead pool</b> (3,370 ft) is total capacity 25.16 MAF (USGS 2018 survey) less ~23.3 MAF of live capacity, ≈1.9 MAF.</p>
 
     <p>Regenerate the baked medians or the daily readings from source at any time:</p>
     <pre class="cmd">python3 scripts/build_normals.py   <span style="color:#8a8069"># pulls the histories, rewrites js/normals.js</span>
@@ -182,7 +197,14 @@ document.getElementById('dl-live').addEventListener('click',()=>{
   a.click();
   URL.revokeObjectURL(a.href);
 });
+function renderDaily(){
+  const S=LIVE_META.snow, P=LIVE_META.powell;
+  const s=document.getElementById('asof-snow'), p=document.getElementById('asof-powell');
+  if(S)s.textContent=fmtDay(S.asOf)+' · '+S.reporting+' of '+S.panel+' sites';
+  if(P)p.textContent=fmtDay(P.now.date);
+}
 window.addEventListener('cw-live',renderTable);
+window.addEventListener('cw-live',renderDaily);
 renderTable();
 });
 </script>

@@ -5,8 +5,10 @@ prep, small baked data committed. `README.md` is the technical reference (data
 flow, tests, deploy). Copy rules: US spelling, plain sentences, no em-dash
 asides, agency names as DWR uses them; the audience includes state water staff.
 
-Verify with `npm run smoke` (data invariants + jsdom load of `index.html`).
-`map.html`, `timeline.html` and `data.html` are not covered by the smoke suite;
+Verify with `npm run smoke` (data invariants + jsdom loads of Today, How it
+works, Water year 2026 and the long view, with and without the daily file).
+The page plan is [docs/design.md](docs/design.md).
+`map.html` and `data.html` are not covered by the smoke suite;
 load them in jsdom with `fetch` stubbed to `data/live.json` when they change.
 
 ## Now

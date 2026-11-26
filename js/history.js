@@ -184,19 +184,21 @@ function snowStateChart(el){
     }
   }
 
-  /* --- you are here --- */
+  /* --- you are here: only while the year drawn is the one running. On a
+     page about a closed year (data-closed) there is no "today" on it. --- */
+  const closed=el.dataset.closed==='1';
   const nw=nowWeek();
-  svg.append('line').attr('x1',X(nw)).attr('x2',X(nw)).attr('y1',padT-2).attr('y2',base)
+  if(!closed){svg.append('line').attr('x1',X(nw)).attr('x2',X(nw)).attr('y1',padT-2).attr('y2',base)
     .attr('stroke',PAL.BONE).attr('stroke-width',1.2).attr('opacity',0.85);
   svg.append('circle').attr('cx',X(nw)).attr('cy',padT-2).attr('r',2.6).attr('fill',PAL.BONE);
   svg.append('text').attr('class','wc-now')
     .attr('x',X(nw)+(nw>WYW*0.8?-5:5)).attr('y',padT+9)
-    .attr('text-anchor',nw>WYW*0.8?'end':'start').text('today');
+    .attr('text-anchor',nw>WYW*0.8?'end':'start').text('today');}
 
   /* --- legend --- */
   legend(svg,padL,16,[
     {col:THENCOL,w:2.1,t:`${oldK} median`},{col:NOWDEC,w:2.1,t:`${newK} median`},
-    {col:NOWCOL,w:2.6,t:'this water year'}],nar,[126,126]);
+    {col:NOWCOL,w:2.6,t:closed?'water year '+D.curWY:'this water year'}],nar,[126,126]);
 
   /* --- crosshair: the season, week by week --- */
   crosshair(svg.node(),{
@@ -214,7 +216,7 @@ function snowStateChart(el){
         `WY${D.curWY} <b>${inch(D.cur?D.cur[i]:null)}</b>`];
       return {x:X(i+0.5),
         html:`<div class="tt-h">${wkLabel(i)}</div><div class="tt-d">${rows.join('<br>')}</div>`,
-        label:`${wkLabel(i)}: ${oldK} ${inch(oldW[i])}, ${newK} ${inch(newW[i])}, this year ${inch(D.cur?D.cur[i]:null)}`};
+        label:`${wkLabel(i)}: ${oldK} ${inch(oldW[i])}, ${newK} ${inch(newW[i])}, WY${D.curWY} ${inch(D.cur?D.cur[i]:null)}`};
     }
   });
 }
@@ -347,7 +349,10 @@ function snowStateFallback(el){
    two elevations that decide what the dam can still do, and the four
    years that changed the river.
    ===================================================================== */
-/* Storage at the dam's two hard elevations, in acre-feet.
+/* Storage at the dam's two hard elevations, in acre-feet. The elevations,
+   3,490 ft for power and 3,370 ft for dead pool ("the lowest point at which
+   water can be released through the dam"), are from Wikipedia, Glen Canyon
+   Dam, *Water storage and distribution*.
    - Minimum power pool, elev 3,490 ft: the reservoir sat there in Aug-Sep
      1964 while filling, holding 4.00 MAF (USBR daily record). Sedimentation
      has since cut capacity ~6.8% — the same record shows elev 3,525 ft at
@@ -455,7 +460,7 @@ function powellChart(el){
     .attr('y1',Y(POW_DEADPOOL)).attr('y2',Y(POW_DEADPOOL)).attr('stroke',PAL.POWELL.dead);
   svg.append('text').attr('class','hc-thr').attr('fill',PAL.POWELL.dead)
     .attr('x',W-padR-4).attr('y',Y(POW_DEADPOOL)+11).attr('text-anchor','end')
-    .text(nar?'dead pool · 3,370 ft':'dead pool · 3,370 ft · nothing flows downstream');
+    .text(nar?'dead pool · 3,370 ft':'dead pool · 3,370 ft · no water leaves the dam below this');
 
   /* today's end of the line — labelled out in the right margin, clear of the
      2022 marker it used to sit on top of */
@@ -499,7 +504,8 @@ function powellTable(){
     id:'tbl-powell',
     summary:'Every year in this chart',
     caption:`Lake Powell storage on (or nearest) September 30, in acre-feet · USBR. `
-      +`Minimum power pool ≈ ${fmtAF(POW_MINPOWER)} AF, dead pool ≈ ${fmtAF(POW_DEADPOOL)} AF.`,
+      +`Minimum power pool (3,490 ft) ≈ ${fmtAF(POW_MINPOWER)} AF, dead pool (3,370 ft) ≈ ${fmtAF(POW_DEADPOOL)} AF. `
+      +`Elevations: Wikipedia, Glen Canyon Dam.`,
     head:['Year','End-of-Sept storage (AF)','% of '+peak[0]+' peak'],
     rows:POWELL_ANNUAL.map(d=>[d[0],Math.round(d[1]).toLocaleString('en-US'),
       Math.round(d[1]/peak[1]*100)+'%'])
@@ -545,7 +551,8 @@ function drawPanels(el,panels,ariaLabel,rowsAt){
      encodes LINE STYLE and stays neutral — a coloured swatch here would name
      a hue that only one of the panels actually uses. */
   const hasBand=panels.some(p=>p.band);
-  const items=[{col:REFCOL,w:2.4,t:'solid = this water year'},
+  /* the panels draw the closed year the MONTHS list covers, named by its year */
+  const items=[{col:REFCOL,w:2.4,t:'solid = water year '+MONTHS[MONTHS.length-1].split(' ')[1]},
     {col:REFCOL,w:1.4,dash:'4 3',t:'dashed = normal median'}];
   if(hasBand)items.push({rect:true,col:REFCOL,opacity:0.22,t:'shaded = full measured range'});
   const padL=nar?38:44,padR=nar?8:14,gap=nar?44:40,PH=nar?130:118,padB=30;
@@ -664,18 +671,18 @@ function snowStoreChart(el,basinId){
   if(!panels.length){el.innerHTML='';return;}
   drawPanels(el,panels,
     `${bn} basin: snowpack and reservoir storage across the water year, `
-    +`this year against the normal, on two separate scales.`,
+    +`water year 2026 against the normal, on two separate scales.`,
     i=>{
       const rows=[]; let label='';
       if(snow){
         const si=nearSample(MID,snow.cur,i), ni=nearSample(MID,snow.nrm,i);
-        if(si>=0)rows.push(`snow (mid-${monShort(si)}): <b>${inch(snow.cur[si])}</b> this yr · ${inch(snow.nrm[si])} normal`);
+        if(si>=0)rows.push(`snow (mid-${monShort(si)}): <b>${inch(snow.cur[si])}</b> 2026 · ${inch(snow.nrm[si])} normal`);
         else if(ni>=0)rows.push(`snow (mid-${monShort(ni)}): ${inch(snow.nrm[ni])} normal`);
       }
       if(med){
         rows.push(`storage median <b>${Math.round(med[i])}%</b> · range ${Math.round(lo[i])}–${Math.round(hi[i])}%`);
         const ci=nearSample(EOM,sto,i);
-        if(ci>=0)rows.push(`this year (end of ${monShort(ci)}): <b>${Math.round(sto[ci])}%</b>`);
+        if(ci>=0)rows.push(`2026 (end of ${monShort(ci)}): <b>${Math.round(sto[ci])}%</b>`);
         label=`storage median ${Math.round(med[i])} percent`;
       }
       return rows.length?{rows,label:label||'snowpack'}:null;
@@ -702,8 +709,8 @@ function snowStoreTable(basinId){
     id:'tbl-snowstore-'+basinId,
     caption:'Snow is sampled mid-month (NRCS SNOTEL); storage at month end. '
       +'Storage median is the CDSS 2005–present weekly median for that week; '
-      +'"this year" storage is the site’s monthly reconstruction (live where telemetered).',
-    head:['Month','Snow this yr','Snow normal','Storage this yr','Storage median'],
+      +'2026 storage is the site’s monthly reconstruction.',
+    head:['Month','Snow 2026','Snow normal','Storage 2026','Storage median'],
     rows
   });
 }

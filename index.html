@@ -7,8 +7,8 @@
 <link rel="icon" href="favicon.ico" sizes="32x32">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Colorado Water — where does your water come from?</title>
-<meta name="description" content="Enter your ZIP and trace your tap back to its river, its reservoir, and the tunnel that carries it under the Continental Divide. A drought-awareness story for Colorado.">
+<title>Colorado Water — today</title>
+<meta name="description" content="How full Colorado’s reservoirs are today against the usual for the week, basin by basin, from the day’s readings. Enter your ZIP for your own reservoirs.">
 <script>
 /* Legacy/shared map deep-links (#r=, #n=, #view=, #basin=, #m=) belong to the
    map, which now lives at map.html. Forward them before anything renders.
@@ -21,30 +21,28 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="css/site.css">
 </head>
-<body>
+<body data-page="today">
 <div class="wrap">
 
   <nav class="nav" aria-label="Site">
     <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html" aria-current="page">Today</a>
+    <a href="reports.html">Reports</a>
+    <a href="long-view.html">Long view</a>
+    <a href="how-it-works.html">How it works</a>
+    <a href="map.html">Map</a>
     <a href="data.html">Data</a>
     <a href="about.html">About</a>
   </nav>
 
-  <!-- live.js reports here whether the page is showing live readings or the
-       dated snapshot — the story page used to have no such element at all -->
-  <div class="livestat" id="livestat" aria-live="polite"></div>
-
   <main id="story">
-    <!-- ACT 1 — the state: snowpack, the water year, reservoirs, the seven
-         basins, the long view. Renders on load; no ZIP required. -->
-    <article class="longread" id="state-body"></article>
+    <!-- the newest day's readings only; story.js renders it once live.json is in -->
+    <article class="longread" id="today-body"></article>
 
-    <!-- the gate now sits mid-story, once the reader knows what they're
-         looking at and has a reason to want their own -->
     <section class="zip-gate" id="zip-gate" aria-label="Find your water">
-      <p class="zg-kicker">Now make it yours</p>
-      <h2 class="zg-h2">Which of it ends up in <em>your</em> tap?</h2>
-      <p class="zg-sub">Enter a ZIP code and the rest of this page becomes about your basin, your reservoirs and your utility.</p>
+      <p class="zg-kicker">Your water</p>
+      <h2 class="zg-h2">Which reservoirs fill <em>your</em> tap?</h2>
+      <p class="zg-sub">Enter a ZIP code to see your provider’s reservoirs and their newest readings.</p>
       <div class="zip-entry">
         <input id="zip" inputmode="numeric" pattern="[0-9]*" maxlength="5" placeholder="ZIP code" aria-label="ZIP code" autocomplete="postal-code">
         <button id="zipgo">Show me</button>
@@ -54,13 +52,20 @@
       <div class="citychips" id="citychips"></div>
     </section>
 
-    <!-- ACT 2 & 3 — your basin, then your tap. Empty until a place is chosen. -->
     <article class="longread" id="local-body" hidden></article>
+
+    <nav class="pagelinks" aria-label="More of the story">
+      <a href="check-in-2026-autumn.html"><b>Autumn 2026 check-in →</b><span>Written 23 November 2026: the rain helped the south, not the West Slope</span></a>
+      <a href="water-year-2026.html"><b>Water year 2026: the report →</b><span>The finished year, 1 October 2025 to 30 September 2026</span></a>
+      <a href="long-view.html"><b>The long view →</b><span>Lake Powell every September since 1963, and the snowpack by decade</span></a>
+      <a href="how-it-works.html"><b>How your water gets to you →</b><span>Snow, reservoirs, the seven basins, the tunnels, your tap</span></a>
+      <a href="map.html"><b>The detailed map →</b><span>Every reservoir, gage and tunnel at once, best on a large screen</span></a>
+    </nav>
   </main>
 
   <footer class="foot">
     An educational project on drought and where your water comes from ·
-    <a href="about.html">the story &amp; methods</a> · <a href="data.html">raw data (CSV)</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a><br>
+    <a href="about.html">about &amp; methods</a> · <a href="data.html">raw data (CSV)</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a><br>
     Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
     <p class="mjc-foot">This site is brought to you by <a href="mailto:jimmy@myjimmycloud.com">Jimmy@MyJimmyCloud.com</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a> · <a href="https://myjimmycloud.com">more projects</a></p>
   </footer>
