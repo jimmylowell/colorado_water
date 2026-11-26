@@ -95,10 +95,17 @@
   Before any later rebuild of the normals, check the report's figures against
   the new CSV: they are typed by hand. A fresh fetch takes more than ten
   minutes and caches under `/tmp/cw_normals_cache`.
-- **Open** — Not yet bullets or sourced: the provider descriptions (`desc` in
-  `TAPS`, `js/data.js`, about 35 of them, class `tap-desc`, left out of the
-  paragraph-length test). That is the last unsourced text on the story
-  pages.
+- **Decided, provider descriptions (2026-11-26)** — Each `desc` in `TAPS`
+  (`js/data.js`) says only what a Wikipedia article says, cited as
+  `(Wikipedia: …)` through `wp(article,label)`; claims with no source were
+  cut. 28 providers keep a cited line; 8 show name and figures only (empty
+  `desc`): Highlands Ranch, Arvada, Broomfield group, Golden, Steamboat,
+  Craig, Longmont, Trinidad. Wikipedia's Ralston Dam says Ralston supplies
+  Denver, not Arvada. The smoke test holds every `desc` to 30 words with a
+  Wikipedia link in each sentence.
+- **Open** — The 8 empty providers need a published source for their supply
+  (their own water pages refused automated reads), and Arvada's reservoir
+  list (`ralston`) should be checked against Arvada's own water page.
 - **Decided, sources (2026-11-26)** — Lake Powell's 3,490 ft power pool and
   3,370 ft dead pool cite Wikipedia, Glen Canyon Dam, *Water storage and
   distribution*. The Moffat Tunnel note says only what Wikipedia says:
