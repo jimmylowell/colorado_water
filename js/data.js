@@ -160,6 +160,13 @@ function gageMedianNow(site){
   const s=(typeof GAGE_NORMALS!=='undefined')&&GAGE_NORMALS[site];
   return s?s[weekIdx()]:null;
 }
+/* where a gage's weekly median comes from, and its years, in words */
+function gageMedianSource(site){
+  const m=(typeof GAGE_NORMALS_SRC!=='undefined')&&GAGE_NORMALS_SRC[site];
+  if(m){const ab=m.src.replace(/^CDSS /,'');
+    return `Colorado DWR’s published daily record (CDSS station ${ab}), ${m.from} to ${m.to.slice(0,4)}, since USGS stopped publishing this gage`;}
+  return `USGS daily values from 1991`;
+}
 function stoAt(r,mi){
   if(mi===NOW&&LIVE_STO[r.id])return Math.min(r.cap*1.05,LIVE_STO[r.id].sto);
   return Math.min(r.cap*1.02, r.sto*pmFactor(r.b,mi));

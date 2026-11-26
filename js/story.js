@@ -799,6 +799,7 @@ function secMethod2026(){
     `<ul class="lr-list">
        <li>Storage: Colorado DWR telemetry against each reservoir’s median for the week (daily records from 2005).</li>
        <li>Streamflow: the mapped USGS and DWR gages against theirs (USGS daily values from 1991).</li>
+       <li>Rio Grande near Del Norte and South Platte at Kersey: DWR’s published daily record, 1991 to 2026 (USGS stopped in 2003 and 2000).</li>
        <li>Snow: NRCS SNOTEL snow-water equivalent on a fixed panel of long-record sites.</li>
        <li>Lake Powell: USBR Upper Colorado daily storage.</li>
        <li>Every month, basin by basin: the <a href="data.html">basin history CSV</a> on the Data page.</li>

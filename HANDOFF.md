@@ -18,8 +18,27 @@
   (08220000) is from 30 April 2003 and for South Platte at Kersey (06754000)
   from 23 May 2000; `fetch_live.py` took them as current. It now drops a USGS
   value over 14 days old, and CDSS fills both (RIODELCO, PLAKERCO). Their
-  weekly medians in `js/normals.js` still come from USGS daily values, which
-  for these two end in 2003 and 2000.
+  weekly medians in `js/normals.js` come from DWR's published daily record in
+  CDSS (`surfacewatertsday`), 1 January 1991 to 3 November 2026, 35 or more
+  years in every week; `GAGE_NORMALS_SRC` names it, and the map sheet, the
+  report's Method and the Data page say so. Only these two arrays were
+  replaced; the other gages were not rebuilt. `build_normals.py` does the same
+  for any gage whose newest USGS value is over 14 days old. The percents did
+  not move for late November: Del Norte's week median is 190 cfs either way
+  (737 cfs, 388%), Kersey's 813.5 became 811 (569 cfs, 70%).
+- **Decided, stale-gage medians (2026-11-26)** — Medians use CDSS's published
+  record, not its telemetry daily values: telemetry runs far above it in
+  winter (Del Norte, January and February 1998: telemetry median 2,050 cfs,
+  published 230 cfs; USGS gave the same 170 cfs as the published record on
+  1 January 1991).
+- **Open** — Del Norte's live readings run 770 to 1,170 cfs from 16 to 25
+  November 2026, four to six times its late-November median, flagged `O` in
+  CDSS (not yet reviewed). Whether they are real or ice is unknown.
+- **Open, next rebuild** — On a full rebuild these two gages join
+  `FLOWPCT_DERIVED`, the statewide monthly flow index, which they are not in
+  now (USGS had no 2026 days for them). Check `secFlow2026` in `js/story.js`
+  against the new index then. The autumn check-in is frozen and does not
+  change; it gives no percent for Del Norte or Kersey, so nothing in it is off.
 - **State, snow and Lake Powell on Today** — `scripts/fetch_live.py` adds
   `snow` and `powell` blocks to `data/live.json` each day (method in
   [docs/design.md](docs/design.md), *Today means today*), and saves the NRCS
