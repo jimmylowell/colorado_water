@@ -53,17 +53,18 @@ const {glassGlyph,PAL,kaf,af,dataTable}=window.CW_CHARTS;
 function glass(P,r,scale){
   const cx=P.x(r.lon), cy=P.y(r.lat);
   const h=Math.max(11,Math.min(34,Math.sqrt(r.cap)/scale));
-  const frac=Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap));
-  const col=r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW));
+  const rd=readingOf(r);
+  const frac=Math.max(0,Math.min(1,rd.sto/r.cap));
+  const col=r.fc?PAL.GLASS.fc:ramp(rd.pm);
   /* role="img", not "button": there is no action here — focusing it reads
      the tooltip (markHover listens on focusin), and that is the whole deal.
      The old role="button" + no handler was a focus trap. */
-  const state=r.fc?'flood control pool':pmAt(r,NOW)+'% of normal';
+  const state=r.fc?'flood control pool':rd.pm+'% of normal';
   return {cx,cy,h,svg:`<g class="bm-res" data-res="${r.id}" tabindex="0" role="img"`
       +` aria-label="${esc(r.n)}, ${state}, ${kaf(r.cap)} thousand acre-feet when full"`
       +` data-tip="<div class=&quot;tt-h&quot;>${esc(r.n)}</div><div class=&quot;tt-d&quot;>${state}`
-      +`${r.fc?'':` · <b>${af(stoAt(r,NOW))} AF</b> today`}<br>${kaf(r.cap)} KAF when full`
-      +`${LIVE_STO[r.id]?' · live':''}</div>"`
+      +`${r.fc?'':` · <b>${af(rd.sto)} AF</b> ${readingWhen(rd)}`}<br>${kaf(r.cap)} KAF when full`
+      +`</div>"`
       +` transform="translate(${cx.toFixed(1)},${(cy+h/2).toFixed(1)})">`
       +glassGlyph({h,a:h*0.40,b:h*0.21,frac,col,id:'bg'+r.id,stroke:'#6d8ea3',strokeHi:PAL.GLASS.strokeHi})
       +`</g>`};
@@ -361,15 +362,16 @@ function flow(bid,tap){
     let glyph='', lab=n.l||'';
     if(n.k==='res'){
       const r=RESBY[n.res];
-      const col=r?(r.fc?PAL.GLASS.fc:ramp(pmAt(r,NOW))):PAL.GLASS.fc;
-      const frac=r?Math.max(0,Math.min(1,stoAt(r,NOW)/r.cap)):0.5;
+      const rd=r?readingOf(r):null;
+      const col=r?(r.fc?PAL.GLASS.fc:ramp(rd.pm)):PAL.GLASS.fc;
+      const frac=r?Math.max(0,Math.min(1,rd.sto/r.cap)):0.5;
       const h=17;
       glyph=`<g transform="translate(0,${h/2})">`
         +glassGlyph({h,a:6.5,b:3.6,frac,col,id:'bf'+n.id,stroke:PAL.GLASS.strokeHi,
           strokeHi:mine.has(n.res)?'#EDE6D6':PAL.GLASS.strokeHi,
           strokeW:mine.has(n.res)?1.6:1})
         +`</g>`;
-      if(r&&!r.fc)lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'')+' · '+pmAt(r,NOW)+'%';
+      if(r&&!r.fc)lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'')+' · '+rd.pm+'%'+(rd.today?'':'*');
       else lab=(n.l||'').replace(/ (Res\.|Reservoir)$/,'');
     }else if(n.k==='gage'){
       const q=liveQ[n.gage];
@@ -455,15 +457,17 @@ function drop(bid){
 
 /* table views — every mark on the map and the step-down, reachable as text */
 function resTable(bid){
-  const rows=RES.filter(r=>r.b===bid).sort((a,b)=>b.cap-a.cap).map(r=>[
-    esc(r.n), esc(r.r||''), kaf(r.cap),
-    r.fc?'—':af(stoAt(r,NOW)),
-    r.fc?'flood control':pmAt(r,NOW)+'%',
-    LIVE_STO[r.id]?'live':(r.c==='obs'?'measured':'estimate')]);
+  const rows=RES.filter(r=>r.b===bid).sort((a,b)=>b.cap-a.cap).map(r=>{
+    const rd=readingOf(r);
+    return [esc(r.n), esc(r.r||''), kaf(r.cap),
+    r.fc?'—':af(rd.sto),
+    r.fc?'flood control':rd.pm+'%',
+    rd.kind==='reading'?'DWR telemetry, '+(rd.today?'today':fmtDay(rd.date))
+      :rd.kind==='obs'?'measured, '+fmtDay(rd.date):'estimate for '+fmtDay(rd.date)];});
   if(!rows.length)return '';
   return dataTable({id:'tbl-bmres-'+bid,
     summary:'The reservoirs on this map, as numbers',
-    head:['Reservoir','River','Capacity (KAF)','Today (AF)','vs normal','Reading'],
+    head:['Reservoir','River','Capacity (KAF)','Latest (AF)','vs normal','Reading'],
     rows});
 }
 function flowTable(bid){
@@ -480,10 +484,12 @@ function flowTable(bid){
     let today='—';
     if(n.k==='res'){
       const r=RESBY[n.res];
-      if(r)today=r.fc?'flood control':pmAt(r,NOW)+'% of normal · '+af(stoAt(r,NOW))+' AF';
+      if(r){const rd=readingOf(r);
+        today=r.fc?'flood control':rd.pm+'% of normal · '+af(rd.sto)+' AF '+readingWhen(rd);}
     }else if(n.k==='gage'){
       const q=liveQ[n.gage];
-      today=q!=null?Math.round(q).toLocaleString('en-US')+' cfs (live)':'USGS '+n.gage;
+      today=q!=null?Math.round(q).toLocaleString('en-US')+' cfs (newest reading'
+        +(LIVE_META.day?', gathered '+fmtDay(LIVE_META.day):'')+')':'USGS '+n.gage;
     }
     /* unmeasured heights stay blank — same doctrine as the diagram */
     return [esc(n.l||n.id),kind(n),measured[n.id]?ftLab(est[n.id]):'—',today];
@@ -494,7 +500,7 @@ function flowTable(bid){
       +'surface is measured (DWR pool elevation, USGS gage datum, or the national '
       +'elevation model); everything else is placed by its position on the river '
       +'and carries no number.',
-    head:['Structure','Kind','Elevation','Today'],
+    head:['Structure','Kind','Elevation','Latest'],
     rows});
 }
 

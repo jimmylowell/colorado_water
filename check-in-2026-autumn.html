@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Colorado Water — autumn 2026 check-in</title>
+<meta name="description" content="Colorado water on 23 November 2026: Lake Powell, the southern reservoirs after the autumn rain, the West Slope headwaters and the first snow, each figure dated.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body data-page="checkin" class="checkin">
+<div class="wrap">
+
+  <nav class="nav" aria-label="Site">
+    <a class="brand" href="index.html">Colorado Water</a>
+    <a href="index.html">Today</a>
+    <a href="reports.html" aria-current="page">Reports</a>
+    <a href="long-view.html">Long view</a>
+    <a href="how-it-works.html">How it works</a>
+    <a href="map.html">Map</a>
+    <a href="data.html">Data</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <main id="story">
+    <!-- A check-in is frozen once published: the figures below are typed from
+         the readings of the day it was written and are never recomputed.
+         How a check-in is made: docs/design.md, Check-ins. -->
+    <article class="longread" id="checkin-body">
+      <header class="lr-hero">
+        <p class="lr-eyebrow">Check-in · autumn 2026</p>
+        <h1 class="lr-title">The rain helped the south, not the West Slope</h1>
+        <p class="lr-servedby" id="checkin-written">Written 23 November 2026 · this page is not updated</p>
+        <p class="lr-sub">The newest readings are on <a href="index.html">Today</a>.</p>
+      </header>
+
+      <section class="lr-sec" id="ci-powell">
+        <p class="lr-kicker">USBR daily record, 22 November 2026</p>
+        <h2 class="lr-h2">Lake Powell: 6.51M acre-feet at 3,540.98 ft</h2>
+        <ul class="lr-list">
+          <li>Up <b>1.36M acre-feet</b> (22.90 ft) since 30 September (5.16M, the lowest end of a water year since 1964).</li>
+          <li>Down 196,000 acre-feet (3.06 ft) from 22 November 2025; 27% of its 24.1M peak of 1983 (<a href="long-view.html">the long view</a>).</li>
+        </ul>
+      </section>
+
+      <section class="lr-sec" id="ci-south">
+        <p class="lr-kicker">Colorado DWR and USGS, 23 November 2026</p>
+        <h2 class="lr-h2">The south</h2>
+        <ul class="lr-list">
+          <li>Rio Grande basin reservoirs: <b>212%</b> of their median for the week (3 of 3 reporting).</li>
+          <li>San Juan &amp; Dolores: <b>124%</b> (3 of 5 reporting). Vallecito 81% full, Lake Nighthorse 100%, McPhee 70%.</li>
+          <li>Animas River at Durango: <b>756 cfs</b>, 3.2 times its median for the week (233 cfs).</li>
+        </ul>
+      </section>
+
+      <section class="lr-sec" id="ci-west">
+        <p class="lr-kicker">Colorado DWR, 23 November 2026</p>
+        <h2 class="lr-h2">The West Slope headwaters</h2>
+        <ul class="lr-list">
+          <li>Blue Mesa: <b>20% full</b>, 32% of its median for the week. The only Gunnison basin reservoir reporting (1 of 7).</li>
+          <li>Colorado headwaters: <b>53%</b> of median (9 of 11 reporting).</li>
+        </ul>
+      </section>
+
+      <section class="lr-sec" id="ci-state">
+        <p class="lr-kicker">Statewide</p>
+        <h2 class="lr-h2">Reservoirs and snow</h2>
+        <ul class="lr-list">
+          <li>23 November: the 25 of 50 supply reservoirs that reported held <b>1.79M acre-feet</b>, 71% of their median for the week (Colorado DWR).</li>
+          <li>22 November: snow so far <b>65%</b> of the median for the date, 1.9 in of water against 3.0 in, 42 of 43 SNOTEL sites reporting (NRCS).</li>
+        </ul>
+      </section>
+
+      <section class="lr-sec" id="lr-method">
+        <p class="lr-kicker">Method</p>
+        <h2 class="lr-h2">How the figures are made</h2>
+        <ul class="lr-list lr-cap">
+          <li>Reservoirs: <a href="https://dwr.state.co.us/Rest/GET/Help">Colorado DWR CDSS</a> telemetry of 23 November, summed over the reservoirs that reported that day, against each one’s median for that week (daily records from 2005). A reservoir with no reading is left out.</li>
+          <li>Percent full: storage over the capacity in the site’s reservoir list (<a href="data.html">Data</a>).</li>
+          <li>Animas: <a href="https://waterdata.usgs.gov/monitoring-location/09361500/">USGS 09361500</a>, provisional discharge at 16:30 on 23 November, against its weekly median (USGS daily values from 1991).</li>
+          <li>Lake Powell: USBR Upper Colorado daily <a href="https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/17.csv">storage</a> and <a href="https://www.usbr.gov/uc/water/hydrodata/reservoir_data/919/csv/49.csv">elevation</a>, provisional, read 23 November.</li>
+          <li>Snow: the fixed panel of 43 NRCS SNOTEL sites of <a href="long-view.html#lr-snowdecades">the snowpack by decade</a>, each against its own median for that day, water years 1981 to 2026.</li>
+          <li>File: <code>data/live.json</code>, generated 24 November 2026 00:03 UTC.</li>
+          <li>Correction: the about page of 10 November gave the Rio Grande near Del Norte at 875 cfs. That was USGS’s last value for the gage, from 30 April 2003. It is left out here.</li>
+        </ul>
+      </section>
+    </article>
+
+    <nav class="pagelinks" aria-label="More reports">
+      <a href="reports.html"><b>All reports →</b><span>The check-ins and the yearly report, newest first</span></a>
+      <a href="water-year-2026.html"><b>Water year 2026: the report →</b><span>The finished year, 1 October 2025 to 30 September 2026</span></a>
+    </nav>
+  </main>
+
+  <footer class="foot">
+    An educational project on drought and where your water comes from ·
+    <a href="about.html">about &amp; methods</a> · <a href="data.html">raw data (CSV)</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a><br>
+    Sources: USGS NWIS · Colorado DWR (CDSS) · USBR · Denver Water · NRCS. Not operational data.
+    <p class="mjc-foot">This site is brought to you by <a href="mailto:jimmy@myjimmycloud.com">Jimmy@MyJimmyCloud.com</a> · <a href="https://github.com/jimmylowell/colorado_water">source code</a> · <a href="https://myjimmycloud.com">more projects</a></p>
+  </footer>
+</div>
+</body>
+</html>

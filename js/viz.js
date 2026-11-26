@@ -837,7 +837,7 @@ function renderSheet(){
         ${largest?`<tr><td class="lab">Largest</td><td>${cn(largest.n)} · <span style="color:${rampText(pmAt(largest,mi),'paper')}">${pmAt(largest,mi)}%</span></td></tr>`:''}
         <tr><td class="lab">Streamgages</td><td>${gg.length}</td></tr>
       </table>
-      ${BASININFO[b.id]?`<div class="prov" style="font-size:12px;color:#4a4636">${BASININFO[b.id]}</div>`:''}
+      ${BASININFO[b.id]?`<div class="prov" style="font-size:12px;color:#4a4636">${wikify(BASININFO[b.id])}</div>`:''}
       ${tuns.length?`<div class="prov"><b>Tunnels crossing here:</b> ${tuns.join(' · ')}</div>`:''}
       ${rivers.length?`<div class="prov"><b>Rivers:</b> ${rivers.slice(0,8).join(' · ')}${rivers.length>8?' …':''}</div>`:''}
       <div class="prov">Click a glass for a reservoir, a ◆ for a gage, or <a href="#" id="basinall" style="color:#1A2730">← all basins</a>.</div>`;
@@ -847,8 +847,9 @@ function renderSheet(){
   }
   if(!state.selected){
     s.innerHTML=`<div class="tag"><span>Data sheet</span><span>—</span></div>
-      <div class="empty">Click a reservoir for its storage against the 1991–2020 normal, or a gage diamond for the flow it carries. Pick a <b>basin</b> chip — or its dashed outline on the map — for a basin overview.
-      <br><br>Enter your ZIP code above the map to light up the reservoirs and tunnels behind your own tap. Or open the <a href="timeline.html" style="color:#1A2730">timeline</a> to watch the 2026 drought arrive month by month.</div>`;
+      <div class="empty">Click a reservoir for its storage against its weekly median (DWR, from 2005), or a gage diamond for its flow. Pick a <b>basin</b> chip, or its dashed outline, for the basin.${
+        document.body.dataset.page==='report'?'':
+        `<br><br>Enter a ZIP code above the map to mark the reservoirs and tunnels behind that tap. Water year 2026 month by month: <a href="water-year-2026.html#player" style="color:#1A2730">the report</a>.`}</div>`;
     return;
   }
   const r=RESBY[state.selected];
@@ -1025,7 +1026,7 @@ d3.select('#btn-meas').on('click',function(){
   draw();
 });
 
-/* timeline — present only on timeline.html; guarded elsewhere */
+/* timeline — present only on the water year 2026 report; guarded elsewhere */
 const slider=document.getElementById('tslider'), monthlbl=document.getElementById('monthlbl');
 function setMonth(mi){
   state.mi=mi;

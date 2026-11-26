@@ -127,6 +127,24 @@ const FLOWPCT=(typeof FLOWPCT_DERIVED!=='undefined'&&FLOWPCT_DERIVED.length===MO
    LIVE_DELTA holds the week's storage trend as cfs (+ = drawing down). */
 const LIVE_STO={};
 const LIVE_DELTA={};
+/* LIVE_META.day is the newest reading date in data/live.json (YYYY-MM-DD),
+   set by live.js. A figure is called "today's" only when its own reading is
+   from that day; any other reading carries its own date. */
+const LIVE_META={day:null,generated:null,snow:null,powell:null};
+/* "2026-11-22" -> "22 Nov 2026" (or "22 November 2026" with long=true);
+   a date already written out ("16 Jul 2026") is returned as it is */
+function fmtDay(s,long){
+  if(!s)return '';
+  if(!/^\d{4}-\d\d-\d\d$/.test(s))return s;
+  return new Date(s+'T12:00:00').toLocaleDateString('en-GB',
+    {day:'numeric',month:long?'long':'short',year:'numeric'});
+}
+/* the water year a date falls in, and its day number (1 October = day 1) */
+function wyDay(s){
+  const d=new Date(s+'T12:00:00');
+  const y=d.getMonth()>=9?d.getFullYear():d.getFullYear()-1;
+  return {wy:y+1,day:Math.floor((d-new Date(y,9,1,12))/864e5)+1};
+}
 function pmFactor(b,mi){ return (PMH[b]?PMH[b][mi]/PMH[b][SNAP_MI]:1); }
 /* week-of-year index 0..51, matching the baked weekly medians in normals.js */
 function weekIdx(d){ d=d||new Date();
@@ -155,6 +173,46 @@ function pmAt(r,mi){
   return Math.round(r.pm*pmFactor(r.b,mi));
 }
 function qFactor(mi){ return FLOWPCT[mi]/FLOWPCT[SNAP_MI]; }
+/* What can honestly be said about a reservoir now: its newest reading and
+   that reading's date. kind 'reading' = DWR telemetry from data/live.json
+   (today = from the newest day); 'obs' = the published reading of the July
+   snapshot, with its date; 'est' = the snapshot's basin-scaled estimate.
+   Nothing is scaled forward to another month here. */
+function readingOf(r){
+  const L=LIVE_STO[r.id];
+  if(L){
+    const nr=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+    const med=nr?nr[weekIdx(new Date(L.asOf+'T12:00:00'))]:null;
+    let pm=null;
+    if(med>0)pm=Math.round(L.sto/med*100);
+    else if(r.pm>0&&r.sto>0)pm=Math.round(L.sto/(r.sto/(r.pm/100))*100);
+    return {sto:Math.min(r.cap*1.05,L.sto),pm,date:L.asOf,
+      today:!!LIVE_META.day&&L.asOf===LIVE_META.day,kind:'reading'};
+  }
+  if(r.c==='obs'&&r.d)return {sto:r.sto,pm:r.pm,date:r.d,today:false,kind:'obs'};
+  return {sto:r.sto,pm:r.pm,date:SNAP_DATE,today:false,kind:'est'};
+}
+/* how a reading's date is said beside its figure */
+function readingWhen(rd){
+  if(rd.today)return 'today';
+  return rd.kind==='est'?'estimate for '+fmtDay(rd.date):'on '+fmtDay(rd.date);
+}
+/* One basin from the newest day's readings only: storage summed over the
+   reservoirs that reported that day, against the sum of their medians for
+   that week. Reservoirs with no reading that day are left out and counted. */
+function basinToday(bid){
+  const inb=RES.filter(r=>(bid==='all'||r.b===bid)&&!r.fc);
+  let sto=0,med=0,n=0;
+  if(LIVE_META.day)inb.forEach(r=>{
+    const L=LIVE_STO[r.id]; if(!L||L.asOf!==LIVE_META.day)return;
+    const nr=(typeof RES_NORMALS!=='undefined')&&RES_NORMALS[r.id];
+    const m=nr?nr[weekIdx(new Date(L.asOf+'T12:00:00'))]:null;
+    if(!(m>0))return;
+    sto+=L.sto; med+=m; n++;
+  });
+  const cap=inb.reduce((s,r)=>s+r.cap,0);
+  return {pct:med>0?Math.round(sto/med*100):null,n,count:inb.length,sto,med,cap};
+}
 /* one basin summary — story.js (Act 1 panel, Act 2 stats) and the map's
    basin sheet each used to recompute this with subtly different fallbacks */
 function basinStats(bid,mi){
@@ -639,13 +697,13 @@ function zipLookup(zip){
 /* Character of each basin — deliberately free of year-specific numbers, because
    the live derived percentage renders directly beside this text. */
 const BASININFO={
- colorado:'The Colorado River rises here in the high country along the Divide, and it is the most heavily borrowed water in the West. Front Range cities reach across the mountains to tap it, and seven states plus Mexico divide what is left downstream.',
- gunnison:'The Gunnison gathers off the West Elk and San Juan high country into Blue Mesa, Colorado’s largest reservoir and a key piece of the Upper Colorado system. When Blue Mesa drops, it is felt all the way to Lake Powell.',
- yampa:'The Yampa is one of the last largely free-flowing rivers in the West, running through northwest Colorado with few dams. Ranching, Steamboat, and the sage country all depend on its snowmelt, and no tunnel brings in water from anywhere else.',
- sw:'The San Juan Mountains feed the Animas, Dolores, and San Juan, rivers that water the Four Corners and fill Navajo and McPhee before crossing into New Mexico and on to Lake Powell. It is dry country that depends on the snowpack.',
- rio:'The Rio Grande rises in the San Juans and crosses the San Luis Valley, where three states share every drop by compact and farmers pump a shrinking aquifer between deliveries.',
- arkansas:'The Arkansas begins as steep snowmelt near Leadville and runs the length of southern Colorado to Kansas. It carries more water than nature gave it: Fryingpan–Arkansas imports from the West Slope ride it downstream to Pueblo and the plains.',
- platte:'The South Platte drains the Front Range, where most of Colorado lives, and much of its water is imported. Denver, Boulder, and the northern cities pull a large share of their supply across the Divide through tunnels.'
+ colorado:'The headwaters of the {{Colorado River}}, whose water is shared by seven US states and Mexico. Tunnels under the Divide carry part of it east to the Front Range.',
+ gunnison:'The {{Gunnison River}}, one of the largest tributaries of the Colorado. Holds {{Blue Mesa Reservoir}}, the largest lake entirely in Colorado.',
+ yampa:'The {{Yampa River}} and the White, in northwest Colorado. The Yampa is one of the few free-flowing rivers in the western United States. No tunnel brings water in.',
+ sw:'The {{San Juan River}}, the {{Animas River|Animas}} and the {{Dolores River|Dolores}}, tributaries of the Colorado. Holds McPhee and Vallecito; Navajo sits at the New Mexico line.',
+ rio:'The {{Rio Grande}}, through the San Luis Valley. Shared with New Mexico and Texas under the {{Rio Grande Compact}} of 1938.',
+ arkansas:'The {{Arkansas River}}, from near Leadville east to Kansas. The {{Fryingpan–Arkansas Project}} adds West Slope water through the Boustead Tunnel.',
+ platte:'The {{South Platte River}}, along the Front Range, where most Coloradans live. Denver, Boulder and the northern cities bring part of their supply through tunnels under the Divide.'
 };
 /* Example places for the picker. Ordered by basin, and EVERY basin carries at
    least one — otherwise a reader in the Gunnison, Yampa or Rio Grande sees no
@@ -684,6 +742,14 @@ const WIKI={
  'acre-foot':'Acre-foot',
  'aridification':'Aridification',
  'megadrought':'Southwestern_North_American_megadrought',
+ 'Gunnison River':'Gunnison_River',
+ 'Yampa River':'Yampa_River',
+ 'San Juan River':'San_Juan_River_(Colorado_River_tributary)',
+ 'Dolores River':'Dolores_River',
+ 'Rio Grande':'Rio_Grande',
+ 'Rio Grande Compact':'Rio_Grande_Compact',
+ 'Arkansas River':'Arkansas_River',
+ 'South Platte River':'South_Platte_River',
  'North American Monsoon':'North_American_Monsoon',
  'soil moisture':'Soil_moisture',
  'evapotranspiration':'Evapotranspiration',
@@ -712,9 +778,9 @@ const TUNNELS={
  'Adams Tunnel':{year:1947,mi:13.1,proj:'Colorado–Big Thompson Project',
    note:'carries Lake Granby water east beneath Rocky Mountain National Park to the northern Front Range',wiki:'Alva_B._Adams_Tunnel'},
  'Roberts Tunnel':{year:1962,mi:23.3,proj:'Denver Water',
-   note:'moves Blue River water banked in Dillon east to the North Fork of the South Platte, Colorado’s longest water tunnel',wiki:'Harold_D._Roberts_Tunnel'},
+   note:'carries water from Dillon Reservoir east to the North Fork of the South Platte; one of the world’s longest water tunnels',wiki:'Harold_D._Roberts_Tunnel'},
  'Moffat Tunnel':{year:1936,mi:6.2,proj:'Denver Water',
-   note:'skims Fraser and Williams Fork water under the Divide to South Boulder Creek and Gross Reservoir',wiki:'Moffat_Tunnel'},
+   note:'carries Williams Fork water, which reaches it through the Fraser River valley, under the Divide for Denver; it feeds <a class="wikilink" href="https://en.wikipedia.org/wiki/Gross_Reservoir" target="_blank" rel="noopener">Gross Reservoir</a> (Wikipedia)',wiki:'Moffat_Tunnel'},
  'Boustead Tunnel':{year:1972,mi:5.4,proj:'Fryingpan–Arkansas Project',
    note:'brings Fryingpan headwaters under the Divide to Turquoise Lake for Pueblo and the plains',wiki:'Fryingpan-Arkansas_Project'},
  'Homestake Tunnel':{year:1967,mi:5.2,proj:'Homestake Project',
@@ -730,10 +796,10 @@ const TUNNELS={
    of the Divide, and the whole Southwest is downstream. Deliberately short —
    no two facts should lead with the same number. */
 const COLORADO_FACTS=[
- {stat:'~80%',lab:'of Colorado’s water supply arrives as mountain {{snowpack}}. The snow, not the reservoirs, is the main storage',cite:'NRCS / NOAA'},
- {stat:'Oct 1',lab:'the {{water year}} begins. Hydrology starts its clock with the first snow, not on New Year’s Day',cite:'USGS'},
- {stat:'~9 in 10',lab:'Coloradans live east of the {{Continental Divide}}, while most of the state’s water starts west of it. That mismatch is why the tunnels exist',cite:'Colorado Water Plan (CWCB)'},
- {stat:'40M',lab:'people across seven states and Mexico drink from the {{Colorado River}}, born in these headwaters',cite:'US Bureau of Reclamation'}
+ {stat:'Up to 90%',lab:'of the {{Colorado River}}’s flow starts as snowmelt; most of Colorado’s water supply falls as snow in the Rocky Mountains',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado_River" target="_blank" rel="noopener">Colorado River</a>, <a href="https://en.wikipedia.org/wiki/Water_in_Colorado" target="_blank" rel="noopener">Water in Colorado</a>'},
+ {stat:'Oct 1',lab:'the {{water year}} begins; it ends 30 September',cite:'USGS, via <a href="https://en.wikipedia.org/wiki/Water_year" target="_blank" rel="noopener">Wikipedia</a>'},
+ {stat:'~80% / ~80%',lab:'of Colorado’s precipitation falls west of the {{Continental Divide}}; about 80% of its population lives along the eastern slope',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado%E2%80%93Big_Thompson_Project" target="_blank" rel="noopener">Colorado–Big Thompson Project</a>'},
+ {stat:'40M',lab:'people are supplied by {{Colorado River}} water, in seven US states and Mexico',cite:'Wikipedia: <a href="https://en.wikipedia.org/wiki/Colorado_River" target="_blank" rel="noopener">Colorado River</a>'}
 ];
 
 /* Provider → official conservation / current-status page. We link to the
