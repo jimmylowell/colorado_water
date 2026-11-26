@@ -589,7 +589,7 @@ function secTap(tap){
          <li>ZIP codes are postal routes, not service areas: a regional picture. <a href="data.html#providers">How providers are modelled, and the authoritative answer →</a></li>
        </ul>
      </div>
-     <p class="lr-p tap-desc">${tap.desc}</p>
+     ${tap.desc?`<p class="lr-p tap-desc">${tap.desc}</p>`:''}
      ${reveal}
      ${totCap?`<ul class="lr-list">
         <li>These reservoirs hold <b>${kaf(totCap)} thousand acre-feet</b> when full.</li>

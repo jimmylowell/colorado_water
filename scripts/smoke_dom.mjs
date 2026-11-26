@@ -85,7 +85,7 @@ const TODAYWORD=/\b(today|right now|live)\b/i;
    short sentence at most (chart captions and tunnel lines aside) */
 const PROSE_MAX=30;
 function shortProse(root,what){
-  const long=[...root.querySelectorAll('p.lr-p:not(.tap-desc), p.co-p, p.bx-blurb')]
+  const long=[...root.querySelectorAll('p.lr-p, p.co-p, p.bx-blurb')]
     .map(p=>p.textContent.trim().split(/\s+/).filter(Boolean).length>PROSE_MAX?p.textContent.trim().slice(0,60):null)
     .filter(Boolean);
   ok(long.length===0,`${what}: no paragraph over ${PROSE_MAX} words`+(long.length?'\n    '+long.join('\n    '):''));
@@ -276,6 +276,13 @@ console.log('How it works (with readings), ZIP 80302');
   ok(!local.querySelector('[data-cw="snowStore"]'),'the 2026 snow-in chart is not in the trace');
   ok(!/right now/i.test(local.textContent),'no "right now" in the trace');
   shortProse(p.document.querySelector('main'),'How it works');
+  /* every provider description: short, and each sentence cites Wikipedia */
+  const taps=p.window.eval('TAPS');
+  const words=h=>h.replace(/<[^>]+>/g,'').trim().split(/\s+/).filter(Boolean).length;
+  const longTap=taps.filter(t=>t.desc&&words(t.desc)>PROSE_MAX).map(t=>t.id);
+  ok(longTap.length===0,`provider descriptions at most ${PROSE_MAX} words`+(longTap.length?': '+longTap.join(', '):''));
+  const uncited=taps.filter(t=>t.desc&&t.desc.split(/\.(?:\s|$)/).filter(s=>s.trim()).some(s=>!/\(Wikipedia: <a [^>]*href="https:\/\/en\.wikipedia\.org\/wiki\//.test(s))).map(t=>t.id);
+  ok(uncited.length===0,'every provider sentence cites Wikipedia'+(uncited.length?': '+uncited.join(', '):''));
   ok(!/NRCS \/ NOAA/.test(el.textContent),'the unsourced snowpack share is gone');
   ok(!!el.querySelector('a[href*="Southwestern_North_American_megadrought"]'),'megadrought links to its article');
   const mark=local.querySelector('.bm-res[data-tip]');
