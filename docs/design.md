@@ -52,6 +52,42 @@ forward to the map.
   reading".
 - Snow and Lake Powell carry their own dates, which can differ from the
   reservoirs' day. A day the fetch fails keeps the last block with its date.
+- Each gage reading keeps the agency's own flag on it. `scripts/fetch_live.py`
+  writes `gage_flags` into `data/live.json`: for every gage with a reading,
+  the codes the agency put on that reading and the agency's words for each.
+  - DWR puts two flags on a CDSS telemetry reading, `flagA` and `flagB`,
+    defined in CDSS's
+    [station flags table](https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?format=json&dataSource=DWR).
+    `flagA`: `A` "Approved - Processing and review completed.", `P`
+    "Provisional data subject to revision. Some review and corrections may
+    have been made to improve data quality but final processing has not been
+    completed.", `O` "Original data as collected by the data collection
+    platform", `U` "3rd Party Data - Original data as collected by DWR;
+    Reliability unknown". `flagB` is a condition, such as `Ice` "Ice
+    affected", `e` "Estimated", `Eqp` "Equipment malfunction", `Bkw` "Flow
+    affected by backwater". The script reads the table each day (saved as
+    `data/raw/cdss_stationflags.json`) and keeps yesterday's words if it does
+    not answer.
+  - USGS puts qualifiers on each NWIS value, and the NWIS response itself
+    gives their words: `P` "Provisional data subject to revision.", `A`
+    "Approved for publication -- Processing and review completed."; others
+    include `Ice` and `e`. USGS's
+    [service notes](https://waterservices.usgs.gov/docs/instantaneous-values/instantaneous-values-details/)
+    say "most recent data are marked provisional".
+- A reading flagged anything other than `A` or `P` carries a note in the
+  agency's own words, linked to the page that defines it, for example
+  "DWR flag O: Original data as collected by the data collection platform".
+  `P` and `A` carry none: every source line already says the readings are
+  provisional and subject to revision. The page decides nothing about a
+  flagged reading: it is shown, counted and compared to its median as it is.
+- The note shows wherever that gage's reading or its percent of normal shows:
+  on How it works, the basin map's label and tooltip and a line under the
+  map, the step-down's label and a line under it, and its table's *Latest*
+  column; on the map page, the gage sheet, the gage list and the gage's hover
+  title. Today and the Data page show no gage readings, and no figure on Today
+  sums them; the readings line on the map and Data pages counts gages and
+  gives the number flagged beside it. The note is 12 px or larger; the short
+  form "DWR flag O" inside a drawing has the full words in the line below it.
 - If the daily file does not load, Today says so and shows no basin figures.
 - Every other figure carries its own date. The report page loads no daily
   readings, so nothing on it can move into the new year.
@@ -117,6 +153,7 @@ The October report is a new `water-year-<year>.html` built like
 |---|---|---|
 | Reservoir storage, daily | Colorado DWR CDSS telemetry, [dwr.state.co.us](https://dwr.state.co.us/Rest/GET/Help) | daily, `scripts/fetch_live.py` |
 | Streamflow, daily | USGS NWIS, [waterservices.usgs.gov](https://waterservices.usgs.gov/); CDSS for the DWR-operated gages and for any gage whose newest USGS value is over 14 days old (Rio Grande near Del Norte and South Platte at Kersey, whose USGS records end in 2003 and 2000) | daily, `scripts/fetch_live.py` |
+| What each reading's flag means | DWR: CDSS [station flags table](https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?format=json&dataSource=DWR); USGS: the qualifier list in each NWIS response, and USGS's [service notes](https://waterservices.usgs.gov/docs/instantaneous-values/instantaneous-values-details/) | daily, `scripts/fetch_live.py` |
 | Weekly medians, monthly basin history | CDSS daily from 2005, USGS daily values from 1991 | on rebuild, `scripts/build_normals.py` |
 | Weekly flow medians, Rio Grande near Del Norte and South Platte at Kersey | Colorado DWR's published daily streamflow in CDSS for RIODELCO and PLAKERCO, [surfacewatertsday](https://dwr.state.co.us/Rest/GET/Help/Api/GET-api-v2-surfacewater-surfacewatertsday), 1 January 1991 to 3 November 2026, the same span as the other gages, since USGS's daily values for these two end in 2003 and 2000. Not CDSS telemetry daily values: in winter those run far above the published record (Del Norte, January and February 1998: telemetry median 2,050 cfs, published 230 cfs) | on rebuild, `scripts/build_normals.py`, for any gage whose newest USGS value is over 14 days old |
 | Snowpack, by basin and by decade | NRCS AWDB SNOTEL snow-water equivalent, [wcc.sc.egov.usda.gov](https://wcc.sc.egov.usda.gov/); a fixed panel of 43 sites for the decades | on rebuild, `scripts/build_normals.py` |

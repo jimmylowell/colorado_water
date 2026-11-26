@@ -408,5 +408,67 @@ console.log('Data page');
   ok(q.document.getElementById('asof-snow').textContent==='not loaded','offline: the snow date says not loaded');
 }
 
+/* ---------------- agency flags on gage readings ---------------- */
+/* One flagged gage (Rio Grande near Del Norte, DWR flag O) and one clean one
+   (Colorado River near the state line, USGS P): the flagged reading carries a
+   note in DWR's words wherever it shows, the clean one none, and neither
+   reading is changed or dropped. */
+console.log('Agency flags: one flagged gage, one clean');
+{
+  const F=JSON.parse(JSON.stringify(LIVE));
+  const DN='08220000', CL='09163500';
+  F.gages[DN]=F.gages[DN]??782; F.gage_src[DN]='dwr';
+  F.gages[CL]=F.gages[CL]??2310; F.gage_src[CL]='usgs';
+  F.gage_flags={
+    [DN]:[{code:'O',text:'Original data as collected by the data collection platform'}],
+    [CL]:[{code:'P',text:'Provisional data subject to revision.'}]};
+  const WORDS='DWR flag O: Original data as collected by the data collection platform';
+  const DEF='https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?format=json&dataSource=DWR';
+
+  /* Today shows no gage reading, so it has nothing to note */
+  const td=await load('index.html',{live:F});
+  noErrors(td,'Today: no script errors');
+  const tl=await zip(td,'81101');
+  ok(!/\b782 cfs|\b737 cfs/.test(td.document.body.textContent)&&!tl.querySelector('a.flagnote'),'Today: shows no gage reading, so no note');
+
+  /* the basin map, the step-down and its table: How it works */
+  const t=await load('how-it-works.html',{live:F});
+  noErrors(t);
+  const local=await zip(t,'81101');   /* Alamosa: the Rio Grande basin */
+  const lines=[...local.querySelectorAll('.flaglines li')].map(li=>li.textContent);
+  ok(lines.some(s=>/Del Norte/i.test(s)&&s.includes(WORDS)&&s.includes(Math.round(F.gages[DN]).toLocaleString('en-US')+' cfs')),
+    'How it works: a line under the Rio Grande map names Del Norte, its reading and DWR’s words');
+  const links=[...local.querySelectorAll('a.flagnote')];
+  ok(links.length>=2&&links.every(a=>a.getAttribute('href')===DEF),'How it works: each note links CDSS’s station flags table');
+  const row=[...local.querySelectorAll('table.dtab tr')].find(tr=>/Del Norte/i.test(tr.textContent)&&/cfs/.test(tr.textContent));
+  ok(row&&row.querySelector('a.flagnote'),'How it works: the step-down table’s Del Norte row carries the note');
+  ok([...local.querySelectorAll('text, .bm-gage')].some(e=>/DWR flag O/.test(e.textContent||e.getAttribute('data-tip')||'')),
+    'How it works: the map label or tooltip names the flag');
+  noErrors(t,'How it works: still no script errors');
+
+  const g=await zip(t,'81501');       /* Grand Junction: the Colorado basin */
+  ok(!/flag P|Provisional data subject/.test(g.innerHTML),'How it works: a provisional (P) reading carries no note');
+
+  const m=await load('map.html',{live:F});
+  noErrors(m,'map page: no script errors');
+  const md=m.document, W=m.window;
+  W.eval(`state.basin='all';state.tap=null;state.selected=null;state.selectedNode=null;renderSheet();`);
+  const rowOf=re=>[...md.querySelectorAll('.zl-row.zl-gage')].find(b=>re.test(b.textContent));
+  const dn=rowOf(/Rio Grande/i);
+  ok(dn&&dn.querySelector('.zl-flag')&&/DWR flag O/.test(dn.textContent),'map list: Del Norte carries DWR flag O');
+  ok(dn&&/\d+%/.test(dn.querySelector('.zl-p').textContent),'map list: Del Norte still shows its percent of normal');
+  const cl=rowOf(/^◆?\s*Colorado River/i);
+  ok(cl&&!cl.querySelector('.zl-flag'),'map list: the clean Colorado River gage carries no flag');
+  W.eval(`state.selectedNode='rg_dn';renderSheet();`);
+  const sheet=md.getElementById('sheet');
+  const fn=sheet.querySelector('a.flagnote');
+  ok(fn&&fn.textContent===WORDS&&fn.getAttribute('href')===DEF,'map sheet: Del Norte’s sheet gives DWR’s words, linked');
+  ok(/Percent of normal/.test(sheet.textContent),'map sheet: the percent of normal still shows');
+  W.eval(`state.selectedNode='x_utah';renderSheet();`);
+  ok(!sheet.querySelector('a.flagnote'),'map sheet: the clean gage’s sheet carries no note');
+  ok(/1<\/b> with an agency flag/.test(md.getElementById('livestat').innerHTML),'map page: the readings line counts 1 flagged gage');
+  noErrors(m,'map page: still no script errors');
+}
+
 if(failures){console.error('\n'+failures+' FAILURES');process.exit(1);}
 console.log('\nsmoke_dom: all green');
