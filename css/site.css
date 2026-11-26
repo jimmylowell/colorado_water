@@ -722,3 +722,28 @@ svg:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
 .checkin .lr-h2{font-size:clamp(21px,3.6vw,27px);margin-bottom:8px}
 .checkin .lr-list li{margin-bottom:6px}
 .checkin #lr-method{padding-top:28px}
+
+/* =====================================================================
+   TYPE FLOOR: no sentence, caption, label or footer under 12 px.
+   The phone block above already lifts these; this does the same from
+   601 px up, and lifts the few phone sizes still under 12. Chart and
+   map labels drawn inside an svg are sized to the drawing, not here.
+   ===================================================================== */
+@media (min-width:601px){
+  .eyebrow,.asof,.seg button,.seglab,.chip,.month small,.viewnote,.sheet .tag,
+  .gaugelbl,.rows,.rows .lab,.prov,.badge,.complist,.srcline,.card h3,.src,
+  .livestat,.paste textarea,.zl-head,.zl-sec,.nav,.dtable,.dtable th,.dlbtn,
+  .foot,.zipbar button,.zipbar #zipmsg,.story-back,.zipmsg,.orpick,
+  .citychip .cc-city,.citychip .cc-basin,.skiplink,.story-kicker,.src-tip,
+  .bp-lab,.src-slope-h,.rr-live,.rr-sub,.rr-sparklab,.rr-of,.rr-af,.lr-place,
+  .lr-explore,.lr-eyebrow,.lr-kicker,.lr-cite,.bxl-cap,.bxl-tick b,.bx-stats,
+  .lr-chart-cap,.hydro-cap,.lr-table summary,.dtab,.dtab caption,
+  .dtab thead th,.zg-kicker,.co-h,.sb-keys,.crossnote,.cw-tip,.tb-n{font-size:12px}
+}
+@media (max-width:600px){
+  .dtable th,.tb-n,.bxl-cap,.bxl-tick b,.citychip .cc-basin,.zl-sec,.seglab,
+  .badge,.month small,.sheet .tag,.rows .lab,.rr-live,.src-slope-h,
+  .dtab thead th{font-size:12px}
+}
+/* the side sheet's section heads and notes are sized inline by viz.js */
+.sheet [style*="font-size:9.5px"],.sheet [style*="font-size:11px"]{font-size:12px!important}
